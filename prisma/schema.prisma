@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String   @default("USER")
+  juizId    Int?     @unique
+  createdAt DateTime @default(now())
+  juiz      Juiz?    @relation(fields: [juizId], references: [id])
+}
+
+model Temporada {
+  id                      Int     @id @default(autoincrement())
+  ano                     Int
+  titulo                  String
+  ativa                   Boolean @default(true)
+  bonusMelhorNotaNoite    Int     @default(0)
+  bonusMelhorNotaEtapa    Int     @default(0)
+  bonusNotasAcima90       Float   @default(0)
+  ptsMelhorNotaCampeonato Int     @default(0)
+  premiaAte               Int     @default(5)
+  ptsRound1               Int     @default(10)
+  ptsRound2               Int     @default(8)
+  ptsRound3               Int     @default(6)
+  ptsRound4               Int     @default(4)
+  ptsRound5               Int     @default(2)
+  ptsEtapa1               Int     @default(70)
+  ptsEtapa2               Int     @default(60)
+  ptsEtapa3               Int     @default(50)
+  ptsEtapa4               Int     @default(40)
+  ptsEtapa5               Int     @default(30)
+  ptsEtapa6               Int     @default(25)
+  ptsEtapa7               Int     @default(20)
+  ptsEtapa8               Int     @default(15)
+  ptsEtapa9               Int     @default(10)
+  ptsEtapa10              Int     @default(5)
+  defaultJuiz1Id          Int?
+  defaultJuiz2Id          Int?
+  etapas                  Etapa[]
+}
+
+model Etapa {
+  id             Int        @id @default(autoincrement())
+  nome           String
+  cidade         String
+  estado         String
+  dataInicio     DateTime
+  dataFinal      DateTime
+  ativa          Boolean    @default(true)
+  temporadaId    Int
+  defaultJuiz1Id Int?
+  defaultJuiz2Id Int?
+  temporada      Temporada  @relation(fields: [temporadaId], references: [id])
+  montarias      Montaria[]
+  rounds         Round[]
+}
+
+model Competidor {
+  id        Int        @id @default(autoincrement())
+  nome      String
+  cidade    String?
+  uf        String?
+  ranking   Int        @default(0)
+  montarias Montaria[]
+}
+
+model Animal {
+  id            Int            @id @default(autoincrement())
+  nome          String
+  companhia     String
+  tipo          String         @default("Touro")
+  montarias     Montaria[]
+  roundReservas RoundReserva[]
+}
+
+model Juiz {
+  id      Int     @id @default(autoincrement())
+  nome    String
+  cidade  String?
+  uf      String?
+  rounds4 Round[] @relation("Juiz4")
+  rounds3 Round[] @relation("Juiz3")
+  rounds2 Round[] @relation("Juiz2")
+  rounds1 Round[] @relation("Juiz1")
+  user    User?
+}
+
+model Round {
+  id         Int            @id @default(autoincrement())
+  numero     Int
+  etapaId    Int
+  juiz1Id    Int?
+  juiz2Id    Int?
+  juiz3Id    Int?
+  juiz4Id    Int?
+  modalidade String         @default("Touro")
+  dataAgenda DateTime       @default(now())
+  dataHora   DateTime       @default(now())
+  montarias  Montaria[]
+  juiz4      Juiz?          @relation("Juiz4", fields: [juiz4Id], references: [id])
+  juiz3      Juiz?          @relation("Juiz3", fields: [juiz3Id], references: [id])
+  juiz2      Juiz?          @relation("Juiz2", fields: [juiz2Id], references: [id])
+  juiz1      Juiz?          @relation("Juiz1", fields: [juiz1Id], references: [id])
+  etapa      Etapa          @relation(fields: [etapaId], references: [id])
+  reservas   RoundReserva[]
+}
+
+model Montaria {
+  id              Int        @id @default(autoincrement())
+  competidorId    Int
+  animalId        Int
+  roundId         Int
+  etapaId         Int
+  j1Peao          Float      @default(0)
+  j1Animal        Float      @default(0)
+  j2Peao          Float      @default(0)
+  j2Animal        Float      @default(0)
+  j3Peao          Float      @default(0)
+  j3Animal        Float      @default(0)
+  j4Peao          Float      @default(0)
+  j4Animal        Float      @default(0)
+  notaPeao        Float      @default(0)
+  notaAnimal      Float      @default(0)
+  notaTotal       Float      @default(0)
+  tempo           Float      @default(0)
+  desclassificado Boolean    @default(false)
+  motivo          String?
+  replayFileName  String?
+  dataHora        DateTime   @default(now())
+  competidor      Competidor @relation(fields: [competidorId], references: [id])
+  animal          Animal     @relation(fields: [animalId], references: [id])
+  round           Round      @relation(fields: [roundId], references: [id])
+  etapa           Etapa      @relation(fields: [etapaId], references: [id])
+}
+
+model Configuracao {
+  id                 Int       @id @default(autoincrement())
+  numJuizes          Int       @default(2)
+  notaMaxima         Int       @default(100)
+  titulo             String    @default("Circuito Master")
+  vmixUrl            String?   @default("http://127.0.0.1:8088/api")
+  vmixInputId        String?
+  vmixReplayInputId  String?   @default("Instant Replay")
+  replayExportPath   String?
+  vmixOverlayChannel Int       @default(1)
+  timerStartedAt     DateTime?
+  timerRunning       Boolean   @default(false)
+  montariaAtivaId    Int?
+  rankingMode        String?   @default("OFF")
+  rankingPage        Int       @default(0)
+  googleDriveFolderId String?
+  googleDriveApiKey   String?
+}
+
+model RoundReserva {
+  id        Int     @id @default(autoincrement())
+  roundId   Int
+  animalId  Int
+  ordem     Int
+  utilizado Boolean @default(false)
+  round     Round   @relation(fields: [roundId], references: [id])
+  animal    Animal  @relation(fields: [animalId], references: [id])
+}
