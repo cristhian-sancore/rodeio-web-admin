@@ -48,7 +48,12 @@ RUN chown nextjs:nodev .next
 COPY --from=builder --chown=nextjs:nodev /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodev /app/.next/static ./.next/static
 
-# Ensure the SQLite DB path is accessible
+# IMPORTANT: Copy Prisma and seed files for database management on VPS
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/seed-admin.js ./seed-admin.js
+COPY --from=builder /app/package.json ./package.json
+
+# Ensure the SQLite DB path is accessible (if used) or just persistent prisma files
 VOLUME ["/app/prisma"]
 
 USER nextjs
