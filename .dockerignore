@@ -15,5 +15,9 @@ README.md
 *.js
 !next.config.ts
 !next-env.d.ts
+!seed-admin.js
+!seed-test.js
+!backup_db.js
 prisma/*
 !prisma/schema.prisma
+!prisma/migrations
