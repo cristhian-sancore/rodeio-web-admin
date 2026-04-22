@@ -7,6 +7,21 @@ import { updateMontariaAtiva } from '../etapas/actions';
 
 export default function SumulaList({ montarias, roundId, selectedId }: { montarias: any[], roundId: number, selectedId?: number }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [errorVisible, setErrorVisible] = useState(false);
+  const router = useRouter();
+
+  const handleSelect = async (mId: number) => {
+    try {
+      setErrorVisible(false);
+      await updateMontariaAtiva(mId);
+      router.push(`/admin/execucao?roundId=${roundId}&montariaId=${mId}`);
+    } catch (err: any) {
+      if (err.message === "AGUARDANDO_NOTAS_JUIZES") {
+        setErrorVisible(true);
+        setTimeout(() => setErrorVisible(false), 5000);
+      }
+    }
+  };
 
   const filtered = montarias.filter(m => {
     const text = `${m.competidor.nome} ${m.animal.nome} ${m.animal.companhia}`.toLowerCase();
@@ -15,6 +30,24 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {errorVisible && (
+        <div style={{
+          background: 'rgba(255, 68, 68, 0.15)',
+          border: '1px solid #ff4444',
+          color: '#ff4444',
+          padding: '0.75rem',
+          borderRadius: '8px',
+          fontSize: '0.8rem',
+          marginBottom: '1rem',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          animation: 'shake 0.5s'
+        }}>
+          ⚠️ AGUARDANDO NOTAS DOS JUÍZES! <br/>
+          <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>A montaria atual ainda não foi finalizada.</span>
+        </div>
+      )}
+
       <div style={{ position: 'relative', marginBottom: '1rem' }}>
         <input 
           type="text" 
@@ -31,20 +64,20 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
           const isSelected = selectedId === m.id;
           const isDone = m.notaTotal > 0 || m.desclassificado;
           return (
-            <Link 
+            <div 
               key={m.id} 
-              href={`/admin/execucao?roundId=${roundId}&montariaId=${m.id}`}
-              onClick={() => updateMontariaAtiva(m.id)}
+              onClick={() => handleSelect(m.id)}
               className="premium-card"
               style={{ 
                 padding: '1rem', 
-                textDecoration: 'none',
+                cursor: 'pointer',
                 border: isSelected ? '2px solid var(--primary)' : (isDone ? '1px solid #1a1a1a' : '1px dashed #333'),
                 background: isSelected ? 'rgba(212, 175, 55, 0.05)' : (isDone ? '#181818' : '#111'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                opacity: isDone && !isSelected ? 0.6 : 1
+                opacity: isDone && !isSelected ? 0.6 : 1,
+                transition: 'all 0.2s'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -61,13 +94,21 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
                   <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: m.notaTotal > 0 ? 'var(--primary)' : '#ff4444' }}>{m.notaTotal.toFixed(2)}</div>
                 </div>
               )}
-            </Link>
+            </div>
           );
         })}
         {filtered.length === 0 && (
           <p style={{ color: '#666', textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>Nenhum resultado encontrado.</p>
         )}
       </div>
+
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-5px); }
+          40%, 80% { transform: translateX(5px); }
+        }
+      `}</style>
     </div>
   );
 }

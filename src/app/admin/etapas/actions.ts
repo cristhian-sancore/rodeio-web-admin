@@ -540,6 +540,30 @@ export async function updateRound(formData: FormData) {
 }
 
 export async function updateMontariaAtiva(montariaId: number | null) {
+  const currentConfig = await prisma.configuracao.findUnique({ where: { id: 1 } });
+  
+  // Se estiver tentando ativar uma NOVA montaria (diferente da atual)
+  if (montariaId && currentConfig?.montariaAtivaId && currentConfig.montariaAtivaId !== montariaId) {
+    const activeMontaria = await prisma.montaria.findUnique({
+      where: { id: currentConfig.montariaAtivaId },
+      include: { round: true }
+    });
+
+    if (activeMontaria && !activeMontaria.desclassificado) {
+      const numJuizes = currentConfig.numJuizes || 2;
+      let pendente = false;
+
+      if (numJuizes >= 1 && activeMontaria.j1Animal === 0) pendente = true;
+      if (numJuizes >= 2 && activeMontaria.j2Animal === 0) pendente = true;
+      if (numJuizes >= 3 && activeMontaria.j3Animal === 0) pendente = true;
+      if (numJuizes >= 4 && activeMontaria.j4Animal === 0) pendente = true;
+
+      if (pendente) {
+        throw new Error("AGUARDANDO_NOTAS_JUIZES");
+      }
+    }
+  }
+
   await prisma.configuracao.update({
     where: { id: 1 },
     data: { montariaAtivaId: montariaId }

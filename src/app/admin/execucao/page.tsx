@@ -14,6 +14,7 @@ import SumulaList from "./SumulaList";
 import { getCompetidorStageRank, getOverlayRankingData } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
 import RideTimer from "./RideTimer";
+import JuizStatusPanel from "./JuizStatusPanel";
 
 export default async function ExecucaoPage({ searchParams }: { searchParams: Promise<{ roundId?: string, montariaId?: string, error?: string }> }) {
   const session = await getServerSession(authOptions);
@@ -261,6 +262,8 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
               <h2 style={{ fontSize: '1.4rem', marginBottom: '2rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <BookmarkCheck size={26} /> Cédula de Pontuação
               </h2>
+
+              <JuizStatusPanel montariaId={selectedMontaria.id} numJuizes={numJuizes} />
 
               <form key={selectedMontaria.id} action={updateMontariaNota}>
                 <input type="hidden" name="montariaId" value={selectedMontaria.id} />
