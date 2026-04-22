@@ -17,6 +17,8 @@ import RideTimer from "./RideTimer";
 import JuizStatusPanel from "./JuizStatusPanel";
 import ScoringForm from "./ScoringForm";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ExecucaoPage({ searchParams }: { searchParams: Promise<{ roundId?: string, montariaId?: string, error?: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session) redirect('/login');
