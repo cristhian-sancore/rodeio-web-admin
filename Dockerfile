@@ -55,11 +55,14 @@ COPY --from=builder /app/package.json ./package.json
 # Copy node_modules to ensure maintainability tools and bcryptjs are available
 COPY --from=builder /app/node_modules ./node_modules
 
+# Copy entrypoint script
+COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
+
 # Ensure the SQLite DB path is accessible (if used) or just persistent prisma files
 VOLUME ["/app/prisma"]
 
 # Grant permissions to the nextjs user for the whole app
-RUN chown -R nextjs:nodev /app
+RUN chmod +x docker-entrypoint.sh && chown -R nextjs:nodev /app
 
 USER nextjs
 
@@ -68,5 +71,6 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# server.js is created by next build from the standalone output
-CMD ["node", "server.js"]
+# Auto-run migrations + seed, then start the app
+CMD ["sh", "docker-entrypoint.sh"]
+

@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: rodeio_secure_pass_2026
       POSTGRES_DB: rodeio_db
     volumes:
-      - rodeio_pgdata:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
     networks:
       - rede
 
@@ -31,11 +31,8 @@ services:
     networks:
       - rede
 
-volumes:
-  rodeio_pgdata:
-    driver: local
-
 networks:
   rede:
     external: true
+
 
