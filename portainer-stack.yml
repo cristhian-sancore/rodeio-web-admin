@@ -11,10 +11,10 @@ services:
     volumes:
       - rodeio_pgdata:/var/lib/postgresql/data
     networks:
-      - rede
+      - rodeio-net
 
   app:
-    build: .
+    image: ghcr.io/cristhian-sancore/rodeio-web-admin:latest
     ports:
       - "3000:3000"
     environment:
@@ -29,13 +29,12 @@ services:
       - db
     restart: always
     networks:
-      - rede
+      - rodeio-net
 
 volumes:
   rodeio_pgdata:
     driver: local
 
 networks:
-  rede:
-    external: true
-
+  rodeio-net:
+    driver: bridge
