@@ -15,6 +15,7 @@ import { getCompetidorStageRank, getOverlayRankingData } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
 import RideTimer from "./RideTimer";
 import JuizStatusPanel from "./JuizStatusPanel";
+import ScoringForm from "./ScoringForm";
 
 export default async function ExecucaoPage({ searchParams }: { searchParams: Promise<{ roundId?: string, montariaId?: string, error?: string }> }) {
   const session = await getServerSession(authOptions);
@@ -265,94 +266,18 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
 
               <JuizStatusPanel montariaId={selectedMontaria.id} numJuizes={numJuizes} />
 
-              <form key={selectedMontaria.id} action={updateMontariaNota}>
-                <input type="hidden" name="montariaId" value={selectedMontaria.id} />
-                
-                {/* Visual Peão vs Touro */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem', padding: '1.5rem', background: '#121212', borderRadius: '12px', border: '1px solid #222' }}>
-                  <div style={{ flex: 1, minWidth: '200px' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#555', textTransform: 'uppercase', fontWeight: 'bold' }}>Peão Selecionado</span>
-                    <h3 style={{ margin: '5px 0 0', color: '#fff' }}>{selectedMontaria.competidor.nome}</h3>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Ranking atual na Etapa: <strong style={{color:'var(--primary)'}}>{currentRankText}</strong></p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', fontSize: '1.2rem', fontWeight: '900' }}>VS</div>
-                  <div style={{ flex: 1, minWidth: '200px', textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#555', textTransform: 'uppercase', fontWeight: 'bold' }}>Animal Escalado</span>
-                    <h3 style={{ margin: '5px 0 0', color: 'var(--primary)' }}>{selectedMontaria.animal.nome}</h3>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Cia: {selectedMontaria.animal.companhia}</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888', fontSize: '0.8rem' }}>Sistema de Arbitragem</label>
-                    <div style={{ padding: '0.75rem', background: '#222', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 'bold', border: '1px solid #333' }}>
-                      {numJuizes} Juiz(es) - Max {config.notaMaxima} Pts
-                    </div>
-                    <input type="hidden" name="numJuizes" value={numJuizes} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888', fontSize: '0.8rem' }}>Tempo de Prova</label>
-                    <RideTimer initialValue={selectedMontaria.tempo || 0} />
-                  </div>
-                </div>
-
-                <div className="responsive-grid" style={{ marginBottom: '2.5rem' }}>
-                  {[1, 2, 3, 4].map(num => {
-                    // Só mostra o juiz se ele estiver configurado para a etapa
-                    if (num > numJuizes && numJuizes !== 3) return null; 
-                    if (numJuizes === 3 && num > 3) return null; // Suporte para 3 juízes se necessário
-
-                    const canEdit = (num === 1 && isJ1) || (num === 2 && isJ2) || (num === 3 && isJ3) || (num === 4 && isJ4);
-                    const valP = (selectedMontaria as any)[`j${num}Peao`];
-                    const valA = (selectedMontaria as any)[`j${num}Animal`];
-                    return (
-                      <div key={num} className="premium-card" style={{ padding: '1rem', background: canEdit ? 'rgba(212, 175, 55, 0.03)' : '#121212', border: canEdit ? '1.5px solid var(--primary)' : '1px solid #1a1a1a', opacity: canEdit ? 1 : 0.4 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: '900', color: canEdit ? 'var(--primary)' : '#444' }}>
-                            {num === 1 ? (round.juiz1?.nome || 'JUIZ 1') : 
-                             num === 2 ? (round.juiz2?.nome || 'JUIZ 2') : 
-                             num === 3 ? (round.juiz3?.nome || 'JUIZ 3') : 
-                             (round.juiz4?.nome || 'JUIZ 4')}
-                          </span>
-                          {!canEdit && <Lock size={14} color="#333" />}
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.75rem' }}>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>TECNICA PEÃO</p>
-                            <input name={`j${num}Peao`} type="number" step="0.25" min="0" max="25" defaultValue={valP || ''} readOnly={!canEdit} style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} placeholder="0" />
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>FORÇA ANIMAL</p>
-                            <input name={`j${num}Animal`} type="number" step="0.25" min="0" max="25" defaultValue={valA || ''} readOnly={!canEdit} style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} placeholder="0" />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div style={{ padding: '1rem', background: 'rgba(255, 68, 68, 0.05)', borderRadius: '10px', border: '1px solid rgba(255, 68, 68, 0.2)', marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                    <input type="checkbox" name="desclassificado" id="des" defaultChecked={selectedMontaria.desclassificado} style={{ width: '20px', height: '20px' }} />
-                    <label htmlFor="des" style={{ color: '#ff4444', fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <AlertTriangle size={18} /> DESCLASSIFICAÇÃO / ZERO NOTA
-                    </label>
-                  </div>
-                  <input name="motivo" type="text" defaultValue={selectedMontaria.motivo || ''} placeholder="Motivo (ex: Toque com mão livre)" style={{ background: '#111 !important', fontSize: '0.8rem' }} />
-                </div>
-
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button type="submit" className="btn-primary" style={{ flex: 2, padding: '1.5rem', fontSize: '1.1rem' }}>
-                    <Save size={24} /> GRAVAR NOTA OFICIAL
-                  </button>
-                  <button formAction={async () => { 'use server'; const { applyRepasse } = await import('../etapas/actions'); await applyRepasse(selectedMontaria.id, rId); }} className="btn-primary" style={{ flex: 1, padding: '1.5rem', fontSize: '1.1rem', background: 'transparent', border: '2px solid #ff4444', color: '#ff4444' }}>
-                    🔄 DAR REPASSE (TROCAR ANIMAL)
-                  </button>
-                </div>
-              </form>
+              <ScoringForm 
+                montaria={selectedMontaria}
+                round={round}
+                numJuizes={numJuizes}
+                notaMaxima={config.notaMaxima || 100}
+                currentRankText={currentRankText}
+                isAdmin={isAdmin}
+                user={user}
+              />
             </div>
           ) : (
+
             <div style={{ height: '100%', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '2px dashed #222', borderRadius: '15px', color: '#444' }}>
               <Search size={48} style={{ marginBottom: '1rem' }} />
               <h3>Aguardando seleção...</h3>

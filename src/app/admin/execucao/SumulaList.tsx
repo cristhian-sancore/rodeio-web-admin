@@ -8,6 +8,7 @@ import { updateMontariaAtiva } from '../etapas/actions';
 export default function SumulaList({ montarias, roundId, selectedId }: { montarias: any[], roundId: number, selectedId?: number }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorVisible, setErrorVisible] = useState(false);
+  const [showFinished, setShowFinished] = useState(false);
   const router = useRouter();
 
   const handleSelect = async (mId: number) => {
@@ -24,6 +25,10 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
   };
 
   const filtered = montarias.filter(m => {
+    const isDone = (m.notaTotal > 0 || m.desclassificado);
+    // Se NÃO estiver em modo "mostrar finalizados", e a montaria ESTIVER pronta, oculta (a menos que seja a selecionada)
+    if (!showFinished && isDone && selectedId !== m.id) return false;
+    
     const text = `${m.competidor.nome} ${m.animal.nome} ${m.animal.companhia}`.toLowerCase();
     return text.includes(searchTerm.toLowerCase());
   });
@@ -48,18 +53,38 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
         </div>
       )}
 
-      <div style={{ position: 'relative', marginBottom: '1rem' }}>
-        <input 
-          type="text" 
-          placeholder="Buscar peão ou animal..." 
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', background: '#111', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '0.9rem' }}
-        />
-        <Search size={18} color="#888" style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)' }} />
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <input 
+            type="text" 
+            placeholder="Buscar..." 
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            style={{ width: '100%', padding: '0.6rem 0.6rem 0.6rem 2.2rem', background: '#111', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '0.85rem' }}
+          />
+          <Search size={16} color="#888" style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)' }} />
+        </div>
+        <button 
+          onClick={() => setShowFinished(!showFinished)}
+          style={{
+            padding: '0.5rem 0.8rem',
+            background: showFinished ? 'var(--primary)' : '#222',
+            color: showFinished ? '#000' : '#888',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '0.7rem',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {showFinished ? 'OCULTAR FINALIZADOS' : 'VER TUDO'}
+        </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '65vh', overflowY: 'auto', paddingRight: '0.5rem' }}>
+
         {filtered.map((m: any) => {
           const isSelected = selectedId === m.id;
           const isDone = m.notaTotal > 0 || m.desclassificado;
