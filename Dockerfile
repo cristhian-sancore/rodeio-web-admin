@@ -15,8 +15,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client (Architecture sensitive)
-ENV PRISMA_CLI_QUERY_ENGINE_TYPE=library
+# Generate Prisma Client
 RUN npx prisma generate
 
 ENV NEXT_TELEMETRY_DISABLED=1
