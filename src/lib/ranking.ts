@@ -90,7 +90,7 @@ export async function getOverlayRankingData(mode: string, roundId?: number) {
         const modalidade = lastRound.modalidade || 'Touro';
         if (mode.includes('COMPETIDOR')) {
           return await getCompetidorRanking(mode, lastRound.id, etapaId, temporadaId, modalidade);
-        } else if (mode.includes('ANIMAL')) {
+        } else if (mode.includes('ANIMAL') || mode.includes('BOIADA')) {
           return await getAnimalRanking(mode, lastRound.id, etapaId, temporadaId, modalidade);
         }
       }
@@ -111,7 +111,7 @@ export async function getOverlayRankingData(mode: string, roundId?: number) {
 
     if (mode.includes('COMPETIDOR')) {
       return await getCompetidorRanking(mode, rId, etapaId, temporadaId, modalidade);
-    } else if (mode.includes('ANIMAL')) {
+    } else if (mode.includes('ANIMAL') || mode.includes('BOIADA')) {
       return await getAnimalRanking(mode, rId, etapaId, temporadaId, modalidade);
     }
 
@@ -190,6 +190,9 @@ export async function getCompetidorRanking(mode: string, roundId: number, etapaI
 export async function getAnimalRanking(mode: string, roundId: number, etapaId: number, temporadaId: number, modalidade: string = 'Touro') {
   let where: any = {};
   let title = "";
+  // Para ranking de noite, não exige mínimo de saídas
+  // Para etapa e campeonato, exige mínimo 2 saídas
+  let minSaidas = 1;
 
   if (mode === 'NOITE_ANIMAL') {
     where = { roundId };
@@ -197,9 +200,17 @@ export async function getAnimalRanking(mode: string, roundId: number, etapaId: n
   } else if (mode === 'ETAPA_ANIMAL') {
     where = { etapaId };
     title = `MELHORES TOUROS (ETAPA) - ${modalidade.toUpperCase()}`;
+    minSaidas = 2;
   } else if (mode === 'CAMPEONATO_ANIMAL') {
     where = { etapa: { temporadaId } };
     title = `MELHORES TOUROS (TEMPORADA) - ${modalidade.toUpperCase()}`;
+    minSaidas = 2;
+  } else if (mode === 'NOITE_BOIADA') {
+    return await getBoiadaRanking({ roundId }, `MELHOR BOIADA (NOITE) - ${modalidade.toUpperCase()}`, modalidade);
+  } else if (mode === 'ETAPA_BOIADA') {
+    return await getBoiadaRanking({ etapaId }, `MELHOR BOIADA (ETAPA) - ${modalidade.toUpperCase()}`, modalidade);
+  } else if (mode === 'CAMPEONATO_BOIADA') {
+    return await getBoiadaRanking({ etapa: { temporadaId } }, `MELHOR BOIADA (TEMPORADA) - ${modalidade.toUpperCase()}`, modalidade);
   }
 
   const montariasRaw = await prisma.montaria.findMany({
@@ -231,6 +242,8 @@ export async function getAnimalRanking(mode: string, roundId: number, etapaId: n
   });
 
   const list = Object.values(map)
+    // Filtrar pelo mínimo de saídas exigido
+    .filter((item: any) => item.qtd >= minSaidas)
     .map((item: any) => ({
       ...item,
       media: item.qtd > 0 ? (item.soma / item.qtd) : 0
@@ -245,12 +258,65 @@ export async function getAnimalRanking(mode: string, roundId: number, etapaId: n
       pos: idx + 1,
       animalId: item.id,
       nome: item.nome,
-      info: item.cia,
+      info: `${item.cia} (${item.qtd} saída${item.qtd > 1 ? 's' : ''})`,
       nota: item.media.toFixed(2),
       extra: idx === 0 ? "-" : (leaderMedia - item.media).toFixed(2)
     }))
   };
 }
+
+/**
+ * Ranking de Melhor Boiada (agrupa por companhia)
+ * Soma todas as notas dos touros da companhia e divide pelo total de saídas
+ */
+export async function getBoiadaRanking(where: any, title: string, modalidade: string = 'Touro') {
+  const montariasRaw = await prisma.montaria.findMany({
+    where,
+    include: { 
+      animal: true,
+      round: true
+    }
+  });
+
+  const targetMod = modalidade.trim().toUpperCase();
+  const montarias = montariasRaw.filter(m => 
+    m.round.modalidade.trim().toUpperCase() === targetMod
+  );
+
+  // Agrupar por companhia
+  const map: Record<string, { cia: string, soma: number, qtd: number, touros: Set<number> }> = {};
+  montarias.forEach(m => {
+    const cia = m.animal.companhia.trim();
+    if (!map[cia]) {
+      map[cia] = { cia, soma: 0, qtd: 0, touros: new Set() };
+    }
+    map[cia].soma += m.notaAnimal;
+    map[cia].qtd += 1;
+    map[cia].touros.add(m.animalId);
+  });
+
+  const list = Object.values(map)
+    .map((item: any) => ({
+      ...item,
+      numTouros: item.touros.size,
+      media: item.qtd > 0 ? (item.soma / item.qtd) : 0
+    }))
+    .sort((a: any, b: any) => b.media - a.media);
+
+  const leaderMedia = list.length > 0 ? (list[0] as any).media : 0;
+
+  return { 
+    title, 
+    list: list.map((item: any, idx) => ({
+      pos: idx + 1,
+      nome: item.cia,
+      info: `${item.numTouros} touro${item.numTouros > 1 ? 's' : ''} • ${item.qtd} saída${item.qtd > 1 ? 's' : ''}`,
+      nota: item.media.toFixed(2),
+      extra: idx === 0 ? "-" : (leaderMedia - item.media).toFixed(2)
+    }))
+  };
+}
+
 
 /**
  * Calcula o Ranking do Campeonato (Pontos de Liga C.Pts)

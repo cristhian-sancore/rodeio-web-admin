@@ -202,6 +202,20 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
               Campeonato
             </button>
           </div>
+
+          {/* LINHA 3: BOIADA */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#666', width: '60px' }}>BOIADA:</span>
+            <button formAction={async () => { 'use server'; await updateRankingMode('NOITE_BOIADA'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
+              Noite
+            </button>
+            <button formAction={async () => { 'use server'; await updateRankingMode('ETAPA_BOIADA'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
+              Etapa
+            </button>
+            <button formAction={async () => { 'use server'; await updateRankingMode('CAMPEONATO_BOIADA'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
+              Campeonato
+            </button>
+          </div>
           
           <div style={{ height: '1px', background: '#333', margin: '5px 0' }} />
 

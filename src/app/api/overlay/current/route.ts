@@ -58,19 +58,11 @@ export async function GET() {
     const stageRankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
     const numJuizes = config.numJuizes;
 
-    const formatValue = (val: number, numJuizes: number) => {
-      let v = val;
-      if (numJuizes === 4) v /= 2;
-      else if (numJuizes === 3) v = (v / 3) * 2;
-      return v.toFixed(1);
-    };
+    // Nota individual do juiz é exibida como foi dada (sem divisão)
+    const formatValue = (val: number) => val.toFixed(1);
 
-    const calculateJudgeTotal = (p: number, a: number, numJuizes: number) => {
-      let v = p + a;
-      if (numJuizes === 4) v /= 2;
-      else if (numJuizes === 3) v = (v / 3) * 2;
-      return v.toFixed(2);
-    };
+    // Total de um juiz = soma peão + animal (sem divisão)
+    const calculateJudgeTotal = (p: number, a: number) => (p + a).toFixed(2);
 
     return new NextResponse(JSON.stringify({
       active: true,
@@ -89,18 +81,18 @@ export async function GET() {
         j2Nome: montaria.round.juiz2?.nome || 'JUIZ 2',
         j3Nome: montaria.round.juiz3?.nome || 'JUIZ 3',
         j4Nome: montaria.round.juiz4?.nome || 'JUIZ 4',
-        j1P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j1Peao, numJuizes),
-        j1A: formatValue(montaria.j1Animal, numJuizes),
-        j2P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j2Peao, numJuizes),
-        j2A: formatValue(montaria.j2Animal, numJuizes),
-        j3P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j3Peao, numJuizes),
-        j3A: formatValue(montaria.j3Animal, numJuizes),
-        j4P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j4Peao, numJuizes),
-        j4A: formatValue(montaria.j4Animal, numJuizes),
-        j1Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j1Peao), montaria.j1Animal, numJuizes),
-        j2Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j2Peao), montaria.j2Animal, numJuizes),
-        j3Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j3Peao), montaria.j3Animal, numJuizes),
-        j4Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j4Peao), montaria.j4Animal, numJuizes),
+        j1P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j1Peao),
+        j1A: formatValue(montaria.j1Animal),
+        j2P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j2Peao),
+        j2A: formatValue(montaria.j2Animal),
+        j3P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j3Peao),
+        j3A: formatValue(montaria.j3Animal),
+        j4P: formatValue((montaria.tempo < 8 || montaria.desclassificado) ? 0 : montaria.j4Peao),
+        j4A: formatValue(montaria.j4Animal),
+        j1Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j1Peao), montaria.j1Animal),
+        j2Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j2Peao), montaria.j2Animal),
+        j3Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j3Peao), montaria.j3Animal),
+        j4Total: calculateJudgeTotal((montaria.tempo < 8 || montaria.desclassificado ? 0 : montaria.j4Peao), montaria.j4Animal),
         total: montaria.notaTotal.toFixed(2),
         tempo: montaria.tempo.toFixed(2),
         desclassificado: montaria.desclassificado,
