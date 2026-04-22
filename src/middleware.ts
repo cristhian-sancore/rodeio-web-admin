@@ -6,13 +6,16 @@ export default withAuth(
     const { token } = req.nextauth;
     const { pathname } = req.nextUrl;
 
-    // Se o usuário logado for JUIZ, restringir certas rotas de administração
+    // Se o usuário logado for JUIZ, redirecionar para o painel dedicado
     if (token?.role === "JUIZ") {
-      const allowedPaths = ["/admin", "/admin/execucao", "/admin/ranking"];
-      const isAllowed = allowedPaths.some(path => pathname === path || pathname.startsWith("/admin/execucao") || pathname.startsWith("/admin/ranking"));
+      // Permitir acesso ao painel do juiz e APIs do juiz
+      if (pathname.startsWith("/juiz") || pathname.startsWith("/api/juiz")) {
+        return NextResponse.next();
+      }
       
-      if (!isAllowed) {
-        return NextResponse.redirect(new URL("/admin/execucao", req.url));
+      // Redirecionar qualquer acesso admin para o painel do juiz
+      if (pathname.startsWith("/admin")) {
+        return NextResponse.redirect(new URL("/juiz/dashboard", req.url));
       }
     }
 
@@ -37,5 +40,6 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/juiz/:path*"],
 };
+
