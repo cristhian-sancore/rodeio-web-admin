@@ -170,6 +170,8 @@ export async function updateMontariaNota(formData: FormData) {
 
   revalidatePath(`/admin/execucao`);
   revalidatePath(`/juiz/dashboard`);
+  revalidatePath('/overlay/nota');
+  revalidatePath('/api/overlay/current');
   
   // Important imports for this redirect:
   const { redirect } = await import('next/navigation');
@@ -571,6 +573,7 @@ export async function updateMontariaAtiva(montariaId: number | null) {
 
   revalidatePath('/admin/execucao');
   revalidatePath('/overlay/nota');
+  revalidatePath('/api/overlay/current');
 }
 
 export async function updateMontariaSorteio(formData: FormData) {
