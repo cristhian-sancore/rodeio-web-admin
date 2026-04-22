@@ -14,7 +14,7 @@ services:
       - rede
 
   app:
-    build: .
+    image: ghcr.io/cristhian221016/rodeio-web-admin:latest
     ports:
       - "3000:3000"
     environment:
