@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Save, AlertTriangle, Lock, Monitor } from 'lucide-react';
-import { updateMontariaNota, applyRepasse, sendManualToOverlay } from '../etapas/actions';
+import { updateMontariaNota, applyRepasse, sendManualToOverlay } from '@/app/admin/etapas/actions';
 import RideTimer from './RideTimer';
 
 interface ScoringFormProps {

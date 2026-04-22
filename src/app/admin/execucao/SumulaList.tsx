@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, CheckCircle2, Timer, Radio } from 'lucide-react';
-import { updateMontariaAtiva } from '../etapas/actions';
+import { updateMontariaAtiva } from '@/app/admin/etapas/actions';
 
 export default function SumulaList({ montarias, roundId, selectedId }: { montarias: any[], roundId: number, selectedId?: number }) {
   const [searchTerm, setSearchTerm] = useState('');
