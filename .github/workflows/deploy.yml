@@ -34,6 +34,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/rodeio-web-admin:latest
+          tags: ghcr.io/cristhian221016/rodeio-pro:latest
           # Força o build a ignorar cache e erros de rede
           no-cache: true
