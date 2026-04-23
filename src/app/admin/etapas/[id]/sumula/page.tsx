@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { Printer, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { PrintButton } from "../../components/PrintButton";
 
 export default async function SumulaImpressaoPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -33,9 +34,7 @@ export default async function SumulaImpressaoPage(props: { params: Promise<{ id:
         <Link href={`/admin/etapas/${etapaId}`} style={{ color: '#fff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <ArrowLeft size={20} /> Voltar para Painel
         </Link>
-        <button onClick={() => window.print()} className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
-          <Printer size={20} /> IMPRIMIR SÚMULA
-        </button>
+        <PrintButton />
       </div>
 
       {etapa.rounds.map((round) => (
