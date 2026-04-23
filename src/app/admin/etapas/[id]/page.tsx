@@ -72,22 +72,41 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
             </div>
           </div>
           
-          <Link 
-            href={`/admin/etapas/${id}/classificacao`} 
-            className="btn-primary" 
-            style={{ 
-              padding: '1.2rem 2rem', 
-              fontSize: '1.1rem', 
-              fontWeight: 'bold', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.75rem',
-              boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
-              textDecoration: 'none'
-            }}
-          >
-            <Trophy size={24} /> VER CLASSIFICAÇÕES
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <Link 
+              href={`/admin/etapas/${id}/sumula`} 
+              className="btn-primary" 
+              style={{ 
+                padding: '1.2rem 2rem', 
+                fontSize: '1.1rem', 
+                fontWeight: 'bold', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem',
+                background: '#333',
+                textDecoration: 'none'
+              }}
+            >
+              <Printer size={24} /> IMPRIMIR SÚMULAS
+            </Link>
+            
+            <Link 
+              href={`/admin/etapas/${id}/classificacao`} 
+              className="btn-primary" 
+              style={{ 
+                padding: '1.2rem 2rem', 
+                fontSize: '1.1rem', 
+                fontWeight: 'bold', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.75rem',
+                boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
+                textDecoration: 'none'
+              }}
+            >
+              <Trophy size={24} /> VER CLASSIFICAÇÕES
+            </Link>
+          </div>
         </div>
       </div>
 

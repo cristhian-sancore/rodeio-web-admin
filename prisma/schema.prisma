@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -139,6 +138,7 @@ model Montaria {
   animal          Animal     @relation(fields: [animalId], references: [id])
   round           Round      @relation(fields: [roundId], references: [id])
   etapa           Etapa      @relation(fields: [etapaId], references: [id])
+  logs            LogNota[]
 }
 
 model Configuracao {
@@ -168,4 +168,15 @@ model RoundReserva {
   utilizado Boolean @default(false)
   round     Round   @relation(fields: [roundId], references: [id])
   animal    Animal  @relation(fields: [animalId], references: [id])
+}
+
+model LogNota {
+  id           Int      @id @default(autoincrement())
+  montariaId   Int
+  usuarioNome  String
+  juizNumero   Int      // 1, 2, 3 ou 4
+  notaPeao     Float
+  notaAnimal   Float
+  dataHora     DateTime @default(now())
+  montaria     Montaria @relation(fields: [montariaId], references: [id])
 }
