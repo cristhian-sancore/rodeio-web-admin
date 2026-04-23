@@ -197,6 +197,7 @@ export async function getAnimalRanking(mode: string, roundId: number, etapaId: n
   if (mode === 'NOITE_ANIMAL') {
     where = { roundId };
     title = `MELHORES TOUROS (NOITE) - ${modalidade.toUpperCase()}`;
+    minSaidas = 1;
   } else if (mode === 'ETAPA_ANIMAL') {
     where = { etapaId };
     title = `MELHORES TOUROS (ETAPA) - ${modalidade.toUpperCase()}`;

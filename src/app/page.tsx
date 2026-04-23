@@ -54,8 +54,8 @@ export default async function Home() {
     },
     { 
       label: 'MELHOR ANIMAL (ETAPA)', 
-      title: highlights?.etapaAnimal?.nome || 'Nenhum animal', 
-      subtitle: highlights?.etapaAnimal?.info || 'Companhia',
+      title: highlights?.etapaAnimal?.nome || 'Aguardando 2ª Saída', 
+      subtitle: highlights?.etapaAnimal?.info || 'Média min. 2 pulos',
       nota: highlights?.etapaAnimal?.nota || '0.00',
       pos: 'MELHOR MÉDIA',
       video: highlights?.etapaAnimal ? findVideo('', highlights.etapaAnimal.nome) : null,
@@ -72,8 +72,8 @@ export default async function Home() {
     },
     { 
       label: 'MELHOR ANIMAL (TEMPORADA)', 
-      title: highlights?.campeonatoAnimal?.nome || 'Nenhum animal', 
-      subtitle: highlights?.campeonatoAnimal?.info || 'Companhia',
+      title: highlights?.campeonatoAnimal?.nome || 'Aguardando 2ª Saída', 
+      subtitle: highlights?.campeonatoAnimal?.info || 'Média min. 2 pulos',
       nota: highlights?.campeonatoAnimal?.nota || '0.00',
       pos: 'RANKING GERAL',
       video: highlights?.campeonatoAnimal ? findVideo('', highlights.campeonatoAnimal.nome) : null,
