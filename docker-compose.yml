@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: rodeio_secure_pass_2026
       POSTGRES_DB: rodeio_db
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     networks:
       - rede
 
@@ -28,14 +28,17 @@ services:
     depends_on:
       - db
     volumes:
-      - ./prisma_data:/app/prisma
-      - ./uploads:/app/public/uploads
+      - prisma_data:/app/prisma
+      - uploads_data:/app/public/uploads
     restart: always
     networks:
       - rede
 
+volumes:
+  db_data:
+  prisma_data:
+  uploads_data:
+
 networks:
   rede:
     external: true
-
-
