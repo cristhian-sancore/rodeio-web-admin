@@ -20,7 +20,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
     prisma.competidor.findMany({ orderBy: { nome: 'asc' } }),
     prisma.animal.findMany({ orderBy: { nome: 'asc' } }),
     prisma.montaria.findMany({
-      where: { roundId: rId },
+      where: { roundId: rId, removida: false },
       include: { competidor: true, animal: true }
     }),
     prisma.roundReserva.findMany({
@@ -56,7 +56,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
 
     // Verificar duplicidade
     const existing = await prisma.montaria.findFirst({
-      where: { competidorId, roundId: rId }
+      where: { competidorId, roundId: rId, removida: false }
     });
 
     if (!existing) {
@@ -69,7 +69,11 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
 
   async function deleteMontaria(mId: number) {
     'use server';
-    await prisma.montaria.delete({ where: { id: mId } });
+    const userSession = await getServerSession(authOptions);
+    await prisma.montaria.update({ 
+      where: { id: mId },
+      data: { removida: true, removidaPor: userSession?.user?.name || 'Desconhecido', removidaEm: new Date() }
+    });
     revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`);
   }
 
@@ -164,7 +168,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
                   <Link href={`/admin/etapas/${id}/round/${roundId}/montaria/${m.id}/editar`} style={{ padding: '0.5rem', color: '#888', display: 'flex', alignItems: 'center' }}>
                     <Edit size={18} />
                   </Link>
-                  <form action={async () => { 'use server'; await prisma.montaria.delete({ where: { id: m.id } }); revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`); }}>
+                  <form action={async () => { 'use server'; await prisma.montaria.update({ where: { id: m.id }, data: { removida: true, removidaPor: session?.user?.name || 'Desconhecido', removidaEm: new Date() } }); revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`); }}>
                     <button type="submit" style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.5rem', transition: 'color 0.2s ease', display: 'flex', alignItems: 'center' }}>
                       <Trash2 size={20} />
                     </button>

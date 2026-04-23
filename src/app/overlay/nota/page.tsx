@@ -50,23 +50,36 @@ export default function OverlayNotaPage() {
     document.documentElement.style.background = 'transparent';
     document.body.style.background = 'transparent';
     
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`/api/overlay/current?t=${Date.now()}`, { cache: 'no-store' });
-        const json = await res.json();
-        if (json.active) {
-          if (json.serverTime) serverOffsetRef.current = json.serverTime - Date.now();
-          setData(json);
-          setVisible(true);
-        } else {
-          setVisible(false);
-          setTimeout(() => setData(null), 500);
+    const connectSSE = () => {
+      const eventSource = new EventSource('/api/overlay/stream');
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const json = JSON.parse(event.data);
+          if (json.active) {
+            if (json.serverTime) serverOffsetRef.current = json.serverTime - Date.now();
+            setData(json);
+            setVisible(true);
+          } else {
+            setVisible(false);
+            setTimeout(() => setData(null), 500);
+          }
+        } catch (err) {
+          console.error('Erro no payload SSE', err);
         }
-      } catch (err) { console.error('Erro overlay:', err); }
+      };
+
+      eventSource.onerror = (err) => {
+        console.error('Erro SSE. Reconectando...', err);
+        eventSource.close();
+        setTimeout(connectSSE, 2000);
+      };
+
+      return eventSource;
     };
-    fetchData();
-    const interval = setInterval(fetchData, 1000);
-    return () => clearInterval(interval);
+
+    const es = connectSSE();
+    return () => es.close();
   }, []);
 
   useEffect(() => {

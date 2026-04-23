@@ -6,45 +6,45 @@ import { getSafeConfig } from "@/lib/config-safe";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
+export async function getOverlayDataPayload() {
   try {
     const config = await getSafeConfig();
 
     if (!config) {
-      return NextResponse.json({ active: false });
+      return { active: false };
     }
 
     // Prioridade para Ranking se estiver ativo
     if (config.rankingMode && config.rankingMode !== 'OFF') {
       const rankingData = await getOverlayRankingData(config.rankingMode);
-      return NextResponse.json({ 
+      return { 
         active: true, 
         mode: 'RANKING',
         rankingMode: config.rankingMode,
         rankingPage: config.rankingPage || 0,
         rankingData 
-      });
+      };
     }
 
     if (!config?.montariaAtivaId) {
-      return NextResponse.json({ active: false });
+      return { active: false };
     }
 
     const montaria = await prisma.montaria.findUnique({
       where: { id: config.montariaAtivaId },
       include: {
         competidor: {
-          include: { montarias: true }
+          include: { montarias: { where: { removida: false } } }
         },
         animal: {
-          include: { montarias: true }
+          include: { montarias: { where: { removida: false } } }
         },
         round: { include: { juiz1: true, juiz2: true, juiz3: true, juiz4: true } }
       }
     });
 
     if (!montaria) {
-      return NextResponse.json({ active: false });
+      return { active: false };
     }
 
     // --- CÁLCULO DE ESTATÍSTICAS PARA A CHAMADA ---
@@ -60,7 +60,7 @@ export async function GET() {
 
     const stageRankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
 
-    return NextResponse.json({
+    return {
       active: true,
       mode: config.overlayMode || 'ID', 
       numJuizes: config.numJuizes,
@@ -108,10 +108,15 @@ export async function GET() {
         tempo: montaria.tempo.toFixed(2),
         desclassificado: montaria.desclassificado
       }
-    });
+    };
 
   } catch (error) {
     console.error("ERRO API OVERLAY:", error);
-    return NextResponse.json({ active: false });
+    return { active: false };
   }
+}
+
+export async function GET() {
+  const data = await getOverlayDataPayload();
+  return NextResponse.json(data);
 }

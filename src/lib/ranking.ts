@@ -8,7 +8,7 @@ import { getSafeConfig } from "./config-safe";
 export async function getCompetidorStageRank(etapaId: number, competidorId: number): Promise<{ rank: number; diff: number; leaderScore: number }> {
   try {
     const montarias = await prisma.montaria.findMany({
-      where: { etapaId },
+      where: { etapaId, removida: false },
       include: {
         round: { select: { modalidade: true } }
       }
@@ -142,7 +142,7 @@ export async function getCompetidorRanking(mode: string, roundId: number, etapaI
   }
 
   const montariasRaw = await prisma.montaria.findMany({
-    where,
+    where: { ...where, removida: false },
     include: { 
       competidor: true,
       round: true
@@ -224,7 +224,7 @@ export async function getAnimalRanking(mode: string, roundId: number, etapaId: n
   }
 
   const montariasRaw = await prisma.montaria.findMany({
-    where,
+    where: { ...where, removida: false },
     include: { 
       animal: true,
       round: true
@@ -281,7 +281,7 @@ export async function getAnimalRanking(mode: string, roundId: number, etapaId: n
  */
 export async function getBoiadaRanking(where: any, title: string, modalidade: string = 'Touro') {
   const montariasRaw = await prisma.montaria.findMany({
-    where,
+    where: { ...where, removida: false },
     include: { 
       animal: true,
       round: true
@@ -478,6 +478,7 @@ export async function getBestOfRound(roundId: number) {
     const melhor = await prisma.montaria.findFirst({
       where: { 
         roundId, 
+        removida: false,
         desclassificado: false, 
         notaTotal: { gt: 0 } 
       },

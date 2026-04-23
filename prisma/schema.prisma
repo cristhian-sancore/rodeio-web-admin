@@ -137,6 +137,9 @@ model Montaria {
   motivo          String?
   replayFileName  String?
   dataHora        DateTime   @default(now())
+  removida        Boolean    @default(false)
+  removidaPor     String?
+  removidaEm      DateTime?
   competidor      Competidor @relation(fields: [competidorId], references: [id])
   animal          Animal     @relation(fields: [animalId], references: [id])
   round           Round      @relation(fields: [roundId], references: [id])
@@ -181,6 +184,8 @@ model LogNota {
   juizNumero   Int      // 1, 2, 3 ou 4
   notaPeao     Float
   notaAnimal   Float
+  acao         String   @default("NOTA_JUIZ")
+  ipOrigem     String?
   dataHora     DateTime @default(now())
   montaria     Montaria @relation(fields: [montariaId], references: [id])
 }
