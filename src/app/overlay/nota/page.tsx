@@ -4,36 +4,31 @@ import { useState, useEffect, useRef } from 'react';
 
 interface OverlayData {
   active: boolean;
+  mode: 'ID' | 'CHAMADA' | 'RANKING'; // ID=LT, CHAMADA=FullScreen
   numJuizes?: number;
-  mode?: 'NOTA' | 'RANKING';
   rankingMode?: string;
   rankingPage?: number;
   rankingData?: {
     title: string;
-    list: Array<{
-      pos: number;
-      nome: string;
-      info: string;
-      nota: string;
-      extra: string;
-    }>;
+    list: Array<{ pos: number; nome: string; info: string; nota: string; extra: string; }>;
   };
   data?: {
     id: number;
     competidor: string;
-    cidade?: string;
+    competidorFoto: string;
+    competidorCidade: string;
+    competidorRankChamp: string;
+    competidorParadas: string;
     animal: string;
-    companhia: string;
-    j1Nome: string; j1P: string; j1A: string; j1Total: string;
-    j2Nome: string; j2P: string; j2A: string; j2Total: string;
-    j3Nome: string; j3P: string; j3A: string; j3Total: string;
-    j4Nome: string; j4P: string; j4A: string; j4Total: string;
+    animalFoto: string;
+    animalCompanhia: string;
+    animalMedia: string;
+    j1Total: string; j2Total: string; j3Total: string; j4Total: string;
     total: string;
     tempo: string;
-    etapaRank?: string;
-    etapaDiff?: string;
+    etapaRank: string;
+    etapaDiff: string;
     desclassificado: boolean;
-    motivo?: string;
   };
   timerRunning?: boolean;
   timerStartedAt?: string;
@@ -44,40 +39,16 @@ export default function OverlayNotaPage() {
   const [data, setData] = useState<OverlayData | null>(null);
   const [visible, setVisible] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [nameScale, setNameScale] = useState(1);
   const serverOffsetRef = useRef(0);
-  const lastIdRef = useRef<number | null>(null);
-  const nameRef = useRef<HTMLHeadingElement>(null);
-
-  // Efeito para ajustar o tamanho do nome do competidor
-  useEffect(() => {
-    if (nameRef.current) {
-      const parent = nameRef.current.parentElement;
-      if (parent) {
-        const parentWidth = parent.clientWidth;
-        const nameWidth = nameRef.current.scrollWidth;
-        if (nameWidth > parentWidth) {
-          setNameScale(parentWidth / nameWidth);
-        } else {
-          setNameScale(1);
-        }
-      }
-    }
-  }, [data?.data?.competidor]);
 
   useEffect(() => {
-    const setTransparent = () => {
-      document.documentElement.style.setProperty('background', 'transparent', 'important');
-      document.documentElement.style.setProperty('background-color', 'transparent', 'important');
-      document.body.style.setProperty('background', 'transparent', 'important');
-      document.body.style.setProperty('background-color', 'transparent', 'important');
-    };
-    setTransparent();
+    // Garantir fundo transparente
+    document.documentElement.style.background = 'transparent';
+    document.body.style.background = 'transparent';
     
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/overlay/current?t=${Date.now()}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const json = await res.json();
         
         if (json.active) {
@@ -100,10 +71,6 @@ export default function OverlayNotaPage() {
 
   useEffect(() => {
     let animationFrameId: number;
-    if (data?.data?.id && data.data.id !== lastIdRef.current) {
-      lastIdRef.current = data.data.id;
-      setElapsedTime(parseFloat(data.data.tempo) || 0);
-    }
     const updateTimer = () => {
       if (data?.timerRunning && data.timerStartedAt) {
         const start = new Date(data.timerStartedAt).getTime();
@@ -115,289 +82,212 @@ export default function OverlayNotaPage() {
     };
     if (data?.timerRunning) animationFrameId = requestAnimationFrame(updateTimer);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [data?.timerRunning, data?.timerStartedAt, data?.data?.tempo, data?.data?.id]);
+  }, [data?.timerRunning, data?.timerStartedAt]);
 
   if (!visible && !data) return null;
 
   const d = data?.data;
-  const isRanking = data?.mode === 'RANKING';
-  const numJuizes = data?.numJuizes || 2;
-  const rankingPage = typeof data?.rankingPage === 'number' ? data.rankingPage : 0;
-  const itemsPerPage = 10;
-
-  // Lógica de Paginação do Ranking
-  const displayRanking = isRanking && data.rankingData ? {
-    ...data.rankingData,
-    list: data.rankingData.list.slice(rankingPage * itemsPerPage, (rankingPage + 1) * itemsPerPage)
-  } : null;
-
-  const formatScore = (val: any) => {
-    if (!val) return '0';
-    const n = parseFloat(String(val));
-    return isNaN(n) ? val : (n % 1 === 0 ? n.toFixed(0) : n.toString());
-  };
+  const mode = data?.mode || 'ID';
+  const isRanking = mode === 'RANKING';
 
   return (
-    <div className={`overlay-wrapper ${visible ? 'active' : ''} ${isRanking ? 'ranking-mode' : 'nota-mode'}`}>
+    <div className={`overlay-master ${visible ? 'show' : 'hide'}`}>
       <style jsx global>{`
-        html, body { background: transparent !important; overflow: hidden; }
-      `}</style>
-      <style jsx>{`
-        .overlay-wrapper {
-          position: fixed;
+        body { background: transparent !important; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        .overlay-master { position: fixed; inset: 0; transition: opacity 0.5s ease; opacity: 0; }
+        .overlay-master.show { opacity: 1; }
+        
+        /* 1. MODO CHAMADA (FULL SCREEN) */
+        .chamada-fullscreen {
+          position: absolute;
           inset: 0;
-          opacity: 0;
-          transition: opacity 0.5s ease;
+          background: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.95) 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-family: 'Inter', sans-serif;
+          animation: zoomIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .overlay-wrapper.active { opacity: 1; }
 
-        /* MODO NOTA (ESTILO GIGANTE PARA LED) */
-        .nota-mode .nota-container {
+        .chamada-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.5fr 1fr;
+          gap: 40px;
+          width: 90%;
+          max-width: 1600px;
+          height: 600px;
+          align-items: center;
+        }
+
+        .side-photo {
+          width: 100%;
+          height: 100%;
+          border: 6px solid #D4AF37;
+          border-radius: 30px;
+          overflow: hidden;
+          box-shadow: 0 0 50px rgba(212, 175, 55, 0.4);
+          position: relative;
+        }
+        .side-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .side-photo .label { 
+          position: absolute; bottom: 0; left: 0; right: 0; 
+          background: rgba(0,0,0,0.8); color: #D4AF37; 
+          text-align: center; font-weight: 900; padding: 10px; font-size: 1.2rem;
+        }
+
+        .center-info {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          color: #fff;
+        }
+
+        .vs-text { font-size: 4rem; font-weight: 900; color: #D4AF37; font-style: italic; margin-bottom: 20px; }
+        .main-names { margin-bottom: 40px; }
+        .name-rider { font-size: 5rem; font-weight: 950; text-transform: uppercase; line-height: 1; margin: 0; }
+        .name-animal { font-size: 3rem; color: #D4AF37; font-weight: 800; margin-top: 10px; text-transform: uppercase; }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 20px;
+          width: 100%;
+        }
+        .stat-box {
+          background: rgba(255,255,255,0.05); border: 1px solid rgba(212,175,55,0.3);
+          border-radius: 15px; padding: 20px;
+        }
+        .stat-val { font-size: 2.5rem; color: #ffd700; font-weight: 900; display: block; }
+        .stat-lab { font-size: 0.8rem; color: #aaa; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+
+        /* 2. MODO IDENTIFICAÇÃO (LOWER THIRD) */
+        .id-lower-third {
           position: absolute;
-          bottom: 40px;
+          bottom: 50px;
           left: 50%;
-          transform: translateX(-50%); /* Centralizado e Compacto */
+          transform: translateX(-50%);
+          width: 90%;
+          max-width: 1200px;
           display: flex;
           align-items: stretch;
-          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
           animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-          width: fit-content;
-          min-width: 800px;
         }
-        @keyframes slideUp { from { transform: translate(-50%, 100px); } to { transform: translate(-50%, 0); } }
 
-        .info-card {
-          background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(5, 5, 5, 1) 100%);
-          border-left: 12px solid #D4AF37;
-          padding: 30px 60px 30px 50px;
-          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%);
-          min-width: 300px;
-          flex: initial; /* Ajusta ao conteúdo */
-        }
-        .competidor-name-container {
-          overflow: hidden;
-          width: 100%;
-        }
-        .competidor-name { 
-          color: #fff; 
-          font-size: 4.5rem; 
-          font-weight: 900; 
-          text-transform: uppercase; 
-          margin: 0; 
-          letter-spacing: -1px;
-          white-space: nowrap;
-          display: inline-block;
-          transform-origin: left center;
-        }
-        .animal-name { color: #D4AF37; font-size: 2.5rem; font-weight: 700; text-transform: uppercase; margin-top: 10px; display: block; }
-
-        .judges-section {
-          background: rgba(15, 15, 15, 0.95);
-          backdrop-filter: blur(10px);
-          margin-left: -40px;
-          padding: 20px 50px 20px 90px;
+        .lt-main-bar {
+          background: linear-gradient(90deg, rgba(15,15,15,0.98) 0%, rgba(5,5,5,1) 100%);
+          border-left: 10px solid #D4AF37;
+          border-radius: 15px 0 0 15px;
+          padding: 20px 40px;
           display: flex;
-          gap: 40px;
-          clip-path: polygon(40px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%);
-        }
-        .judge-box { border-left: 4px solid #D4AF37; padding-left: 20px; min-width: 180px; }
-        .judge-title { font-size: 1.5rem; color: #D4AF37; font-weight: 900; text-transform: uppercase; display: block; margin-bottom: 8px; }
-        .judge-scores-row { display: flex; gap: 15px; font-size: 1.3rem; }
-        .judge-score-label { font-size: 1rem; color: #D4AF37; font-weight: bold; }
-        .judge-score-value { color: #fff; font-weight: 700; font-size: 1.8rem; }
-        .subtotal { font-size: 3rem; color: #fff; font-weight: 900; margin-top: 8px; border-top: 2px solid rgba(212, 175, 55, 0.3); padding-top: 5px; }
-
-        .final-score-card {
-          min-width: 300px;
-          background: linear-gradient(180deg, #F9D976 0%, #D4AF37 100%);
-          display: flex;
-          flex-direction: column;
           align-items: center;
-          justify-content: center;
-          padding: 25px 50px 25px 70px;
-          clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
-          margin-left: -40px;
-        }
-        .rank-display { font-size: 2.5rem; font-weight: 950; color: #000; }
-        .rank-diff { font-size: 1.3rem; font-weight: 900; color: #000; opacity: 0.6; }
-        .total-label { font-size: 1.2rem; font-weight: 900; color: #000; }
-        .total-value { font-size: 6rem; font-weight: 950; color: #000; letter-spacing: -3px; line-height: 1; }
-
-        .tempo-badge {
-          position: absolute;
-          top: -55px;
-          right: 250px;
-          background: #000;
-          color: #D4AF37;
-          padding: 8px 30px;
-          font-weight: 900;
-          font-size: 1.8rem;
-          border: 3px solid #D4AF37;
-          clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+          gap: 30px;
+          flex: 1;
+          box-shadow: 0 15px 40px rgba(0,0,0,0.8);
         }
 
-        /* MODO RANKING (TELA CHEIA) */
-        .ranking-mode {
-          background: #000; /* Fundo Preto Sólido conforme solicitado */
-        }
-        .ranking-full {
-          width: 94%;
-          max-width: 1700px;
-          height: 90%;
+        .lt-rider-photo { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #D4AF37; overflow: hidden; flex-shrink: 0; }
+        .lt-rider-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+        .lt-names-group h1 { color: #fff; font-size: 3rem; margin: 0; font-weight: 950; text-transform: uppercase; line-height: 1; }
+        .lt-names-group p { color: #D4AF37; font-size: 1.5rem; margin: 5px 0 0; font-weight: 700; text-transform: uppercase; }
+
+        .lt-stats-sidebar {
+          background: #D4AF37;
+          padding: 20px 40px;
           display: flex;
           flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          border-radius: 0 15px 15px 0;
+          color: #000;
+          min-width: 250px;
         }
 
-        .fade-in {
-          animation: fadeIn 0.8s ease-out forwards;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        .lt-stat-item { text-align: center; line-height: 1.1; }
+        .lt-stat-item b { font-size: 2.22rem; font-weight: 950; display: block; }
+        .lt-stat-item span { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
 
-        .ranking-header {
-           border-bottom: 3px solid #D4AF37;
-           margin-bottom: 25px;
-           padding-bottom: 15px;
-           display: flex;
-           justify-content: space-between;
-           align-items: flex-end;
-        }
-        .ranking-title { font-size: 3.8rem; fontWeight: 950; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
-        .ranking-subtitle { font-size: 1.5rem; color: #D4AF37; fontWeight: 900; text-transform: uppercase; }
+        /* Animações */
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 50px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
-        .ranking-table { width: 100%; border-collapse: collapse; }
-        .rank-row { border-bottom: 1px solid rgba(212, 175, 55, 0.1); height: 68px; transition: background 0.3s; }
-        .rank-row:nth-child(even) { background: rgba(255,255,255,0.02); }
-        
-        .rank-cell { color: #fff; font-size: 2rem; fontWeight: 700; padding: 0 15px; }
-        .rank-pos { color: #D4AF37; fontWeight: 900; width: 100px; }
-        .rank-competidor { text-transform: uppercase; }
-        .rank-info { font-size: 1.2rem; color: #888; display: block; }
-        .rank-nota { text-align: right; color: #D4AF37; fontWeight: 900; font-size: 2.8rem; width: 200px; }
-        .rank-extra { text-align: right; font-size: 1.3rem; color: #666; width: 100px; }
-
-        .page-indicator {
-          position: absolute;
-          bottom: 40px;
-          right: 5%;
-          color: #D4AF37;
-          font-size: 1.2rem;
-          font-weight: 900;
-          background: rgba(0,0,0,0.5);
-          padding: 5px 20px;
-          border-radius: 20px;
-          border: 1px solid #D4AF37;
+        /* Timer e Desclassificação */
+        .status-badge {
+          position: absolute; top: -40px; right: 0; background: #000; border: 2px solid #D4AF37;
+          color: #D4AF37; padding: 5px 20px; font-weight: 900; font-size: 1.5rem; border-radius: 10px 10px 0 0;
         }
+        .desc-badge { background: #ff4444; color: #fff; border: none; }
 
-        .desclassificado { position: absolute; top: -30px; left: 40px; background: #ff4444; color: #fff; padding: 5px 20px; font-weight: 900; z-index: 10; font-size: 0.9rem; }
-
-        /* Ajuste do nome para evitar estouro */
-        .competidor-name-container {
-          overflow: hidden;
-          width: 100%;
-        }
-        .competidor-name { 
-          color: #fff; 
-          font-size: 4.5rem; 
-          font-weight: 900; 
-          text-transform: uppercase; 
-          margin: 0; 
-          letter-spacing: -1px;
-          white-space: nowrap;
-          display: inline-block;
-          transform-origin: left center;
-        }
       `}</style>
 
-      {isRanking ? (
-        <div className="ranking-full fade-in">
-           {displayRanking ? (
-             <>
-               <div className="ranking-header">
-                  <h1 className="ranking-title">{displayRanking.title}</h1>
-                  <div className="ranking-subtitle">Classificação Oficial</div>
-               </div>
-               <table className="ranking-table">
-                  <thead>
-                    <tr style={{ borderBottom: '2px solid #D4AF37', textAlign: 'left' }}>
-                      <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px' }}>POS</th>
-                      <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px' }}>{displayRanking.title.includes('TOURO') ? 'TOURO / CIA' : 'COMPETIDOR / CIDADE'}</th>
-                      <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px', textAlign: 'right' }}>{displayRanking.title.includes('TOURO') ? 'MÉDIA' : 'NOTA'}</th>
-                      <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px', textAlign: 'right' }}>DIF.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayRanking.list.map((r) => (
-                      <tr key={r.pos} className="rank-row">
-                        <td className="rank-cell rank-pos">#{r.pos}</td>
-                        <td className="rank-cell rank-competidor">
-                           {r.nome}
-                           <span className="rank-info">{r.info}</span>
-                        </td>
-                        <td className="rank-cell rank-nota">{r.nota}</td>
-                        <td className="rank-cell rank-extra" style={{ textAlign: 'right', color: r.extra === '-' ? '#444' : '#fff' }}>{r.extra}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-               </table>
-             </>
-           ) : (
-             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', fontSize: '2rem' }}>
-                Carregando Ranking...
-             </div>
-           )}
-        </div>
-      ) : d ? (
-        <div className="nota-container">
-          {d.desclassificado && <div className="desclassificado">DESCLASSIFICADO</div>}
-          <div className="tempo-badge">TEMPO: {elapsedTime.toFixed(2)}s</div>
-          
-          <div className="info-card">
-             <div className="competidor-name-container">
-               <h1 ref={nameRef} className="competidor-name" style={{ transform: `scale(${nameScale})` }}>{d.competidor}</h1>
-             </div>
-             <span className="animal-name">{d.animal}</span>
-          </div>
+      {!isRanking && d && mode === 'CHAMADA' && (
+        <div className="chamada-fullscreen">
+          <div className="chamada-grid">
+            {/* Foto Peão */}
+            <div className="side-photo" style={{ animation: 'slideLeft 0.8s ease' }}>
+              <img src={d.competidorFoto} alt="Rider" />
+              <div className="label">{d.competidorCidade}</div>
+            </div>
 
-          <div className="judges-section">
-             {[1,2,3,4].slice(0, numJuizes).map(i => (
-               <div key={i} className="judge-box">
-                  <span className="judge-title">{(d as any)[`j${i}Nome`] || `J${i}`}</span>
-                  <div style={{ display: 'flex', gap: '15px' }}>
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.1rem', color: '#D4AF37', fontWeight: 'bold' }}>PEÃO</div>
-                      <div style={{ color: '#fff', fontWeight: '700', fontSize: '1.8rem' }}>{formatScore((d as any)[`j${i}P`])}</div>
-                    </div>
-                    <div style={{ flex: 1, textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.1rem', color: '#D4AF37', fontWeight: 'bold' }}>ANIMAL</div>
-                      <div style={{ color: '#fff', fontWeight: '700', fontSize: '1.8rem' }}>{formatScore((d as any)[`j${i}A`])}</div>
-                    </div>
-                  </div>
-                  <div className="subtotal">{formatScore((d as any)[`j${i}Total`])}</div>
-               </div>
-             ))}
-          </div>
+            {/* Info Central */}
+            <div className="center-info">
+              <div className="vs-text">CONFRONTO</div>
+              <div className="main-names">
+                <h1 className="name-rider">{d.competidor}</h1>
+                <div className="name-animal">{d.animal}</div>
+              </div>
 
-          <div className="final-score-card">
-             {d.etapaRank && d.etapaRank !== '---' && (
-               <div style={{ textAlign: 'center', marginBottom: '5px' }}>
-                 <span className="rank-display">{d.etapaRank}</span>
-                 <span className="rank-diff" style={{ display: 'block' }}>
-                   {d.etapaDiff === 'LÍDER' ? '🏆 LÍDER' : `DIF: ${d.etapaDiff}`}
-                 </span>
-               </div>
-             )}
-             <span className="total-label">NOTA DO DIA</span>
-             <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
+              <div className="stats-grid">
+                <div className="stat-box">
+                  <span className="stat-lab">RANKING CPTO.</span>
+                  <span className="stat-val">{d.competidorRankChamp}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-lab">PARADAS %</span>
+                  <span className="stat-val">{d.competidorParadas}</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-lab">MÉDIA ANIMAL</span>
+                  <span className="stat-val">{d.animalMedia}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Foto Animal */}
+            <div className="side-photo" style={{ animation: 'slideRight 0.8s ease' }}>
+              <img src={d.animalFoto} alt="Bull" />
+              <div className="label">{d.animalCompanhia}</div>
+            </div>
           </div>
         </div>
-      ) : null}
+      )}
+
+      {!isRanking && d && mode === 'ID' && (
+        <div className="id-lower-third">
+          <div className="lt-main-bar">
+            {d.desclassificado ? (
+              <div className="status-badge desc-badge">DESCLASSIFICADO</div>
+            ) : (
+               <div className="status-badge">{elapsedTime.toFixed(2)}s</div>
+            )}
+            <div className="lt-rider-photo">
+              <img src={d.competidorFoto} alt="Rider" />
+            </div>
+            <div className="lt-names-group">
+              <h1>{d.competidor}</h1>
+              <p>{d.animal} ({d.animalCompanhia})</p>
+            </div>
+          </div>
+          <div className="lt-stats-sidebar">
+            <div className="lt-stat-item">
+               <span>POSIÇÃO ATUAL</span>
+               <b>{d.etapaRank}</b>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Caso de Ranking se for necessário futuramente adicionar algo aqui */}
     </div>
   );
 }

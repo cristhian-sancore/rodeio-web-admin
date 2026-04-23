@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
-import { getCompetidorStageRank, getOverlayRankingData } from "@/lib/ranking";
+import { getCompetidorStageRank, getOverlayRankingData, getChampionshipRanking } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
 
 export const dynamic = 'force-dynamic';
-export const revalidate = 0; // Desativar cache do Next.js para esta rota
+export const revalidate = 0;
 
 export async function GET() {
   try {
@@ -14,7 +14,7 @@ export async function GET() {
       return NextResponse.json({ active: false });
     }
 
-    // Se o ranking estiver ativo, priorizamos os dados do ranking
+    // Prioridade para Ranking se estiver ativo
     if (config.rankingMode && config.rankingMode !== 'OFF') {
       const rankingData = await getOverlayRankingData(config.rankingMode);
       return NextResponse.json({ 
@@ -23,10 +23,6 @@ export async function GET() {
         rankingMode: config.rankingMode,
         rankingPage: config.rankingPage || 0,
         rankingData 
-      }, {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        }
       });
     }
 
@@ -37,16 +33,13 @@ export async function GET() {
     const montaria = await prisma.montaria.findUnique({
       where: { id: config.montariaAtivaId },
       include: {
-        competidor: true,
-        animal: true,
-        round: {
-          include: {
-            juiz1: true,
-            juiz2: true,
-            juiz3: true,
-            juiz4: true,
-          }
-        }
+        competidor: {
+          include: { montarias: true }
+        },
+        animal: {
+          include: { montarias: true }
+        },
+        round: { include: { juiz1: true, juiz2: true, juiz3: true, juiz4: true } }
       }
     });
 
@@ -54,62 +47,57 @@ export async function GET() {
       return NextResponse.json({ active: false });
     }
 
-    // Calcular Ranking da Etapa
+    // --- CÁLCULO DE ESTATÍSTICAS PARA A CHAMADA ---
+    
+    // Peão: Ranking no Campeonato, % de Paradas
+    const champRank = await getChampionshipRanking(montaria.round.etapaId); // Usamos etapaId para buscar temporadaId internamente
+    const myChampPos = champRank?.list?.find(r => r.competidorId === montaria.competidorId);
+    
+    const paradas = montaria.competidor.montarias.filter(m => m.notaTotal > 0).length;
+    const totalMontarias = montaria.competidor.montarias.length;
+    const percParadas = totalMontarias > 0 ? Math.round((paradas / totalMontarias) * 100) : 0;
+
+    // Animal: Média Histórica
+    const totalNotasAnimal = montaria.animal.montarias.reduce((acc, m) => acc + m.notaAnimal, 0);
+    const mediaAnimal = montaria.animal.montarias.length > 0 ? (totalNotasAnimal / montaria.animal.montarias.length).toFixed(2) : '0.00';
+
     const stageRankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
-    const numJuizes = config.numJuizes;
 
-    // Nota individual do juiz é exibida como foi dada (sem divisão)
-    const formatValue = (val: number) => val.toFixed(1);
-
-    // Total de um juiz = soma peão + animal (sem divisão)
-    const calculateJudgeTotal = (p: number, a: number) => (p + a).toFixed(2);
-
-    return new NextResponse(JSON.stringify({
+    return NextResponse.json({
       active: true,
+      mode: config.overlayMode || 'ID', // ID ou CHAMADA
       numJuizes: config.numJuizes,
       timerRunning: config.timerRunning,
       timerStartedAt: config.timerStartedAt,
       data: {
         id: montaria.id,
         competidor: montaria.competidor.nome,
-        cidade: montaria.competidor.cidade,
+        competidorFoto: (montaria.competidor as any).fotoUrl || 'https://rodeio.cristhiansancore.com.br/default-rider.png',
+        competidorCidade: montaria.competidor.cidade,
+        competidorRankChamp: myChampPos ? `${myChampPos.pos}º` : '---',
+        competidorParadas: `${percParadas}%`,
+        
         animal: montaria.animal.nome,
-        companhia: montaria.animal.companhia,
+        animalFoto: (montaria.animal as any).fotoUrl || 'https://rodeio.cristhiansancore.com.br/default-animal.png',
+        animalCompanhia: montaria.animal.companhia,
+        animalMedia: mediaAnimal,
+
         etapaRank: stageRankData.rank > 0 ? `${stageRankData.rank}º` : '---',
-        etapaDiff: stageRankData.rank > 0 ? (stageRankData.rank === 1 ? 'LÍDER' : `-${stageRankData.diff.toFixed(2)}`) : '',
-        j1Nome: montaria.round.juiz1?.nome || 'JUIZ 1',
-        j2Nome: montaria.round.juiz2?.nome || 'JUIZ 2',
-        j3Nome: montaria.round.juiz3?.nome || 'JUIZ 3',
-        j4Nome: montaria.round.juiz4?.nome || 'JUIZ 4',
-        j1P: formatValue(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado) ? 0 : montaria.j1Peao),
-        j1A: formatValue(montaria.j1Animal),
-        j2P: formatValue(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado) ? 0 : montaria.j2Peao),
-        j2A: formatValue(montaria.j2Animal),
-        j3P: formatValue(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado) ? 0 : montaria.j3Peao),
-        j3A: formatValue(montaria.j3Animal),
-        j4P: formatValue(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado) ? 0 : montaria.j4Peao),
-        j4A: formatValue(montaria.j4Animal),
-        j1Total: calculateJudgeTotal(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado ? 0 : montaria.j1Peao), montaria.j1Animal),
-        j2Total: calculateJudgeTotal(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado ? 0 : montaria.j2Peao), montaria.j2Animal),
-        j3Total: calculateJudgeTotal(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado ? 0 : montaria.j3Peao), montaria.j3Animal),
-        j4Total: calculateJudgeTotal(((montaria.tempo > 0 && montaria.tempo < 8) || montaria.desclassificado ? 0 : montaria.j4Peao), montaria.j4Animal),
+        etapaDiff: stageRankData.rank > 1 ? `-${stageRankData.diff.toFixed(2)}` : (stageRankData.rank === 1 ? 'LÍDER' : ''),
+        
+        // Notas (Simplificado para o JSON do gráfico)
+        j1Total: (montaria.j1Peao + montaria.j1Animal).toFixed(1),
+        j2Total: (montaria.j2Peao + montaria.j2Animal).toFixed(1),
+        j3Total: (montaria.j3Peao + montaria.j3Animal).toFixed(1),
+        j4Total: (montaria.j4Peao + montaria.j4Animal).toFixed(1),
         total: montaria.notaTotal.toFixed(2),
         tempo: montaria.tempo.toFixed(2),
-        desclassificado: montaria.desclassificado,
-        motivo: montaria.motivo
-      },
-      serverTime: Date.now()
-    }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
+        desclassificado: montaria.desclassificado
+      }
     });
+
   } catch (error) {
     console.error("ERRO API OVERLAY:", error);
-    return NextResponse.json({ error: "Erro ao buscar montaria ativa" }, { status: 500 });
+    return NextResponse.json({ active: false });
   }
 }

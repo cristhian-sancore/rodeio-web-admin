@@ -9,7 +9,7 @@ import {
   Search, CheckCircle2, Timer, Trophy
 } from "lucide-react";
 import Link from "next/link";
-import { updateMontariaNota, updateRankingMode, updateRankingPage } from "../etapas/actions";
+import { updateMontariaNota, updateRankingMode, updateRankingPage, updateOverlayMode } from "../etapas/actions";
 import SumulaList from "./SumulaList";
 import { getCompetidorStageRank, getOverlayRankingData } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
@@ -166,7 +166,54 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
         </div>
       </div>
 
-      {/* CONTROLE DE RANKING NO OVERLAY */}
+      {/* CONTROLE DE VISUALIZAÇÃO DO PEÃO (CHAMADA) */}
+      <div className="premium-card" style={{ marginBottom: '2rem', background: '#0a0a0a', border: '1px solid #333' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+          <UserIcon size={20} color="var(--primary)" />
+          <h3 style={{ margin: 0, fontSize: '1rem' }}>Formato da Chamada (VMIX)</h3>
+        </div>
+        
+        <form style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            formAction={async () => { 'use server'; await updateOverlayMode('ID'); }} 
+            className="btn-secondary" 
+            style={{ 
+              flex: 1, 
+              background: config.overlayMode === 'ID' ? 'var(--primary)' : '#111', 
+              color: config.overlayMode === 'ID' ? '#000' : '#fff',
+              border: '1px solid #333',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            <span style={{ fontWeight: 'bold' }}>IDENTIFICAÇÃO</span>
+            <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>RODAPÉ (LOWER THIRD)</span>
+          </button>
+
+          <button 
+            formAction={async () => { 'use server'; await updateOverlayMode('CHAMADA'); }} 
+            className="btn-secondary" 
+            style={{ 
+              flex: 1, 
+              background: config.overlayMode === 'CHAMADA' ? 'var(--primary)' : '#111', 
+              color: config.overlayMode === 'CHAMADA' ? '#000' : '#fff',
+              border: '1px solid #333',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}
+          >
+            <span style={{ fontWeight: 'bold' }}>CHAMADA DE GALA</span>
+            <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>TELA CHEIA + ESTATÍSTICAS</span>
+          </button>
+        </form>
+      </div>
+
       <div className="premium-card" style={{ marginBottom: '2rem', background: '#111', borderColor: config.rankingMode !== 'OFF' ? 'var(--primary)' : '#222' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
           <Trophy size={20} color={config.rankingMode !== 'OFF' ? 'var(--primary)' : '#666'} />

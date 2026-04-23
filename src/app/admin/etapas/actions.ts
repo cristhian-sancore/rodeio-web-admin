@@ -716,3 +716,13 @@ export async function sendManualToOverlay(montariaId: number) {
     });
   }
 }
+
+export async function updateOverlayMode(mode: string) {
+  await prisma.configuracao.update({
+    where: { id: 1 },
+    data: { overlayMode: mode }
+  });
+  revalidatePath('/admin/execucao');
+  revalidatePath('/api/overlay/current');
+}
+
