@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { PrintButton } from "../../components/PrintButton";
+import { PrintButton } from "@/app/admin/components/PrintButton";
 
 export default async function SumulaImpressaoPage(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
