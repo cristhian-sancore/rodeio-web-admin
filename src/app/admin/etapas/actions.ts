@@ -543,7 +543,7 @@ export async function updateRound(formData: FormData) {
 }
 
 export async function updateMontariaAtiva(montariaId: number | null) {
-  const currentConfig = await prisma.configuracao.findUnique({ where: { id: 1 } });
+  const currentConfig = await prisma.configuracao.findFirst();
   
   // Se estiver tentando ativar uma NOVA montaria (diferente da atual)
   if (montariaId && currentConfig?.montariaAtivaId && currentConfig.montariaAtivaId !== montariaId) {
@@ -567,9 +567,10 @@ export async function updateMontariaAtiva(montariaId: number | null) {
     }
   }
 
-  await prisma.configuracao.update({
-    where: { id: 1 },
-    data: { montariaAtivaId: montariaId }
+  await prisma.configuracao.upsert({
+    where: { id: currentConfig?.id || 1 },
+    update: { montariaAtivaId: montariaId },
+    create: { id: 1, montariaAtivaId: montariaId, numJuizes: 2, titulo: "Rodeio Web" }
   });
 
   // Automação vMix: Se ativou uma montaria, envia os dados base e rank
@@ -579,7 +580,7 @@ export async function updateMontariaAtiva(montariaId: number | null) {
         where: { id: montariaId },
         include: { competidor: true, animal: true, etapa: { select: { nome: true } } }
       });
-      const config = await prisma.configuracao.findUnique({ where: { id: 1 } });
+      const config = await prisma.configuracao.findFirst();
 
       if (montaria && config?.vmixUrl) {
         const rankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
@@ -718,9 +719,11 @@ export async function sendManualToOverlay(montariaId: number) {
 }
 
 export async function updateOverlayMode(mode: string) {
-  await prisma.configuracao.update({
-    where: { id: 1 },
-    data: { overlayMode: mode }
+  const currentConfig = await prisma.configuracao.findFirst();
+  await prisma.configuracao.upsert({
+    where: { id: currentConfig?.id || 1 },
+    update: { overlayMode: mode },
+    create: { id: 1, overlayMode: mode, numJuizes: 2, titulo: "Rodeio Web" }
   });
   revalidatePath('/admin/execucao');
   revalidatePath('/api/overlay/current');
