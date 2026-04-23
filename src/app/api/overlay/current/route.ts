@@ -48,16 +48,13 @@ export async function GET() {
     }
 
     // --- CÁLCULO DE ESTATÍSTICAS PARA A CHAMADA ---
-    
-    // Peão: Ranking no Campeonato, % de Paradas
-    const champRank = await getChampionshipRanking(montaria.round.etapaId); // Usamos etapaId para buscar temporadaId internamente
+    const champRank = await getChampionshipRanking(montaria.round.etapaId);
     const myChampPos = champRank?.list?.find(r => r.competidorId === montaria.competidorId);
     
-    const paradas = montaria.competidor.montarias.filter(m => m.notaTotal > 0).length;
+    const paradas = montaria.competidor.montarias.filter(m => m.notaTotal > 8).length; // Consideramos parada nota > 8
     const totalMontarias = montaria.competidor.montarias.length;
     const percParadas = totalMontarias > 0 ? Math.round((paradas / totalMontarias) * 100) : 0;
 
-    // Animal: Média Histórica
     const totalNotasAnimal = montaria.animal.montarias.reduce((acc, m) => acc + m.notaAnimal, 0);
     const mediaAnimal = montaria.animal.montarias.length > 0 ? (totalNotasAnimal / montaria.animal.montarias.length).toFixed(2) : '0.00';
 
@@ -65,10 +62,11 @@ export async function GET() {
 
     return NextResponse.json({
       active: true,
-      mode: config.overlayMode || 'ID', // ID ou CHAMADA
+      mode: config.overlayMode || 'ID', 
       numJuizes: config.numJuizes,
       timerRunning: config.timerRunning,
       timerStartedAt: config.timerStartedAt,
+      serverTime: Date.now(),
       data: {
         id: montaria.id,
         competidor: montaria.competidor.nome,
@@ -85,11 +83,27 @@ export async function GET() {
         etapaRank: stageRankData.rank > 0 ? `${stageRankData.rank}º` : '---',
         etapaDiff: stageRankData.rank > 1 ? `-${stageRankData.diff.toFixed(2)}` : (stageRankData.rank === 1 ? 'LÍDER' : ''),
         
-        // Notas (Simplificado para o JSON do gráfico)
+        // --- NOTAS INDIVIDUAIS E NOMES DOS JUIZES ---
+        j1Nome: montaria.round.juiz1?.nome || 'J1',
+        j1P: montaria.j1Peao,
+        j1A: montaria.j1Animal,
         j1Total: (montaria.j1Peao + montaria.j1Animal).toFixed(1),
+
+        j2Nome: montaria.round.juiz2?.nome || 'J2',
+        j2P: montaria.j2Peao,
+        j2A: montaria.j2Animal,
         j2Total: (montaria.j2Peao + montaria.j2Animal).toFixed(1),
+
+        j3Nome: montaria.round.juiz3?.nome || 'J3',
+        j3P: montaria.j3Peao,
+        j3A: montaria.j3Animal,
         j3Total: (montaria.j3Peao + montaria.j3Animal).toFixed(1),
+
+        j4Nome: montaria.round.juiz4?.nome || 'J4',
+        j4P: montaria.j4Peao,
+        j4A: montaria.j4Animal,
         j4Total: (montaria.j4Peao + montaria.j4Animal).toFixed(1),
+
         total: montaria.notaTotal.toFixed(2),
         tempo: montaria.tempo.toFixed(2),
         desclassificado: montaria.desclassificado
