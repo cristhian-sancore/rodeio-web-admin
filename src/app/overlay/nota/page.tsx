@@ -110,6 +110,10 @@ export default function OverlayNotaPage() {
         .overlay-master { position: fixed; inset: 0; opacity: 0; transition: opacity 0.5s ease; }
         .overlay-master.show { opacity: 1; }
 
+        .gold-border { border: 3px solid #D4AF37; }
+        .gold-text { color: #D4AF37; }
+        .bg-dark { background: rgba(10, 10, 10, 0.95); }
+
         /* --- MODO ID --- */
         .mode-ID .lt-container {
           position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
@@ -127,50 +131,22 @@ export default function OverlayNotaPage() {
         .mode-ID .total-val-giant { font-size: 5rem; font-weight: 950; color: #D4AF37; line-height: 1; }
         .mode-ID .rider-info-badge { background: #D4AF37; color: #000; padding: 10px 30px; margin-left: -20px; height: fit-content; transform: skewX(-15deg); border: 2px solid #000; align-self: center; }
 
-        /* --- MODO CHAMADA (ANIMAÇÃO CONFRONTO) --- */
+        /* --- MODO CHAMADA --- */
         .mode-CHAMADA .full-call { position: absolute; inset: 0; background: radial-gradient(circle at center, #222 0%, #000 100%); display: flex; flex-direction: column; overflow: hidden; }
-        
-        .mode-CHAMADA .call-header { 
-          height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-          animation: dropHeader 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-        
-        .mode-CHAMADA .side-card-rider { 
-          animation: confrontationLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .mode-CHAMADA .side-card-bull { 
-          animation: confrontationRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        
-        .mode-CHAMADA .vs-box { 
-          font-size: 6rem; font-weight: 950; color: #000; background: #D4AF37; padding: 20px 40px; 
-          transform: skewX(-10deg); border: 4px solid #fff; 
-          animation: vsImpact 0.5s 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-          box-shadow: 0 0 50px rgba(212,175,55,0.6);
-        }
-        
-        .mode-CHAMADA .footer-bar { 
-          height: 140px; background: rgba(0,0,0,0.9); border-top: 5px solid #D4AF37; 
-          display: flex; justify-content: center; align-items: center; gap: 20px; 
-          animation: slideUpFooter 0.6s 0.8s backwards;
-        }
-        .mode-CHAMADA .info-badge { 
-          background: #111; color: #fff; padding: 10px 40px; transform: skewX(-15deg); border: 2px solid #D4AF37; 
-          animation: badgeStagger 0.4s calc(0.9s + (var(--i) * 0.1s)) backwards;
-        }
+        .mode-CHAMADA .call-header { height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: dropHeader 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .mode-CHAMADA .side-card-rider { animation: confrontationLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .mode-CHAMADA .side-card-bull { animation: confrontationRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .mode-CHAMADA .vs-box { font-size: 6rem; font-weight: 950; color: #000; background: #D4AF37; padding: 20px 40px; transform: skewX(-10deg); border: 4px solid #fff; animation: vsImpact 0.5s 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; box-shadow: 0 0 50px rgba(212,175,55,0.6); }
+        .mode-CHAMADA .footer-bar { height: 140px; background: rgba(0,0,0,0.9); border-top: 5px solid #D4AF37; display: flex; justify-content: center; align-items: center; gap: 20px; animation: slideUpFooter 0.6s 0.8s backwards; }
+        .mode-CHAMADA .info-badge { background: #111; color: #fff; padding: 10px 40px; transform: skewX(-15deg); border: 2px solid #D4AF37; animation: badgeStagger 0.4s calc(0.9s + (var(--i) * 0.1s)) backwards; }
 
-        /* ANIMAÇÕES ESPECÍFICAS CONFRONTO */
         @keyframes confrontationLeft { from { opacity: 0; transform: translateX(-600px) scale(0.8); } to { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes confrontationRight { from { opacity: 0; transform: translateX(600px) scale(0.8); } to { opacity: 1; transform: translateX(0) scale(1); } }
         @keyframes vsImpact { 0% { transform: scale(0) skewX(-10deg); opacity: 0; } 70% { transform: scale(1.3) skewX(-10deg); } 100% { transform: scale(1) skewX(-10deg); opacity: 1; } }
-        @keyframes dropHeader { from { top: -250px; opacity: 0; } to { top: 0; opacity: 1; } }
+        @keyframes dropHeader { from { transform: translateY(-250px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideUpFooter { from { transform: translateY(150px); } to { transform: translateY(0); } }
         @keyframes badgeStagger { from { opacity: 0; transform: translateY(50px) skewX(-15deg); } to { opacity: 1; transform: translateY(0) skewX(-15deg); } }
         @keyframes slideUpLT { from { transform: translate(-50%, 150px); } to { transform: translate(-50%, 0); } }
-
-        /* MODO RANKING */
-        .mode-RANKING .rank-page { position: absolute; inset: 0; background: linear-gradient(135deg, #111 0%, #000 100%); display: flex; padding: 60px; animation: fadeIn 0.8s ease; }
-        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
 
@@ -178,14 +154,14 @@ export default function OverlayNotaPage() {
       {isRanking && displayRanking && (
         <div className="rank-page">
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative' }}>
-             <img src={d?.competidorFoto || '/default-rider.png'} style={{ width: '100%', height: '90%', objectFit: 'contain', filter: 'drop-shadow(0 0 30px #D4AF37)' }} />
+             <img src={d?.competidorFoto || '/default-rider.png'} style={{ width: '100%', height: '90%', objectFit: 'contain', filter: 'drop-shadow(0 0 30px #D4AF37)' }} alt="Líder" />
              <div style={{ background: '#D4AF37', color: '#000', padding: '20px 40px', fontSize: '3rem', fontWeight: 950, transform: 'skewX(-15deg)', width: 'fit-content', border: '4px solid #fff' }}>LÍDER | {formatScore(displayRanking.list[0]?.nota)}</div>
           </div>
           <div style={{ flex: 1.5, display: 'flex', flexDirection: 'column', gap: '12px' }}>
              <h1 style={{ color: '#D4AF37', fontSize: '4.5rem', margin: '0 0 20px 0', textTransform: 'uppercase', borderBottom: '5px solid #D4AF37' }}>CLASSIFICAÇÃO</h1>
              {displayRanking.list.map((r, i) => (
                 <div key={i} style={{ background: 'rgba(255,255,255,0.05)', border: '2px solid #D4AF37', display: 'grid', gridTemplateColumns: '100px 1fr 150px', alignItems: 'center', height: '65px', transform: 'skewX(-15deg)', overflow: 'hidden' }}>
-                   <div style={{ background: '#D4AF37', color: '#000', height: '100%', display: 'flex', alignItems: 'center', justify-content: 'center', font-size: '2rem', font-weight: 950 }}>{r.pos}º</div>
+                   <div style={{ background: '#D4AF37', color: '#000', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 950 }}>{r.pos}º</div>
                    <div style={{ color: '#fff', fontSize: '1.8rem', fontWeight: 700, paddingLeft: '30px', transform: 'skewX(15deg)', textTransform: 'uppercase' }}>{r.nome}</div>
                    <div style={{ color: '#D4AF37', fontSize: '2.2rem', fontWeight: 900, textAlign: 'right', paddingRight: '30px', transform: 'skewX(15deg)' }}>{formatScore(r.nota)}</div>
                 </div>
@@ -198,7 +174,7 @@ export default function OverlayNotaPage() {
       {mode === 'ID' && d && (
         <div className="lt-container">
           <div className="rider-photo-mini">
-             <img src={d.competidorFoto} />
+             <img src={d.competidorFoto} alt="Competidor" />
           </div>
           <div className="scores-table">
              <div className="row-labels">
@@ -231,10 +207,10 @@ export default function OverlayNotaPage() {
               <div style={{ color: '#D4AF37', fontSize: '6rem', margin: 0, fontWeight: 950, letterSpacing: '5px', textShadow: '0 0 20px rgba(212,175,55,0.5)' }}>SEMI FINAL</div>
               <div style={{ background: '#fff', color: '#000', padding: '5px 50px', fontWeight: 900, transform: 'skewX(-20deg)', fontSize: '1.2rem' }}>RODEIO PRO 2026</div>
            </div>
-           <div style={{ flex: 1, display: 'flex', justifyContent: 'center', align-items: 'center', gap: '50px', padding: '0 50px' }}>
+           <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '50px', padding: '0 50px' }}>
               <div className="side-card-rider" style={{ width: '450px', textAlign: 'center' }}>
                  <div style={{ border: '5px solid #D4AF37', borderRadius: '20px', overflow: 'hidden', height: '500px', background: '#111' }}>
-                    <img src={d.competidorFoto} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={d.competidorFoto} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Peão" />
                  </div>
                  <h2 style={{ color: '#fff', fontSize: '3.5rem', margin: '20px 0 0', textTransform: 'uppercase' }}>{d.competidor}</h2>
                  <p style={{ color: '#D4AF37', fontSize: '1.5rem', fontWeight: 700 }}>{d.competidorCidade}</p>
@@ -244,7 +220,7 @@ export default function OverlayNotaPage() {
               
               <div className="side-card-bull" style={{ width: '450px', textAlign: 'center' }}>
                  <div style={{ border: '5px solid #fff', borderRadius: '20px', overflow: 'hidden', height: '500px', background: '#111' }}>
-                    <img src={d.animalFoto} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src={d.animalFoto} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Touro" />
                  </div>
                  <h2 style={{ color: '#D4AF37', fontSize: '3.5rem', margin: '20px 0 0', textTransform: 'uppercase' }}>{d.animal}</h2>
                  <p style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 700 }}>{d.animalCompanhia}</p>
