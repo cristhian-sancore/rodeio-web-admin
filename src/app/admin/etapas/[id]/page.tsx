@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Trophy, Plus, LayoutGrid, AlertTriangle, Edit, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Trophy, Plus, LayoutGrid, AlertTriangle, Edit, Trash2, Printer } from "lucide-react";
 import Link from "next/link";
 import { createRound, deleteRound } from "../actions";
 import { prisma } from "@/lib/db";
