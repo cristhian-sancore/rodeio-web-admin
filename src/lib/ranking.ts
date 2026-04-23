@@ -328,6 +328,21 @@ export async function getBoiadaRanking(where: any, title: string, modalidade: st
 }
 
 
+function isRoundFechado(round: any) {
+  const now = new Date();
+  
+  const hasOpenMontaria = round.montarias.some((m: any) => 
+    m.notaAnimal === 0 && m.notaPeao === 0 && m.tempo === 0 && !m.desclassificado
+  );
+
+  const dataRef = new Date(round.dataAgenda || round.dataHora);
+  const dataLimite = new Date(dataRef);
+  dataLimite.setDate(dataLimite.getDate() + 1);
+  dataLimite.setHours(6, 0, 0, 0);
+
+  return !hasOpenMontaria || now > dataLimite;
+}
+
 /**
  * Calcula o Ranking do Campeonato (Pontos de Liga C.Pts)
  */
@@ -356,6 +371,7 @@ export async function getChampionshipRanking(temporadaId: number, modalidade: st
 
     etapa.rounds.forEach((round: any) => {
       if (round.modalidade.trim().toUpperCase() !== targetMod) return;
+      const roundFechado = isRoundFechado(round);
 
       round.montarias.forEach((m: any) => {
         // Ignorar montarias desclassificadas na soma de notas
@@ -373,7 +389,7 @@ export async function getChampionshipRanking(temporadaId: number, modalidade: st
         classificacaoEtapa[m.competidorId].tempo += m.tempo;
         
         // Bônus Notas Altas (CPTs) - EXCLUSIVO TOURO
-        if (targetMod === 'TOURO' && m.notaTotal >= 90) {
+        if (targetMod === 'TOURO' && m.notaTotal >= 90 && roundFechado) {
           classificacaoEtapa[m.competidorId].cpts += (temp.bonusNotasAcima90 || 0);
         }
         
@@ -384,7 +400,7 @@ export async function getChampionshipRanking(temporadaId: number, modalidade: st
       });
 
       // Pontos por Posição no Round (Top 5 recebem CPTs) - EXCLUSIVO TOURO
-      if (targetMod === 'TOURO') {
+      if (targetMod === 'TOURO' && roundFechado) {
         const sortedRound = [...round.montarias]
           .filter((m: any) => m.notaTotal > 0 && !m.desclassificado)
           .sort((a: any, b: any) => b.notaTotal - a.notaTotal)
@@ -403,6 +419,8 @@ export async function getChampionshipRanking(temporadaId: number, modalidade: st
       }
     });
 
+    const etapaFechada = etapa.rounds.length > 0 && etapa.rounds.every((r: any) => isRoundFechado(r));
+
     // Pontos por Posição na Etapa (Top 10 recebem CPTs) - EXCLUSIVO TOURO
     if (targetMod === 'TOURO') {
       const rankingEtapa = Object.values(classificacaoEtapa).sort((a: any, b: any) => {
@@ -412,10 +430,12 @@ export async function getChampionshipRanking(temporadaId: number, modalidade: st
 
       const ptsEtapa = [temp.ptsEtapa1, temp.ptsEtapa2, temp.ptsEtapa3, temp.ptsEtapa4, temp.ptsEtapa5, temp.ptsEtapa6, temp.ptsEtapa7, temp.ptsEtapa8, temp.ptsEtapa9, temp.ptsEtapa10];
       rankingEtapa.forEach((r: any, idx) => {
-        if (idx < 10) r.cpts += (ptsEtapa[idx] || 0);
-        if (idx === 0) {
-            // Adicional para o Campeão da Etapa
-            r.cpts += (temp.bonusMelhorNotaEtapa || 0);
+        if (etapaFechada) {
+            if (idx < 10) r.cpts += (ptsEtapa[idx] || 0);
+            if (idx === 0) {
+                // Adicional para o Campeão da Etapa
+                r.cpts += (temp.bonusMelhorNotaEtapa || 0);
+            }
         }
         
         // Finalmente adicionamos a soma de bônus da etapa (CPTs) à pontuação global de campeonato
