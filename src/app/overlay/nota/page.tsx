@@ -184,10 +184,16 @@ export default function OverlayNotaPage() {
         .name-rider-full { font-size: 7rem; font-weight: 950; text-transform: uppercase; line-height: 0.85; margin: 20px 0 0; color: #fff; }
 
         /* --- MODO RANKING --- */
+        .mode-RANKING .ranking-wrapper {
+          position: absolute; inset: 0;
+          display: flex; align-items: center; justify-content: center;
+          padding: 40px;
+        }
         .mode-RANKING .ranking-full {
-          width: 94%; max-width: 1700px; height: 90%; display: flex; flex-direction: column; 
-          background: #000; padding: 40px; border-radius: 20px; border: 4px solid #D4AF37;
-          animation: zoomIn 0.5s ease-out;
+          width: 100%; max-width: 1840px; height: 100%; max-height: 1000px; display: flex; flex-direction: column; 
+          background: rgba(10, 10, 10, 0.98); padding: 50px 60px; border-radius: 24px; border: 4px solid #D4AF37;
+          box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+          animation: popCenter 0.5s ease-out;
         }
 
         @keyframes popCenter { from { opacity: 0; transform: scale(1.5); filter: blur(20px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
@@ -195,8 +201,9 @@ export default function OverlayNotaPage() {
 
       {/* RANKING */}
       {isRanking && displayRanking && (
-        <div className="ranking-full">
-            <div className="ranking-header">
+        <div className="ranking-wrapper">
+          <div className="ranking-full">
+              <div className="ranking-header">
                 <h1 style={{ fontSize: '3.8rem', color: '#fff', margin: 0 }}>{displayRanking.title}</h1>
                 <div style={{ color: '#D4AF37', fontSize: '1.5rem', fontWeight: 900 }}>Classificação Oficial</div>
             </div>
@@ -220,6 +227,7 @@ export default function OverlayNotaPage() {
                     ))}
                 </tbody>
             </table>
+          </div>
         </div>
       )}
 
