@@ -42,7 +42,9 @@ export default function OverlayNotaPage() {
   const [data, setData] = useState<OverlayData | null>(null);
   const [visible, setVisible] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [nameScale, setNameScale] = useState(1);
   const serverOffsetRef = useRef(0);
+  const nameRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     document.documentElement.style.background = 'transparent';
@@ -82,6 +84,14 @@ export default function OverlayNotaPage() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [data?.timerRunning, data?.timerStartedAt]);
 
+  useEffect(() => {
+    if (nameRef.current) {
+        const parentWidth = data?.mode === 'ID' ? 350 : 800;
+        const nameWidth = nameRef.current.scrollWidth;
+        setNameScale(nameWidth > parentWidth ? parentWidth / nameWidth : 1);
+    }
+  }, [data?.data?.competidor, data?.mode]);
+
   if (!visible && !data) return null;
 
   const d = data?.data;
@@ -97,140 +107,166 @@ export default function OverlayNotaPage() {
   } : null;
 
   const formatScore = (val: any) => {
-    if (val === undefined || val === null) return '00,00';
+    if (val === undefined || val === null) return '0';
     const n = parseFloat(String(val));
-    return isNaN(n) ? val : n.toFixed(2).replace('.', ',');
+    return isNaN(n) ? val : (n % 1 === 0 ? n.toFixed(0) : n.toString());
   };
 
   return (
-    <div key={d?.id} className={`overlay-master ${visible ? 'show' : 'hide'} mode-${mode}`}>
-      <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700;900&display=swap" rel="stylesheet" />
+    <div className={`overlay-master ${visible ? 'show' : 'hide'} mode-${mode}`}>
       <style jsx global>{`
-        html, body { background: transparent !important; margin: 0; overflow: hidden; font-family: 'Oswald', sans-serif; }
-        .overlay-master { position: fixed; inset: 0; opacity: 0; transition: opacity 0.5s ease; }
+        html, body { background: transparent !important; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        .overlay-master { position: fixed; inset: 0; transition: opacity 0.5s ease; opacity: 0; }
         .overlay-master.show { opacity: 1; }
 
-        .gold-border { border: 3px solid #D4AF37; }
-        .gold-text { color: #D4AF37; }
-        .bg-dark { background: rgba(10, 10, 10, 0.95); }
-
-        /* --- MODO ID --- */
-        .mode-ID .lt-container {
+        /* --- MODO ID (DESIGN ORIGINAL RESTAURADO) --- */
+        .mode-ID .nota-container {
           position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-          display: flex; align-items: flex-end; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
-          animation: slideUpLT 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          display: flex; align-items: stretch; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+          width: fit-content; min-width: 800px;
         }
-        .mode-ID .rider-photo-mini { width: 140px; height: 140px; border: 4px solid #D4AF37; background: #000; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); margin-right: -15px; position: relative; z-index: 5; }
-        .mode-ID .rider-photo-mini img { width: 100%; height: 100%; object-fit: cover; }
-        .mode-ID .scores-table { background: #fff; display: flex; align-items: stretch; height: 120px; clip-path: polygon(2% 0, 100% 0, 98% 100%, 0 100%); border-bottom: 5px solid #D4AF37; }
-        .mode-ID .row-labels { padding: 10px 20px; display: flex; flex-direction: column; justify-content: space-around; background: #000; color: #fff; font-weight: 700; font-size: 0.8rem; border-right: 2px solid #D4AF37; }
-        .mode-ID .judge-col { border-right: 1px solid #ddd; padding: 0 15px; display: flex; flex-direction: column; justify-content: center; min-width: 120px; }
-        .mode-ID .judge-name-top { font-size: 1rem; font-weight: 950; color: #000; text-align: center; text-transform: uppercase; border-bottom: 1px solid #D4AF37; margin-bottom: 5px; }
-        .mode-ID .score-val { font-size: 1.8rem; font-weight: 900; color: #222; text-align: center; display: block; line-height: 1; }
-        .mode-ID .total-col { background: #000; padding: 0 40px; display: flex; flex-direction: column; justify-content: center; clip-path: polygon(15% 0, 100% 0, 100% 100%, 0 100%); margin-left: -5px; border-left: 2px solid #D4AF37; }
-        .mode-ID .total-val-giant { font-size: 5rem; font-weight: 950; color: #D4AF37; line-height: 1; }
-        .mode-ID .rider-info-badge { background: #D4AF37; color: #000; padding: 10px 30px; margin-left: -20px; height: fit-content; transform: skewX(-15deg); border: 2px solid #000; align-self: center; }
+        .mode-ID .info-card {
+          background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(5, 5, 5, 1) 100%);
+          border-left: 12px solid #D4AF37; padding: 30px 60px 30px 50px;
+          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); min-width: 350px;
+        }
+        .mode-ID .competidor-name { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; white-space: nowrap; transform-origin: left center; }
+        .mode-ID .animal-name { color: #D4AF37; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; border-top: 1px solid rgba(212,175,55,0.3); padding-top: 5px; }
+        
+        .mode-ID .judges-section {
+          background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -40px;
+          padding: 20px 40px 20px 80px; display: flex; gap: 30px;
+          clip-path: polygon(40px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%);
+        }
+        .mode-ID .judge-box { border-left: 3px solid #D4AF37; padding-left: 15px; min-width: 140px; display: flex; flex-direction: column; justify-content: space-between; }
+        .mode-ID .judge-title { font-size: 1rem; color: #D4AF37; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; display: block; background: rgba(0,0,0,0.3); padding: 2px 5px; }
+        .mode-ID .judge-score-label { font-size: 0.75rem; color: #D4AF37; font-weight: bold; text-transform: uppercase; opacity: 0.8; }
+        .mode-ID .judge-score-value { color: #fff; font-weight: 700; font-size: 1.4rem; line-height: 1; }
+        .mode-ID .subtotal { font-size: 2.6rem; color: #fff; font-weight: 950; margin-top: 4px; border-top: 1px solid rgba(212, 175, 55, 0.3); padding-top: 4px; line-height: 1; }
+        
+        .mode-ID .final-score-card {
+          min-width: 250px; background: linear-gradient(180deg, #F9D976 0%, #D4AF37 100%);
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          padding: 20px 40px 20px 60px; clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
+          margin-left: -40px;
+        }
+        .mode-ID .total-value { font-size: 5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
+        
+        .mode-ID .header-badges { position: absolute; top: -45px; left: 0; display: flex; gap: 10px; }
+        .mode-ID .badge { 
+          background: #000; color: #D4AF37; padding: 5px 25px; font-weight: 900; font-size: 1.3rem; 
+          border: 2px solid #D4AF37; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+        }
+        .mode-ID .badge-pos { background: #D4AF37; color: #000; }
 
         /* --- MODO CHAMADA --- */
-        .mode-CHAMADA .full-call { position: absolute; inset: 0; background: radial-gradient(circle at center, #222 0%, #000 100%); display: flex; flex-direction: column; overflow: hidden; }
-        .mode-CHAMADA .call-header { height: 250px; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: dropHeader 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .mode-CHAMADA .side-card-rider { animation: confrontationLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .mode-CHAMADA .side-card-bull { animation: confrontationRight 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .mode-CHAMADA .vs-box { font-size: 6rem; font-weight: 950; color: #000; background: #D4AF37; padding: 20px 40px; transform: skewX(-10deg); border: 4px solid #fff; animation: vsImpact 0.5s 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; box-shadow: 0 0 50px rgba(212,175,55,0.6); }
-        .mode-CHAMADA .footer-bar { height: 140px; background: rgba(0,0,0,0.9); border-top: 5px solid #D4AF37; display: flex; justify-content: center; align-items: center; gap: 20px; animation: slideUpFooter 0.6s 0.8s backwards; }
-        .mode-CHAMADA .info-badge { background: #111; color: #fff; padding: 10px 40px; transform: skewX(-15deg); border: 2px solid #D4AF37; animation: badgeStagger 0.4s calc(0.9s + (var(--i) * 0.1s)) backwards; }
+        .mode-CHAMADA .chamada-fullscreen {
+          position: absolute; inset: 0;
+          background: radial-gradient(circle at center, rgba(30,30,30,0.5) 0%, rgba(0,0,0,0.95) 100%);
+          display: flex; align-items: center; justify-content: center;
+        }
+        .chamada-grid { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 1800px; height: 100%; position: relative; }
+        .side-photo { width: 500px; height: 750px; position: relative; clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%); border: 8px solid #D4AF37; overflow: hidden; box-shadow: 0 0 80px rgba(212,175,55,0.3); }
+        .side-photo img { width: 100%; height: 100%; object-fit: cover; animation: kenBurns 10s infinite alternate; }
+        .name-rider-full { font-size: 7rem; font-weight: 950; text-transform: uppercase; line-height: 0.85; margin: 20px 0 0; color: #fff; }
 
-        @keyframes confrontationLeft { from { opacity: 0; transform: translateX(-600px) scale(0.8); } to { opacity: 1; transform: translateX(0) scale(1); } }
-        @keyframes confrontationRight { from { opacity: 0; transform: translateX(600px) scale(0.8); } to { opacity: 1; transform: translateX(0) scale(1); } }
-        @keyframes vsImpact { 0% { transform: scale(0) skewX(-10deg); opacity: 0; } 70% { transform: scale(1.3) skewX(-10deg); } 100% { transform: scale(1) skewX(-10deg); opacity: 1; } }
-        @keyframes dropHeader { from { transform: translateY(-250px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideUpFooter { from { transform: translateY(150px); } to { transform: translateY(0); } }
-        @keyframes badgeStagger { from { opacity: 0; transform: translateY(50px) skewX(-15deg); } to { opacity: 1; transform: translateY(0) skewX(-15deg); } }
-        @keyframes slideUpLT { from { transform: translate(-50%, 150px); } to { transform: translate(-50%, 0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* --- MODO RANKING --- */
+        .mode-RANKING .ranking-full {
+          width: 94%; max-width: 1700px; height: 90%; display: flex; flex-direction: column; 
+          background: #000; padding: 40px; border-radius: 20px; border: 4px solid #D4AF37;
+          animation: zoomIn 0.5s ease-out;
+        }
+
+        @keyframes popCenter { from { opacity: 0; transform: scale(1.5); filter: blur(20px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
       `}</style>
 
       {/* RANKING */}
       {isRanking && displayRanking && (
-        <div className="rank-page">
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative' }}>
-             <img src={d?.competidorFoto || '/default-rider.png'} style={{ width: '100%', height: '90%', objectFit: 'contain', filter: 'drop-shadow(0 0 30px #D4AF37)' }} alt="Líder" />
-             <div style={{ background: '#D4AF37', color: '#000', padding: '20px 40px', fontSize: '3rem', fontWeight: 950, transform: 'skewX(-15deg)', width: 'fit-content', border: '4px solid #fff' }}>LÍDER | {formatScore(displayRanking.list[0]?.nota)}</div>
-          </div>
-          <div style={{ flex: 1.5, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-             <h1 style={{ color: '#D4AF37', fontSize: '4.5rem', margin: '0 0 20px 0', textTransform: 'uppercase', borderBottom: '5px solid #D4AF37' }}>CLASSIFICAÇÃO</h1>
-             {displayRanking.list.map((r, i) => (
-                <div key={i} style={{ background: 'rgba(255,255,255,0.05)', border: '2px solid #D4AF37', display: 'grid', gridTemplateColumns: '100px 1fr 150px', alignItems: 'center', height: '65px', transform: 'skewX(-15deg)', overflow: 'hidden' }}>
-                   <div style={{ background: '#D4AF37', color: '#000', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 950 }}>{r.pos}º</div>
-                   <div style={{ color: '#fff', fontSize: '1.8rem', fontWeight: 700, paddingLeft: '30px', transform: 'skewX(15deg)', textTransform: 'uppercase' }}>{r.nome}</div>
-                   <div style={{ color: '#D4AF37', fontSize: '2.2rem', fontWeight: 900, textAlign: 'right', paddingRight: '30px', transform: 'skewX(15deg)' }}>{formatScore(r.nota)}</div>
-                </div>
-             ))}
-          </div>
+        <div className="ranking-full">
+            <div className="ranking-header">
+                <h1 style={{ fontSize: '3.8rem', color: '#fff', margin: 0 }}>{displayRanking.title}</h1>
+                <div style={{ color: '#D4AF37', fontSize: '1.5rem', fontWeight: 900 }}>Classificação Oficial</div>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+                <thead>
+                    <tr style={{ borderBottom: '3px solid #D4AF37' }}>
+                        <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>POS</th>
+                        <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>NOME / INFO</th>
+                        <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '15px', textAlign: 'right' }}>NOTA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {displayRanking.list.map((r) => (
+                        <tr key={r.pos} style={{ borderBottom: '1px solid rgba(212,175,55,0.2)', height: '70px' }}>
+                            <td style={{ color: '#D4AF37', fontSize: '2.5rem', fontWeight: 900 }}>#{r.pos}</td>
+                            <td style={{ color: '#fff', fontSize: '2rem', fontWeight: 700 }}>
+                                {r.nome} <span style={{ fontSize: '1.2rem', color: '#888', fontWeight: 400 }}>{r.info}</span>
+                            </td>
+                            <td style={{ color: '#D4AF37', fontSize: '2.8rem', fontWeight: 900, textAlign: 'right' }}>{r.nota}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
       )}
 
       {/* LOWER THIRD (ID) */}
       {mode === 'ID' && d && (
-        <div className="lt-container">
-          <div className="rider-photo-mini">
-             <img src={d.competidorFoto} alt="Competidor" />
+        <div className="nota-container">
+          {/* HEADER BADGES (TEMPO, RANK E DIFF) */}
+          <div className="header-badges">
+            <div className="badge">TEMPO: {elapsedTime.toFixed(2)}s</div>
+            <div className="badge badge-pos">ETAPA: {d.etapaRank}</div>
+            {d.etapaDiff && <div className="badge">DIFF LÍDER: {d.etapaDiff}</div>}
           </div>
-          <div className="scores-table">
-             <div className="row-labels">
-                <div>ANIMAL</div>
-                <div style={{ background: '#D4AF37', color: '#000', padding: '2px 5px' }}>COMPETIDOR</div>
-             </div>
+
+          <div className="info-card">
+             <h1 ref={nameRef} className="competidor-name" style={{ transform: `scale(${nameScale})` }}>{d.competidor}</h1>
+             <span className="animal-name">{d.animal}</span>
+          </div>
+
+          <div className="judges-section">
              {[1,2,3,4].slice(0, numJuizes).map(i => (
-                <div key={i} className="judge-col">
-                   <div className="judge-name-top">{(d as any)[`j${i}Nome`]}</div>
-                   <div className="score-val" style={{ color: '#777' }}>{formatScore((d as any)[`j${i}A`]).split(',')[0]}</div>
-                   <div className="score-val">{formatScore((d as any)[`j${i}P`]).split(',')[0]}</div>
-                </div>
+               <div key={i} className="judge-box">
+                  <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
+                  <div style={{ display: 'flex', gap: '15px', marginBottom: '4px' }}>
+                    <div style={{ flex: 1 }}>
+                      <span className="judge-score-label">P:</span>
+                      <span className="judge-score-value"> {formatScore((d as any)[`j${i}P`])}</span>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <span className="judge-score-label">T:</span>
+                      <span className="judge-score-value"> {formatScore((d as any)[`j${i}A`])}</span>
+                    </div>
+                  </div>
+                  <div className="subtotal">{formatScore((d as any)[`j${i}Total`])}</div>
+               </div>
              ))}
-             <div className="total-col">
-                <div style={{ color: '#D4AF37', fontWeight: 900, fontSize: '1.2rem' }}>TOTAL</div>
-                <div className="total-val-giant">{formatScore(d.total).split(',')[0]}</div>
-             </div>
           </div>
-          <div className="rider-info-badge">
-             <div style={{ transform: 'skewX(15deg)', fontWeight: 950, fontSize: '1.5rem' }}>{d.competidor}</div>
-             <div style={{ transform: 'skewX(15deg)', fontSize: '0.9rem', textAlign: 'center', background: '#000', color: '#fff', marginTop: '2px' }}>{d.competidorCidade}</div>
+          <div className="final-score-card">
+              <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>NOTA FINAL</span>
+              <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
           </div>
         </div>
       )}
 
-      {/* CHAMADA GALA (VS) */}
+      {/* CHAMADA (FULL) */}
       {mode === 'CHAMADA' && d && (
-        <div className="full-call">
-           <div className="call-header">
-              <div style={{ color: '#D4AF37', fontSize: '6rem', margin: 0, fontWeight: 950, letterSpacing: '5px', textShadow: '0 0 20px rgba(212,175,55,0.5)' }}>SEMI FINAL</div>
-              <div style={{ background: '#fff', color: '#000', padding: '5px 50px', fontWeight: 900, transform: 'skewX(-20deg)', fontSize: '1.2rem' }}>RODEIO PRO 2026</div>
-           </div>
-           <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '50px', padding: '0 50px' }}>
-              <div className="side-card-rider" style={{ width: '450px', textAlign: 'center' }}>
-                 <div style={{ border: '5px solid #D4AF37', borderRadius: '20px', overflow: 'hidden', height: '500px', background: '#111' }}>
-                    <img src={d.competidorFoto} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Peão" />
-                 </div>
-                 <h2 style={{ color: '#fff', fontSize: '3.5rem', margin: '20px 0 0', textTransform: 'uppercase' }}>{d.competidor}</h2>
-                 <p style={{ color: '#D4AF37', fontSize: '1.5rem', fontWeight: 700 }}>{d.competidorCidade}</p>
+        <div className="chamada-fullscreen">
+          <div className="chamada-grid">
+            <div className="side-photo photo-rider"><img src={d.competidorFoto} alt="P" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: '#D4AF37', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.competidorCidade}</div></div>
+            <div className="center-info">
+              <div style={{ fontSize: '6rem', fontWeight: 950, color: '#000', WebkitTextStroke: '2px #D4AF37', textShadow: '0 0 20px #D4AF37', fontStyle: 'italic', fontStyle: 'italic', letterSpacing: '-5px' }}>CONFRONTO</div>
+              <h1 style={{ fontSize: '7rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 0.85, margin: '20px 0 0', color: '#fff' }}>{d.competidor}</h1>
+              <div style={{ fontSize: '4rem', color: '#D4AF37', fontWeight: 800, margin: '10px 0', textTransform: 'uppercase' }}>{d.animal}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '50px' }}>
+                <div style={{ border: '2px solid #D4AF37', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: '#D4AF37', fontWeight: 900 }}>RANKING</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>#{d.competidorRankChamp || '---'}</span></div>
+                <div style={{ border: '2px solid #D4AF37', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: '#D4AF37', fontWeight: 900 }}>PARADAS</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorParadas || '0%'}</span></div>
+                <div style={{ border: '2px solid #D4AF37', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: '#D4AF37', fontWeight: 900 }}>MÉDIA BOI</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.animalMedia || '0'}</span></div>
               </div>
-              
-              <div className="vs-box">VS</div>
-              
-              <div className="side-card-bull" style={{ width: '450px', textAlign: 'center' }}>
-                 <div style={{ border: '5px solid #fff', borderRadius: '20px', overflow: 'hidden', height: '500px', background: '#111' }}>
-                    <img src={d.animalFoto} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Touro" />
-                 </div>
-                 <h2 style={{ color: '#D4AF37', fontSize: '3.5rem', margin: '20px 0 0', textTransform: 'uppercase' }}>{d.animal}</h2>
-                 <p style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 700 }}>{d.animalCompanhia}</p>
-              </div>
-           </div>
-           <div className="footer-bar">
-              <div className="info-badge" style={{ '--i': 1 } as any}>RANKING: <b style={{ color: '#D4AF37' }}>#{d.competidorRankChamp}</b></div>
-              <div className="info-badge" style={{ '--i': 2 } as any}>PARADAS: <b style={{ color: '#D4AF37' }}>{d.competidorParadas}</b></div>
-              <div className="info-badge" style={{ '--i': 3 } as any}>MÉDIA BOI: <b style={{ color: '#D4AF37' }}>{d.animalMedia}</b></div>
-           </div>
+            </div>
+            <div className="side-photo photo-bull"><img src={d.animalFoto} alt="T" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: '#D4AF37', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.animalCompanhia}</div></div>
+          </div>
         </div>
       )}
     </div>
