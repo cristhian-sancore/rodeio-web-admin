@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
-import { updateRound } from "../../../actions";
+import { updateRound } from "../../../../actions";
 import { Save, ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 
