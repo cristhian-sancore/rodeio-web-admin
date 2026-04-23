@@ -25,10 +25,13 @@ export async function getCompetidorStageRank(etapaId: number, competidorId: numb
     montarias.forEach(m => {
       if (m.round.modalidade !== modalidadeAlvo) return;
       if (!competidoresMap[m.competidorId]) {
-        competidoresMap[m.competidorId] = { pontos: 0, tempo: 0 };
+        competidoresMap[m.competidorId] = { pontos: 0, notaAnimal: 0, maiorNota: 0 };
       }
       competidoresMap[m.competidorId].pontos += m.notaTotal;
-      competidoresMap[m.competidorId].tempo += m.tempo;
+      competidoresMap[m.competidorId].notaAnimal += m.notaAnimal;
+      if (m.notaTotal > competidoresMap[m.competidorId].maiorNota) {
+        competidoresMap[m.competidorId].maiorNota = m.notaTotal;
+      }
     });
 
     const ranking = Object.entries(competidoresMap)
@@ -38,7 +41,8 @@ export async function getCompetidorStageRank(etapaId: number, competidorId: numb
       }))
       .sort((a, b) => {
         if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-        return b.tempo - a.tempo;
+        if (b.notaAnimal !== a.notaAnimal) return b.notaAnimal - a.notaAnimal; // 1º Desempate CNAR: Melhor Animal
+        return b.maiorNota - a.maiorNota; // 2º Desempate CNAR: Melhor Nota Única
       });
 
     const position = ranking.findIndex(r => r.id === competidorId);
@@ -159,17 +163,22 @@ export async function getCompetidorRanking(mode: string, roundId: number, etapaI
         nome: m.competidor.nome, 
         cidade: `${m.competidor.cidade || ''} - ${m.competidor.uf || ''}`, 
         pontos: 0, 
-        tempo: 0 
+        notaAnimal: 0,
+        maiorNota: 0
       };
     }
     map[m.competidorId].pontos += m.notaTotal;
-    map[m.competidorId].tempo += m.tempo;
+    map[m.competidorId].notaAnimal += m.notaAnimal;
+    if (m.notaTotal > map[m.competidorId].maiorNota) {
+      map[m.competidorId].maiorNota = m.notaTotal;
+    }
   });
 
   const list = Object.values(map)
     .sort((a: any, b: any) => {
       if (b.pontos !== a.pontos) return b.pontos - a.pontos;
-      return b.tempo - a.tempo;
+      if (b.notaAnimal !== a.notaAnimal) return b.notaAnimal - a.notaAnimal;
+      return b.maiorNota - a.maiorNota;
     });
 
   const leaderScore = list.length > 0 ? (list[0] as any).pontos : 0;
