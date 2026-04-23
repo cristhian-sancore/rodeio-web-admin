@@ -86,7 +86,7 @@ export default function OverlayNotaPage() {
 
   useEffect(() => {
     if (nameRef.current) {
-        const parentWidth = d && data?.mode === 'ID' ? 350 : 800;
+        const parentWidth = data?.mode === 'ID' ? 350 : 800;
         const nameWidth = nameRef.current.scrollWidth;
         setNameScale(nameWidth > parentWidth ? parentWidth / nameWidth : 1);
     }
@@ -96,7 +96,15 @@ export default function OverlayNotaPage() {
 
   const d = data?.data;
   const mode = data?.mode || 'ID';
+  const isRanking = mode === 'RANKING';
   const numJuizes = data?.numJuizes || 2;
+  const rankingPage = typeof data?.rankingPage === 'number' ? data.rankingPage : 0;
+  const itemsPerPage = 10;
+
+  const displayRanking = isRanking && data.rankingData ? {
+    ...data.rankingData,
+    list: data.rankingData.list.slice(rankingPage * itemsPerPage, (rankingPage + 1) * itemsPerPage)
+  } : null;
 
   const formatScore = (val: any) => {
     if (!val) return '0';
@@ -107,7 +115,7 @@ export default function OverlayNotaPage() {
   return (
     <div className={`overlay-master ${visible ? 'show' : 'hide'} mode-${mode}`}>
       <style jsx global>{`
-        body { background: transparent !important; margin: 0; overflow: hidden; font-family: 'Oswald', sans-serif; }
+        html, body { background: transparent !important; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
         .overlay-master { position: fixed; inset: 0; transition: opacity 0.5s ease; opacity: 0; }
         .overlay-master.show { opacity: 1; }
 
@@ -151,70 +159,79 @@ export default function OverlayNotaPage() {
           position: absolute; inset: 0;
           background: radial-gradient(circle at center, rgba(30,30,30,0.5) 0%, rgba(0,0,0,0.95) 100%);
           display: flex; align-items: center; justify-content: center;
-          overflow: hidden;
         }
-
-        .chamada-grid {
-          display: flex; align-items: center; justify-content: center;
-          width: 100%; max-width: 1800px; height: 100%; position: relative;
-        }
-
-        .side-photo {
-          width: 500px; height: 750px; position: relative;
-          clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%);
-          border: 8px solid #D4AF37; overflow: hidden;
-          box-shadow: 0 0 80px rgba(212,175,55,0.3);
-          transition: transform 0.3s ease;
-        }
+        .chamada-grid { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 1800px; height: 100%; position: relative; }
+        .side-photo { width: 500px; height: 750px; position: relative; clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%); border: 8px solid #D4AF37; overflow: hidden; box-shadow: 0 0 80px rgba(212,175,55,0.3); }
         .side-photo img { width: 100%; height: 100%; object-fit: cover; animation: kenBurns 10s infinite alternate; }
-
         .photo-rider { animation: slideInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: absolute; left: 5%; }
         .photo-bull { animation: slideInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; position: absolute; right: 5%; }
-
-        .center-info {
-          z-index: 10; text-align: center; color: #fff; width: 800px;
-          animation: popCenter 1s 0.3s backwards;
-        }
-
-        .vs-text {
-          font-size: 6rem; font-weight: 950; color: #000;
-          -webkit-text-stroke: 2px #D4AF37;
-          text-shadow: 0 0 20px #D4AF37;
-          font-style: italic; letter-spacing: -5px;
-          animation: glitch 2s infinite;
-        }
-        .rider-name-full { font-size: 7rem; font-weight: 950; text-transform: uppercase; line-height: 0.85; margin: 20px 0 0; color: #fff; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .bull-name-full { font-size: 4rem; color: #D4AF37; font-weight: 800; margin: 10px 0; text-transform: uppercase; letter-spacing: 5px; }
-
-        .stats-row {
-          display: flex; justify-content: center; gap: 30px; margin-top: 50px;
-        }
-        .stat-card {
-          background: rgba(212, 175, 55, 0.1);
-          border: 2px solid #D4AF37;
-          padding: 20px 40px;
-          transform: skewX(-15deg);
-          box-shadow: 10px 10px 0 rgba(212,175,55,0.2);
-          animation: slideUpStat 0.5s calc(var(--delay) * 1s) backwards;
-        }
+        .center-info { z-index: 10; text-align: center; color: #fff; width: 800px; animation: popCenter 1s 0.3s backwards; }
+        .vs-text { font-size: 6rem; font-weight: 950; color: #000; -webkit-text-stroke: 2px #D4AF37; text-shadow: 0 0 20px #D4AF37; font-style: italic; letter-spacing: -5px; animation: glitch 2s infinite; }
+        .rider-name-full { font-size: 7rem; font-weight: 950; text-transform: uppercase; line-height: 0.85; margin: 20px 0 0; color: #fff; }
+        .bull-name-full { font-size: 4rem; color: #D4AF37; font-weight: 800; margin: 10px 0; text-transform: uppercase; }
+        .stats-row { display: flex; justify-content: center; gap: 30px; margin-top: 50px; }
+        .stat-card { background: rgba(212, 175, 55, 0.1); border: 2px solid #D4AF37; padding: 20px 40px; transform: skewX(-15deg); }
         .stat-card > * { transform: skewX(15deg); }
         .stat-val { font-size: 3.5rem; color: #fff; font-weight: 950; display: block; line-height: 1; }
         .stat-lab { font-size: 0.9rem; color: #D4AF37; font-weight: 900; text-transform: uppercase; }
 
-        /* ANIMAÇÕES */
+        /* --- MODO RANKING (TELA CHEIA) --- */
+        .mode-RANKING .ranking-full {
+          width: 94%; max-width: 1700px; height: 90%; display: flex; flex-direction: column; 
+          background: #000; padding: 40px; border-radius: 20px; border: 4px solid #D4AF37;
+          animation: zoomIn 0.5s ease-out;
+        }
+        .ranking-header { border-bottom: 3px solid #D4AF37; margin-bottom: 25px; padding-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .ranking-title { font-size: 3.8rem; font-weight: 950; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin: 0; }
+        .ranking-table { width: 100%; border-collapse: collapse; }
+        .rank-row { border-bottom: 1px solid rgba(212, 175, 55, 0.1); height: 68px; }
+        .rank-cell { color: #fff; font-size: 2rem; font-weight: 700; padding: 0 15px; }
+        .rank-pos { color: #D4AF37; font-weight: 900; width: 100px; }
+        .rank-competidor { text-transform: uppercase; }
+        .rank-info { font-size: 1.2rem; color: #888; display: block; }
+        .rank-nota { text-align: right; color: #D4AF37; font-weight: 900; font-size: 2.8rem; width: 200px; }
+        .rank-extra { text-align: right; font-size: 1.3rem; color: #444; width: 100px; }
+
         @keyframes slideInLeft { from { opacity: 0; transform: translateX(-500px) skewX(-10deg); } to { opacity: 1; transform: translateX(0) skewX(0); } }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(500px) skewX(10deg); } to { opacity: 1; transform: translateX(0) skewX(0); } }
         @keyframes popCenter { from { opacity: 0; transform: scale(1.5); filter: blur(20px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
-        @keyframes slideUpStat { from { opacity: 0; transform: translateY(50px) skewX(-15deg); } to { opacity: 1; transform: translateY(0) skewX(-15deg); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
         @keyframes kenBurns { from { transform: scale(1); } to { transform: scale(1.15); } }
-        @keyframes glitch {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          1% { transform: skew(5deg); opacity: 0.8; }
-          2% { transform: skew(-5deg); opacity: 1; }
-          3% { transform: none; }
-        }
+        @keyframes glitch { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); opacity: 0.8; } }
       `}</style>
 
+      {/* RENDERIZACAO MODO RANKING */}
+      {isRanking && displayRanking && (
+        <div className="ranking-full">
+            <div className="ranking-header">
+                <h1 className="ranking-title">{displayRanking.title}</h1>
+                <div style={{ color: '#D4AF37', fontSize: '1.5rem', fontWeight: 900 }}>Classificação Oficial</div>
+            </div>
+            <table className="ranking-table">
+                <thead>
+                <tr style={{ borderBottom: '2px solid #D4AF37', textAlign: 'left' }}>
+                    <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px' }}>POS</th>
+                    <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px' }}>{displayRanking.title.includes('TOURO') ? 'TOURO / CIA' : 'COMPETIDOR / CIDADE'}</th>
+                    <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '10px 20px', textAlign: 'right' }}>{displayRanking.title.includes('TOURO') ? 'MÉDIA' : 'NOTA'}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {displayRanking.list.map((r) => (
+                    <tr key={r.pos} className="rank-row">
+                    <td className="rank-cell rank-pos">#{r.pos}</td>
+                    <td className="rank-cell rank-competidor">
+                        {r.nome}
+                        <span className="rank-info">{r.info}</span>
+                    </td>
+                    <td className="rank-cell rank-nota">{r.nota}</td>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+        </div>
+      )}
+
+      {/* RENDERIZACAO MODO ID (LT) */}
       {mode === 'ID' && d && (
         <div className="nota-container">
           <div className="tempo-badge">TEMPO: {elapsedTime.toFixed(2)}s</div>
@@ -245,38 +262,33 @@ export default function OverlayNotaPage() {
         </div>
       )}
 
+      {/* RENDERIZACAO MODO CHAMADA (FULL SCREEN) */}
       {mode === 'CHAMADA' && d && (
         <div className="chamada-fullscreen">
           <div className="chamada-grid">
-            {/* Foto Peão */}
             <div className="side-photo photo-rider">
               <img src={d.competidorFoto || 'https://rodeio.cristhiansancore.com.br/default-rider.png'} alt="Peão" />
               <div className="label">{d.competidorCidade || 'BRASIL'}</div>
             </div>
-
-            {/* Centro Explosivo */}
             <div className="center-info">
               <div className="vs-text">CONFRONTO</div>
               <h1 className="rider-name-full">{d.competidor}</h1>
               <div className="bull-name-full">{d.animal}</div>
-              
               <div className="stats-row">
-                <div className="stat-card" style={{ '--delay': 0.6 } as any}>
+                <div className="stat-card">
                   <span className="stat-lab">RANKING</span>
                   <span className="stat-val">#{d.competidorRankChamp || '---'}</span>
                 </div>
-                <div className="stat-card" style={{ '--delay': 0.8 } as any}>
+                <div className="stat-card">
                   <span className="stat-lab">PARADAS</span>
                   <span className="stat-val">{d.competidorParadas || '0%'}</span>
                 </div>
-                <div className="stat-card" style={{ '--delay': 1.0 } as any}>
+                <div className="stat-card">
                   <span className="stat-lab">MÉDIA BOI</span>
                   <span className="stat-val">{d.animalMedia || '0'}</span>
                 </div>
               </div>
             </div>
-
-            {/* Foto Touro */}
             <div className="side-photo photo-bull">
                <img src={d.animalFoto || 'https://rodeio.cristhiansancore.com.br/default-bull.png'} alt="Touro" />
                <div className="label">{d.animalCompanhia || 'CIA CONTRATADA'}</div>
