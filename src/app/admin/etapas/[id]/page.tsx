@@ -192,10 +192,13 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Link href={`/admin/etapas/${id}/round/${round.id}/editar`} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '0.4rem 0.6rem', borderRadius: '4px', display: 'flex', alignItems: 'center', textDecoration: 'none' }} title="Editar Round">
+                      <Edit size={14} />
+                    </Link>
                     <Link href={`/admin/etapas/${id}/round/${round.id}/montagem`} className="btn-primary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', background: '#333', textDecoration: 'none' }}>Montar</Link>
                     <Link href={`/admin/execucao?roundId=${round.id}`} className="btn-primary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}>Notas</Link>
                     <form action={deleteRound.bind(null, round.id, etapaId)}>
-                      <button type="submit" style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                      <button type="submit" style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Excluir"><Trash2 size={16} /></button>
                     </form>
                   </div>
                 </div>
@@ -222,10 +225,13 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Link href={`/admin/etapas/${id}/round/${round.id}/editar`} style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '0.4rem 0.6rem', borderRadius: '4px', display: 'flex', alignItems: 'center', textDecoration: 'none' }} title="Editar Round">
+                      <Edit size={14} />
+                    </Link>
                     <Link href={`/admin/etapas/${id}/round/${round.id}/montagem`} className="btn-primary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', background: '#333', textDecoration: 'none' }}>Montar</Link>
                     <Link href={`/admin/execucao?roundId=${round.id}`} className="btn-primary" style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem', textDecoration: 'none' }}>Notas</Link>
                     <form action={deleteRound.bind(null, round.id, etapaId)}>
-                      <button type="submit" style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                      <button type="submit" style={{ background: 'transparent', border: 'none', color: '#ff4444', cursor: 'pointer', display: 'flex', alignItems: 'center' }} title="Excluir"><Trash2 size={16} /></button>
                     </form>
                   </div>
                 </div>

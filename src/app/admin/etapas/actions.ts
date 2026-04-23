@@ -501,6 +501,8 @@ export async function updateEtapa(formData: FormData) {
   });
 
   revalidatePath('/admin/etapas');
+  revalidatePath(`/admin/etapas/${id}`);
+  revalidatePath(`/admin/etapas/${id}/editar`);
   
   const { redirect } = await import('next/navigation');
   redirect('/admin/etapas');
@@ -534,6 +536,7 @@ export async function updateRound(formData: FormData) {
 
   revalidatePath(`/admin/etapas/${etapaId}`);
   revalidatePath(`/admin/execucao`);
+  revalidatePath(`/admin/etapas/${etapaId}/round/${id}/editar`);
   
   const { redirect } = await import('next/navigation');
   redirect(`/admin/etapas/${etapaId}`);
