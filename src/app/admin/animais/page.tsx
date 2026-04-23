@@ -46,42 +46,58 @@ export default async function AnimaisPage({ searchParams }: { searchParams: Prom
               <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Companhia / Tropa</label>
               <input name="companhia" type="text" required style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} placeholder="Ex: Cia Paulo Emílio" />
             </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Tipo</label>
-              <select name="tipo" required style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }}>
-                <option value="Touro">Touro</option>
-                <option value="Cavalo">Cavalo</option>
-              </select>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Tipo</label>
+                <select name="tipo" style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }}>
+                  <option value="Touro">Touro</option>
+                  <option value="Cavalo">Cavalo</option>
+                </select>
+              </div>
             </div>
-            <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>Cadastrar Animal</button>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Foto / Capturar Câmera</label>
+              <input 
+                name="foto" 
+                type="file" 
+                accept="image/*" 
+                capture="environment" 
+                style={{ width: '100%', padding: '0.75rem', background: '#111', border: '1px dashed #444', borderRadius: '8px', color: '#888' }} 
+              />
+            </div>
+            <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>Cadastrar Animal</button>
           </form>
         </div>
 
-        {/* Lista */}
+        {/* Lista de Animais */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <h2 style={{ fontSize: '1.25rem', color: '#fff', margin: 0 }}>Boiada/Tropa ({animais.length})</h2>
+            <h2 style={{ fontSize: '1.25rem', color: '#fff', margin: 0 }}>Animais Cadastrados ({animais.length})</h2>
             
             <form method="GET" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
               <div style={{ position: 'relative' }}>
                 <Search size={16} color="#666" style={{ position: 'absolute', left: '10px', top: '10px' }} />
-                <input name="q" type="text" defaultValue={q || ''} placeholder="Pesquisar..." style={{ padding: '0.5rem 0.5rem 0.5rem 2.2rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', width: '200px' }} />
+                <input name="q" type="text" defaultValue={q || ''} placeholder="Pesquisar por nome ou cia..." style={{ padding: '0.5rem 0.5rem 0.5rem 2.2rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff', fontSize: '0.9rem', width: '250px' }} />
               </div>
               <button type="submit" className="btn-primary" style={{ padding: '0.55rem 1rem', fontSize: '0.9rem' }}>Filtrar</button>
               {q && <Link href="/admin/animais" style={{ color: '#ff4444', textDecoration: 'none', fontSize: '0.8rem', marginLeft: '0.5rem' }}>Limpar</Link>}
             </form>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
             {animais.map((a: any) => (
               <div key={a.id} className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{ width: '40px', height: '40px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4af37' }}>
-                    {a.tipo === 'Touro' ? <Cat size={20} /> : <Shield size={20} />}
+                  <div style={{ width: '50px', height: '50px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4af37', border: '1px solid #333' }}>
+                    {a.fotoUrl ? (
+                      <img src={a.fotoUrl} alt={a.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <img src="/icons/bull.png" alt="Icon" style={{ width: '24px', opacity: 0.5 }} onError={(e) => { (e.target as any).src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0zIDExYy0yIDAgLTMgMiAtMyA0czEgNCAzIDRzNSAtNCA1IC00YzAgMCAtMiA0IC01IDRzLTMgLTIgLTMgLTRzMSAtNCAzIC00Ii8+PHBhdGggZD0iTTIxIDExYzIgMCAzIDIgMyA0czEgNCAzIDRzLTUgLTQgLTUgLTRjMCAwIDIgNCArNSA0czMgLTIgMyAtNHMtMSAtNCAzIC00Ii8+PHBhdGggZD0iTTEyIDExYzAgMCAwIDYgMiA3czUgMSAwIDZzLTggMiAtOSA0Ii8+PC9zdmc+' }} />
+                    )}
                   </div>
                   <div>
                     <h4 style={{ margin: 0 }}>{a.nome}</h4>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#666' }}>{a.companhia}</p>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#888' }}>{a.companhia}</p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

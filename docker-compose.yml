@@ -27,6 +27,9 @@ services:
       NEXTAUTH_URL_INTERNAL: http://localhost:3000
     depends_on:
       - db
+    volumes:
+      - ./prisma_data:/app/prisma
+      - ./uploads:/app/public/uploads
     restart: always
     networks:
       - rede

@@ -34,7 +34,7 @@ RUN addgroup --system --gid 1001 nodev
 RUN adduser --system --uid 1001 nextjs
 
 # Set correct permissions for the database folder
-RUN mkdir -p prisma && chown -R nextjs:nodev prisma
+RUN mkdir -p prisma public/uploads && chown -R nextjs:nodev prisma public/uploads
 
 # Copy public assets
 COPY --from=builder /app/public ./public
@@ -59,7 +59,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Ensure the SQLite DB path is accessible (if used) or just persistent prisma files
-VOLUME ["/app/prisma"]
+VOLUME ["/app/prisma", "/app/public/uploads"]
 
 # Grant permissions to the nextjs user for the whole app
 RUN chmod +x docker-entrypoint.sh && chown -R nextjs:nodev /app

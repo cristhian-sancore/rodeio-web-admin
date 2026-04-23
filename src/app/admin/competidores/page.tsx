@@ -43,6 +43,16 @@ export default async function CompetidoresPage({ searchParams }: { searchParams:
               <input name="uf" type="text" maxLength={2} style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} placeholder="SP" />
             </div>
           </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Foto / Capturar Câmera</label>
+            <input 
+              name="foto" 
+              type="file" 
+              accept="image/*" 
+              capture="environment" 
+              style={{ width: '100%', padding: '0.75rem', background: '#111', border: '1px dashed #444', borderRadius: '8px', color: '#888' }} 
+            />
+          </div>
           <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>Cadastrar Atleta</button>
         </form>
       </div>
@@ -66,8 +76,12 @@ export default async function CompetidoresPage({ searchParams }: { searchParams:
           {competidores.map((c: any) => (
             <div key={c.id} className="premium-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{ width: '42px', height: '42px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4af37' }}>
-                  <User size={20} />
+                <div style={{ width: '50px', height: '50px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '12px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d4af37', border: '1px solid #333' }}>
+                  {c.fotoUrl ? (
+                    <img src={c.fotoUrl} alt={c.nome} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={24} />
+                  )}
                 </div>
                 <div>
                   <h4 style={{ margin: 0 }}>{c.nome}</h4>
