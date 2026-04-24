@@ -177,7 +177,6 @@ export default function OverlayNotaPage() {
 
   if (!visible && !data) return null;
 
-  const d = data?.data;
   const mode = data?.mode || 'ID';
   const isRanking = mode === 'RANKING';
   const numJuizes = data?.numJuizes || 2;
