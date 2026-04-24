@@ -13,6 +13,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
     }
 
+    // 🛡️ PROTEÇÃO CSRF AVANÇADA (PENTEST)
+    const host = req.headers.get('host');
+    const origin = req.headers.get('origin');
+    const referer = req.headers.get('referer');
+    
+    // Validar se a requisição partiu do próprio site (evita disparos externos)
+    if (origin && !origin.includes(host || '')) {
+      return NextResponse.json({ success: false, error: 'Violação de Origem (CSRF)' }, { status: 403 });
+    }
+
     const user = session.user as any;
     const juizId = user.juizId;
     const isAdmin = user.role === 'ADMIN';
@@ -37,8 +47,15 @@ export async function POST(req: Request) {
       getSafeConfig()
     ]);
 
-    if (!montaria) {
-      return NextResponse.json({ success: false, error: 'Montaria não encontrada' });
+    if (!montaria || montaria.removida) {
+      return NextResponse.json({ success: false, error: 'Montaria não encontrada ou inválida' });
+    }
+
+    // 🛡️ INTEGRIDADE DE ARENA (PENTEST)
+    // Impede que um juiz malicioso ou script mude a nota de uma montaria antiga 
+    // que já passou, enquanto outra está ativa no momento.
+    if (!isAdmin && config?.montariaAtivaId && config.montariaAtivaId !== montariaId) {
+      return NextResponse.json({ success: false, error: 'Esta montaria não está mais ativa para julgamento' });
     }
 
     // Validar notas (0-25)
