@@ -15,33 +15,39 @@ export async function createUser(formData: FormData) {
   const password = formData.get('password') as string;
   let role = formData.get('role') as string;
   
-  // 🛡️ PROTEÇÃO CONTRA ESCALADA DE PRIVILÉGIOS (PENTEST)
-  if (role === 'SUPER_ADMIN' && creator.role !== 'SUPER_ADMIN') {
-    throw new Error("Apenas o Super Admin original pode criar outros usuários Root.");
-  }
-
-  // Restrição: Comentarista não pode criar ADMIN nem COMENTARISTA
-  if (creator.role === 'COMENTARISTA') {
-    if (role === 'ADMIN' || role === 'COMENTARISTA' || role === 'SUPER_ADMIN') {
-      role = 'JUIZ'; 
+  try {
+    // 🛡️ PROTEÇÃO CONTRA ESCALADA DE PRIVILÉGIOS (PENTEST)
+    if (role === 'SUPER_ADMIN' && creator.role !== 'SUPER_ADMIN') {
+      throw new Error("Apenas o Super Admin original pode criar outros usuários Root.");
     }
-  }
 
-  // Apenas JUIZ ou quem cria um JUIZ pode ter vínculo com juiz oficial
-  const juizId = (role === 'JUIZ' && formData.get('juizId')) ? parseInt(formData.get('juizId') as string) : null;
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  await prisma.user.create({
-    data: {
-      username,
-      password: hashedPassword,
-      role,
-      juizId
+    // Restrição: Comentarista não pode criar ADMIN nem COMENTARISTA
+    if (creator.role === 'COMENTARISTA') {
+      if (role === 'ADMIN' || role === 'COMENTARISTA' || role === 'SUPER_ADMIN') {
+        role = 'JUIZ'; 
+      }
     }
-  });
 
-  revalidatePath('/admin/usuarios');
+    const juizId = (role === 'JUIZ' && formData.get('juizId')) ? parseInt(formData.get('juizId') as string) : null;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        username,
+        password: hashedPassword,
+        role,
+        juizId
+      }
+    });
+
+    const { logSystemAction } = await import("@/lib/audit");
+    await logSystemAction(creator.name || username, 'USER_CREATE', { role, target: username });
+
+    revalidatePath('/admin/usuarios');
+  } catch (err: any) {
+    console.error("ERRO AO CRIAR USUÁRIO:", err);
+    throw new Error(err.message || "Erro ao criar usuário. Verifique se o login já existe.");
+  }
 }
 
 export async function updateUser(formData: FormData) {

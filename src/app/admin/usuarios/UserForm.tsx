@@ -6,7 +6,7 @@ import { createUser } from './actions';
 export default function UserForm({ juizes, currentUserRole }: { juizes: any[], currentUserRole: string }) {
   const [role, setRole] = useState('JUIZ');
 
-  const isAdmin = currentUserRole === 'ADMIN';
+  const isAdminOrSuper = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
   return (
     <div className="premium-card">
@@ -32,9 +32,9 @@ export default function UserForm({ juizes, currentUserRole }: { juizes: any[], c
             style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }}
           >
             <option value="JUIZ">Juiz (Acesso ao Lançamento)</option>
-            {isAdmin && <option value="COMENTARISTA">Comentarista (Gestão de Evento)</option>}
-            {isAdmin && <option value="ADMIN">Administrador (Acesso Total)</option>}
-            {!isAdmin && <option value="USER">Usuário Comum</option>}
+            {isAdminOrSuper && <option value="COMENTARISTA">Comentarista (Gestão de Evento)</option>}
+            {isAdminOrSuper && <option value="ADMIN">Administrador (Acesso Total)</option>}
+            {!isAdminOrSuper && <option value="USER">Usuário Comum</option>}
           </select>
         </div>
 

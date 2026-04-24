@@ -14,19 +14,28 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
   const currentUserRole = user?.role || 'USER';
 
   const { q } = await searchParams;
-  const [usuarios, juizes] = await Promise.all([
-    prisma.user.findMany({
-      where: q ? {
-        username: { contains: q }
-      } : undefined,
-      include: { juiz: true },
-      orderBy: { username: 'asc' }
-    }),
-    prisma.juiz.findMany({
-      where: { user: null }, // Só juízes que ainda não tem conta
-      orderBy: { nome: 'asc' }
-    })
-  ]);
+  let usuarios: any[] = [];
+  let juizes: any[] = [];
+
+  try {
+    const results = await Promise.all([
+      prisma.user.findMany({
+        where: q ? {
+          username: { contains: q, mode: 'insensitive' }
+        } : undefined,
+        include: { juiz: true },
+        orderBy: { username: 'asc' }
+      }),
+      prisma.juiz.findMany({
+        where: { user: { is: null } as any }, // Só juízes que ainda não tem conta
+        orderBy: { nome: 'asc' }
+      })
+    ]);
+    usuarios = results[0];
+    juizes = results[1];
+  } catch (err) {
+    console.error("Erro ao carregar usuários/juízes:", err);
+  }
 
   return (
     <div className="fade-in">
