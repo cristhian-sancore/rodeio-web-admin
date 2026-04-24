@@ -64,6 +64,7 @@ export async function getOverlayDataPayload() {
       active: true,
       mode: config.overlayMode || 'ID', 
       numJuizes: config.numJuizes,
+      rankingCongelado: (config as any).rankingCongelado,
       timerRunning: config.timerRunning,
       timerStartedAt: config.timerStartedAt,
       serverTime: Date.now(),

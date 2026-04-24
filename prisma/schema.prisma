@@ -148,23 +148,24 @@ model Montaria {
 }
 
 model Configuracao {
-  id                 Int       @id @default(autoincrement())
-  numJuizes          Int       @default(2)
-  notaMaxima         Int       @default(100)
-  titulo             String    @default("Circuito Master")
-  vmixUrl            String?   @default("http://127.0.0.1:8088/api")
-  vmixInputId        String?
-  vmixReplayInputId  String?   @default("Instant Replay")
-  replayExportPath   String?
-  vmixOverlayChannel Int       @default(1)
-  timerStartedAt     DateTime?
-  timerRunning       Boolean   @default(false)
-  montariaAtivaId    Int?
-  rankingMode        String?   @default("OFF")
-  rankingPage        Int       @default(0)
-  overlayMode        String    @default("ID") // ID (Lower Third), CHAMADA (Full Screen)
+  id                  Int       @id @default(autoincrement())
+  numJuizes           Int       @default(2)
+  notaMaxima          Int       @default(100)
+  titulo              String    @default("Circuito Master")
+  vmixUrl             String?   @default("http://127.0.0.1:8088/api")
+  vmixInputId         String?
+  vmixReplayInputId   String?   @default("Instant Replay")
+  replayExportPath    String?
+  vmixOverlayChannel  Int       @default(1)
+  timerStartedAt      DateTime?
+  timerRunning        Boolean   @default(false)
+  montariaAtivaId     Int?
+  rankingMode         String?   @default("OFF")
+  rankingPage         Int       @default(0)
+  overlayMode         String    @default("ID") // ID (Lower Third), CHAMADA (Full Screen)
   googleDriveFolderId String?
   googleDriveApiKey   String?
+  rankingCongelado    Boolean   @default(false)
 }
 
 model RoundReserva {
@@ -178,14 +179,14 @@ model RoundReserva {
 }
 
 model LogNota {
-  id           Int      @id @default(autoincrement())
-  montariaId   Int
-  usuarioNome  String
-  juizNumero   Int      // 1, 2, 3 ou 4
-  notaPeao     Float
-  notaAnimal   Float
-  acao         String   @default("NOTA_JUIZ")
-  ipOrigem     String?
-  dataHora     DateTime @default(now())
-  montaria     Montaria @relation(fields: [montariaId], references: [id])
+  id          Int      @id @default(autoincrement())
+  montariaId  Int
+  usuarioNome String
+  juizNumero  Int // 1, 2, 3 ou 4
+  notaPeao    Float
+  notaAnimal  Float
+  acao        String   @default("NOTA_JUIZ")
+  ipOrigem    String?
+  dataHora    DateTime @default(now())
+  montaria    Montaria @relation(fields: [montariaId], references: [id])
 }

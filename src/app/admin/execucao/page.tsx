@@ -164,6 +164,28 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Lançamento de Campo: <span style={{color:'var(--primary)'}}>Round {round.numero}</span></h1>
           <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>{round.etapa.nome} • Busque o peão na súmula abaixo para pontuar.</p>
         </div>
+        
+        {/* MODO MANUAL / AUDITORIA */}
+        <form style={{ display: 'flex', background: '#111', padding: '10px 15px', borderRadius: '8px', border: `1px solid ${(config as any).rankingCongelado ? '#ff4444' : '#333'}`, alignItems: 'center', gap: '15px' }}>
+            <div>
+               <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: (config as any).rankingCongelado ? '#ff4444' : '#888', textTransform: 'uppercase' }}>
+                  Auditoria de Ranking
+               </div>
+               <div style={{ fontSize: '0.9rem', color: '#fff' }}>
+                  {(config as any).rankingCongelado ? 'Modo Manual Ativo (Paralisado)' : 'Modo Automático (Público Online)'}
+               </div>
+            </div>
+            
+            {(config as any).rankingCongelado ? (
+                <button formAction={async () => { 'use server'; const { updateRankingCongelado } = await import('../etapas/actions'); await updateRankingCongelado(false); }} className="btn-secondary" style={{ background: '#222', color: '#fff' }}>
+                   Restaurar Auto
+                </button>
+            ) : (
+                <button formAction={async () => { 'use server'; const { updateRankingCongelado } = await import('../etapas/actions'); await updateRankingCongelado(true); }} className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>
+                   Congelar Site & Overlay
+                </button>
+            )}
+        </form>
       </div>
 
       {/* CONTROLE DE VISUALIZAÇÃO DO PEÃO (CHAMADA) */}

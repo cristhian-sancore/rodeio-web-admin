@@ -729,3 +729,17 @@ export async function updateOverlayMode(mode: string) {
   revalidatePath('/api/overlay/current');
 }
 
+export async function updateRankingCongelado(status: boolean) {
+  const currentConfig = await prisma.configuracao.findFirst();
+  await prisma.configuracao.upsert({
+    where: { id: currentConfig?.id || 1 },
+    update: { rankingCongelado: status },
+    create: { id: 1, rankingCongelado: status, overlayMode: 'ID', numJuizes: 2, titulo: "Rodeio Web" }
+  });
+  revalidatePath('/admin/execucao');
+  revalidatePath('/api/overlay/current');
+  revalidatePath('/overlay/nota');
+  revalidatePath('/');
+  revalidatePath('/ranking');
+}
+

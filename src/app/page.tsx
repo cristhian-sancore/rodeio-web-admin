@@ -156,13 +156,22 @@ export default async function Home() {
         <div className="section-header" style={{ textAlign: 'left', marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
             <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Ranking Oficial</h2>
-            <p style={{ color: '#666' }}>Acompanhe os líderes em tempo real</p>
+            <p style={{ color: '#666' }}>{(config as any)?.rankingCongelado ? 'As notas recentes estão em processo de auditoria.' : 'Acompanhe os líderes em tempo real'}</p>
           </div>
-          <Link href="/ranking" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            Ver Ranking Completo <ChevronRight size={16} />
-          </Link>
+          {!((config as any)?.rankingCongelado) && (
+             <Link href="/ranking" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+               Ver Ranking Completo <ChevronRight size={16} />
+             </Link>
+          )}
         </div>
 
+        {((config as any)?.rankingCongelado) ? (
+            <div style={{ textAlign: 'center', padding: '50px 20px', background: 'rgba(255,200,0,0.05)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: '15px' }}>
+               <Trophy size={48} color="rgba(255,200,0,0.5)" style={{ marginBottom: '20px' }} />
+               <h3 style={{ color: '#D4AF37', fontSize: '1.5rem', marginBottom: '10px' }}>APURAÇÃO EM ANDAMENTO</h3>
+               <p style={{ color: '#aaa' }}>As posições do ranking estão temporariamente ocultas até o fechamento da correção de notas.<br/>Retorne em instantes para ver a tabela oficial atualizada.</p>
+            </div>
+        ) : (
         <div className="highlights-grid">
            {/* Ranking Etapa */}
            <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a' }}>
@@ -206,6 +215,7 @@ export default async function Home() {
               </div>
            </div>
         </div>
+        )}
       </section>
 
       {/* Features Section */}

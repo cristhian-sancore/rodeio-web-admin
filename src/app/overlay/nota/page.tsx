@@ -315,7 +315,7 @@ export default function OverlayNotaPage() {
         <div className={`nota-container ${shouldHideLowerThird ? 'hidden' : ''}`}>
           {/* HEADER BADGES (RANK E DIFF) */}
           <div className="header-badges">
-            {d.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
+            {!data.rankingCongelado && d.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
           </div>
 
           <div className="info-card">
