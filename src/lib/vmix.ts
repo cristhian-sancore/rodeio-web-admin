@@ -6,7 +6,10 @@ import path from 'node:path';
 
 export interface VMixConfig {
   vmixUrl: string | null;
-  vmixInputId: string | null;
+  vmixInputId?: string | null;
+  vmixInputNotaId?: string | null;
+  vmixInputChamadaId?: string | null;
+  vmixInputRankingId?: string | null;
   vmixReplayInputId?: string | null;
   replayExportPath?: string | null;
   vmixOverlayChannel?: number;
@@ -56,8 +59,9 @@ export async function callVMix(baseUrl: string, functionName: string, params: Re
 /**
  * Aciona um overlay específico no vMix
  */
-export async function triggerVMixOverlay(config: VMixConfig, channel: number, action: 'In' | 'Out' | 'Off') {
-  if (!config.vmixUrl || !config.vmixInputId) return;
+export async function triggerVMixOverlay(config: VMixConfig, channel: number, action: 'In' | 'Out' | 'Off', customInputId?: string) {
+  const inputId = customInputId || config.vmixInputId;
+  if (!config.vmixUrl || !inputId) return;
 
   const baseUrl = config.vmixUrl.endsWith('/api') 
     ? config.vmixUrl 
@@ -65,7 +69,7 @@ export async function triggerVMixOverlay(config: VMixConfig, channel: number, ac
 
   const functionName = action === 'Off' ? `OverlayInput${channel}Off` : `OverlayInput${channel}${action}`;
   
-  return await callVMix(baseUrl, functionName, { Input: config.vmixInputId });
+  return await callVMix(baseUrl, functionName, { Input: inputId });
 }
 
 export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<string | null> {
@@ -78,7 +82,9 @@ export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<st
   let replayFileName: string | null = null;
 
   // 1. Atualizar Textos no Overlay (GT Title)
-  if (config.vmixInputId) {
+  const inputId = config.vmixInputNotaId || config.vmixInputId;
+
+  if (inputId) {
     const fields: Record<string, string | number | undefined> = {
       'Competidor': data.competidor,
       'Animal': data.animal,
@@ -106,7 +112,7 @@ export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<st
     for (const [fieldName, value] of Object.entries(fields)) {
       if (value === undefined || value === null) continue;
       await callVMix(baseUrl, 'SetText', {
-        Input: config.vmixInputId,
+        Input: inputId,
         SelectedName: fieldName,
         Value: value.toString()
       });
@@ -114,7 +120,7 @@ export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<st
 
     // 2. Acionar Overlay (Entrada automática)
     const channel = config.vmixOverlayChannel || 1;
-    await callVMix(baseUrl, `OverlayInput${channel}In`, { Input: config.vmixInputId });
+    await callVMix(baseUrl, `OverlayInput${channel}In`, { Input: inputId });
   }
 
   // 3. Taguear Replay (Instant Replay)

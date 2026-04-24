@@ -279,7 +279,9 @@ export async function saveConfig(formData: FormData) {
         numJuizes, 
         titulo,
         vmixUrl: formData.get('vmixUrl') as string,
-        vmixInputId: formData.get('vmixInputId') as string,
+        vmixInputNotaId: formData.get('vmixInputNotaId') as string,
+        vmixInputChamadaId: formData.get('vmixInputChamadaId') as string,
+        vmixInputRankingId: formData.get('vmixInputRankingId') as string,
         vmixReplayInputId: formData.get('vmixReplayInputId') as string,
         replayExportPath: formData.get('replayExportPath') as string,
         vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
@@ -291,7 +293,9 @@ export async function saveConfig(formData: FormData) {
         numJuizes, 
         titulo,
         vmixUrl: formData.get('vmixUrl') as string,
-        vmixInputId: formData.get('vmixInputId') as string,
+        vmixInputNotaId: formData.get('vmixInputNotaId') as string,
+        vmixInputChamadaId: formData.get('vmixInputChamadaId') as string,
+        vmixInputRankingId: formData.get('vmixInputRankingId') as string,
         vmixReplayInputId: formData.get('vmixReplayInputId') as string,
         replayExportPath: formData.get('replayExportPath') as string,
         vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
@@ -366,7 +370,13 @@ export async function deactivateVMixOverlay() {
     const config = await prisma.configuracao.findFirst();
     if (config && config.vmixUrl) {
       const { triggerVMixOverlay } = await import('@/lib/vmix');
-      await triggerVMixOverlay(config as any, config.vmixOverlayChannel || 1, 'Out');
+      const channel = config.vmixOverlayChannel || 1;
+      
+      let inputId = config.vmixInputNotaId || config.vmixInputId;
+      if (config.overlayMode === 'CHAMADA') inputId = config.vmixInputChamadaId;
+      if (config.overlayMode === 'RANKING') inputId = config.vmixInputRankingId;
+
+      await triggerVMixOverlay(config as any, channel, 'Out', inputId as string);
     }
     return { success: true };
   } catch (err) {
@@ -435,7 +445,8 @@ export async function toggleTimer(running: boolean, finalTempo?: number) {
       if (running && currentConfig.vmixUrl) {
         try {
            const { triggerVMixOverlay } = await import('@/lib/vmix');
-           await triggerVMixOverlay(currentConfig as any, currentConfig.vmixOverlayChannel || 1, 'In');
+           const inputId = currentConfig.vmixInputNotaId || currentConfig.vmixInputId;
+           await triggerVMixOverlay(currentConfig as any, currentConfig.vmixOverlayChannel || 1, 'In', inputId as string);
         } catch (vErr) {
            console.error("Erro ao ativar Overlay no vMix via Cronômetro", vErr);
         }
@@ -841,6 +852,29 @@ export async function updateOverlayMode(mode: string) {
     update: { overlayMode: mode },
     create: { id: 1, overlayMode: mode, numJuizes: 2, titulo: "Rodeio Web" }
   });
+
+  // Automação vMix: Chamar o Input correspondente
+  if (currentConfig?.vmixUrl) {
+    try {
+      const { triggerVMixOverlay } = await import('@/lib/vmix');
+      const channel = currentConfig.vmixOverlayChannel || 1;
+      
+      if (mode === 'OFF') {
+          // Desligar o último ativo (usamos o ID de notas como geral se não soubermos)
+          const fallbackInput = currentConfig.vmixInputRankingId || currentConfig.vmixInputChamadaId || currentConfig.vmixInputNotaId || currentConfig.vmixInputId;
+          await triggerVMixOverlay(currentConfig as any, channel, 'Out', fallbackInput as string);
+      } else {
+          let targetInput = currentConfig.vmixInputNotaId || currentConfig.vmixInputId;
+          if (mode === 'CHAMADA') targetInput = currentConfig.vmixInputChamadaId;
+          if (mode === 'RANKING') targetInput = currentConfig.vmixInputRankingId;
+          
+          await triggerVMixOverlay(currentConfig as any, channel, 'In', targetInput as string);
+      }
+    } catch (e) {
+      console.error("Erro vMix Mode Switch:", e);
+    }
+  }
+
   revalidatePath('/admin/execucao');
   revalidatePath('/api/overlay/current');
 }

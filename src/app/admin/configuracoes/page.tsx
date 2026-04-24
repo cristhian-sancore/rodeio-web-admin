@@ -135,12 +135,32 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.75rem', color: '#888', fontSize: '0.9rem', fontWeight: '600' }}>Input Name / UUID (GT Title)</label>
+              <label style={{ display: 'block', marginBottom: '0.75rem', color: '#888', fontSize: '0.9rem', fontWeight: '600' }}>vMix: Input NOTAS (GT Title)</label>
               <input 
-                name="vmixInputId" 
+                name="vmixInputNotaId" 
                 type="text" 
-                defaultValue={config.vmixInputId || ''} 
-                placeholder="Ex: NotaCompetidor.gtzip"
+                defaultValue={config.vmixInputNotaId || config.vmixInputId || ''} 
+                placeholder="Ex: Notas.gtzip"
+                style={{ width: '100%', padding: '1rem', background: '#111', border: '1px solid #333', borderRadius: '10px', color: '#fff', fontSize: '1rem' }} 
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.75rem', color: '#888', fontSize: '0.9rem', fontWeight: '600' }}>vMix: Input CHAMADA (Full)</label>
+              <input 
+                name="vmixInputChamadaId" 
+                type="text" 
+                defaultValue={config.vmixInputChamadaId || ''} 
+                placeholder="Ex: Chamada.gtzip"
+                style={{ width: '100%', padding: '1rem', background: '#111', border: '1px solid #333', borderRadius: '10px', color: '#fff', fontSize: '1rem' }} 
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.75rem', color: '#888', fontSize: '0.9rem', fontWeight: '600' }}>vMix: Input RANKING</label>
+              <input 
+                name="vmixInputRankingId" 
+                type="text" 
+                defaultValue={config.vmixInputRankingId || ''} 
+                placeholder="Ex: TabelaRanking.gtzip"
                 style={{ width: '100%', padding: '1rem', background: '#111', border: '1px solid #333', borderRadius: '10px', color: '#fff', fontSize: '1rem' }} 
               />
             </div>

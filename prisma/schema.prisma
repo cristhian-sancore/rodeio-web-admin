@@ -154,6 +154,9 @@ model Configuracao {
   titulo              String    @default("Circuito Master")
   vmixUrl             String?   @default("http://127.0.0.1:8088/api")
   vmixInputId         String?
+  vmixInputNotaId     String?
+  vmixInputChamadaId  String?
+  vmixInputRankingId  String?
   vmixReplayInputId   String?   @default("Instant Replay")
   replayExportPath    String?
   vmixOverlayChannel  Int       @default(1)
