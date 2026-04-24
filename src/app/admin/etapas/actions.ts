@@ -190,6 +190,11 @@ export async function addMontaria(roundId: number, competidorId: number, animalI
 }
 
 export async function deleteMontaria(montariaId: number, roundId: number, etapaId: number) {
+  const session = await getServerSession(authOptions);
+  if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'SUPER_ADMIN')) {
+    throw new Error("Não autorizado");
+  }
+
   await p.montaria.delete({
     where: { id: montariaId }
   });
@@ -253,7 +258,9 @@ export async function applyRepasse(montariaId: number, roundId: number) {
 
 export async function saveConfig(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'ADMIN') throw new Error("Apenas administradores podem alterar configurações globais");
+  if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'SUPER_ADMIN')) {
+    throw new Error("Não autorizado para alterar configurações globais.");
+  }
 
   const numJuizesStr = formData.get('numJuizes') as string;
   const titulo = formData.get('titulo') as string;

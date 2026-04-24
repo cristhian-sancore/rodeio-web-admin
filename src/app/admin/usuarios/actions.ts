@@ -15,13 +15,15 @@ export async function createUser(formData: FormData) {
   const password = formData.get('password') as string;
   let role = formData.get('role') as string;
   
-  // Restrição: Juiz nunca cria usuários
-  if (creator.role === 'JUIZ') throw new Error("Juízes não podem criar usuários");
+  // 🛡️ PROTEÇÃO CONTRA ESCALADA DE PRIVILÉGIOS (PENTEST)
+  if (role === 'SUPER_ADMIN' && creator.role !== 'SUPER_ADMIN') {
+    throw new Error("Apenas o Super Admin original pode criar outros usuários Root.");
+  }
 
   // Restrição: Comentarista não pode criar ADMIN nem COMENTARISTA
   if (creator.role === 'COMENTARISTA') {
-    if (role === 'ADMIN' || role === 'COMENTARISTA') {
-      role = 'JUIZ'; // Forçar JUIZ se tentar burlar via FORM
+    if (role === 'ADMIN' || role === 'COMENTARISTA' || role === 'SUPER_ADMIN') {
+      role = 'JUIZ'; 
     }
   }
 
@@ -55,13 +57,21 @@ export async function updateUser(formData: FormData) {
   const targetUser = await prisma.user.findUnique({ where: { id } });
   if (!targetUser) throw new Error("Usuário não encontrado");
 
+  // 🛡️ PROTEÇÃO CONTRA ESCALADA DE PRIVILÉGIOS (PENTEST)
+  if (targetUser.role === 'SUPER_ADMIN' && creator.role !== 'SUPER_ADMIN') {
+    throw new Error("Você não tem permissão para alterar dados de um usuário Root.");
+  }
+  if (role === 'SUPER_ADMIN' && creator.role !== 'SUPER_ADMIN') {
+    throw new Error("Você não pode promover usuários ao nível Root.");
+  }
+
   // Restrição: Comentarista não pode editar ADMINS ou outros COMENTARISTAS
   if (creator.role === 'COMENTARISTA') {
-    if (targetUser.role === 'ADMIN' || targetUser.role === 'COMENTARISTA') {
+    if (targetUser.role === 'ADMIN' || targetUser.role === 'COMENTARISTA' || targetUser.role === 'SUPER_ADMIN') {
       throw new Error("Você não tem permissão para editar usuários deste nível.");
     }
     // Impedir que promova alguém para ADMIN ou COMENTARISTA
-    if (role === 'ADMIN' || role === 'COMENTARISTA') {
+    if (role === 'ADMIN' || role === 'COMENTARISTA' || role === 'SUPER_ADMIN') {
       role = 'JUIZ';
     }
   }
@@ -97,8 +107,13 @@ export async function deleteUser(formData: FormData) {
   const targetUser = await prisma.user.findUnique({ where: { id } });
   if (!targetUser) return;
 
-  // Restrição: Apenas ADMIN pode deletar ADMINS ou COMENTARISTAS
-  if (creator.role !== 'ADMIN' && (targetUser.role === 'ADMIN' || targetUser.role === 'COMENTARISTA')) {
+  // 🛡️ PROTEÇÃO CONTRA DELEÇÃO DE ROOT (PENTEST)
+  if (targetUser.role === 'SUPER_ADMIN' && creator.role !== 'SUPER_ADMIN') {
+    throw new Error("Atenção: Usuários Super Admin só podem ser removidos por outro Super Admin.");
+  }
+
+  // Restrição: Apenas ADMIN ou SUPER_ADMIN pode deletar ADMINS ou COMENTARISTAS
+  if (creator.role !== 'ADMIN' && creator.role !== 'SUPER_ADMIN' && (targetUser.role === 'ADMIN' || targetUser.role === 'COMENTARISTA')) {
     throw new Error("Você não tem permissão para remover este tipo de usuário.");
   }
 
