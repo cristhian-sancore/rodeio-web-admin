@@ -98,19 +98,10 @@ export async function POST(req: Request) {
       peao = 0; // Se desclassificado, a nota individual também vira 0 para o log
     }
 
+    // 🛡️ REVERSÃO DO PENTEST: Voltar para somatória bruta conforme solicitado pelo usuário
     let notaTotal = totalPeao + totalAnimal;
-    const numJuizes = config?.numJuizes || 2;
 
-    // Normalização (Ex: 4 juízes = divide por 2 para teto 100)
-    if (numJuizes === 4) {
-      notaTotal /= 2; totalPeao /= 2; totalAnimal /= 2;
-    } else if (numJuizes === 3) {
-      notaTotal = (notaTotal / 3) * 2; totalPeao = (totalPeao / 3) * 2; totalAnimal = (totalAnimal / 3) * 2;
-    } else if (numJuizes === 1) {
-      notaTotal *= 2; totalPeao *= 2; totalAnimal *= 2;
-    }
-
-    if (notaTotal > 100) notaTotal = 100;
+    if (notaTotal > 100 && (config?.numJuizes || 2) < 4) notaTotal = 100; // Trava básica de segurança se não for 4 juízes
 
     // 3. PRIORIDADE 1 & 3: SALVAR TUDO E REGISTRAR LOG EM UMA ÚNICA TRANSAÇÃO
     await prisma.$transaction([
