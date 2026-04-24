@@ -98,10 +98,23 @@ export async function POST(req: Request) {
       peao = 0; // Se desclassificado, a nota individual também vira 0 para o log
     }
 
-    // 🛡️ REVERSÃO DO PENTEST: Voltar para somatória bruta conforme solicitado pelo usuário
+    // 🛡️ REGRA OFICIAL CNAR (Confederação Nacional de Rodeio)
+    // A nota final é sempre base 100. Cada juiz avalia de 0 a 50 (25 Peão / 25 Animal).
     let notaTotal = totalPeao + totalAnimal;
+    const nJ = config?.numJuizes || 2;
 
-    if (notaTotal > 100 && (config?.numJuizes || 2) < 4) notaTotal = 100; // Trava básica de segurança se não for 4 juízes
+    if (nJ === 4) {
+      // Sistema Barretos/CNAR: (J1+J2+J3+J4) / 2
+      notaTotal /= 2; 
+      totalPeao /= 2; 
+      totalAnimal /= 2;
+    } else if (nJ === 1) {
+      // 1 Juiz: Nota Única * 2
+      notaTotal *= 2; 
+      totalPeao *= 2; 
+      totalAnimal *= 2;
+    }
+    // Para 2 juízes (padrão CNAR), a notaTotal é a soma bruta (Max 100).
 
     // 3. PRIORIDADE 1 & 3: SALVAR TUDO E REGISTRAR LOG EM UMA ÚNICA TRANSAÇÃO
     await prisma.$transaction([
