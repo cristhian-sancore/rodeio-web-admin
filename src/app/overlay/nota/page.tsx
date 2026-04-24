@@ -60,16 +60,22 @@ export default function OverlayNotaPage() {
   );
   const shouldHideLowerThird = timerVisible || (rideStarted && !hasAnyScore);
 
-  // Escuta visibilidade do Lower Third e força a saída da tela após 10 segundos ininterruptos
+  // Escuta visibilidade do Lower Third e força a saída da tela após 60 segundos (60s)
   useEffect(() => {
     if (!shouldHideLowerThird && data?.mode === 'ID' && d) {
        setLowerThirdForcedHide(false);
-       if (ltHideTimeoutRef.current) clearTimeout(ltHideTimeoutRef.current);
+       if (ltHideTimeoutRef.current) {
+           clearTimeout(ltHideTimeoutRef.current);
+           ltHideTimeoutRef.current = null;
+       }
        ltHideTimeoutRef.current = setTimeout(() => {
            setLowerThirdForcedHide(true);
-       }, 10000);
+       }, 60000); // 60 segundos de permanência máxima do gráfico principal
     } else {
-       if (ltHideTimeoutRef.current) clearTimeout(ltHideTimeoutRef.current);
+       if (ltHideTimeoutRef.current) {
+           clearTimeout(ltHideTimeoutRef.current);
+           ltHideTimeoutRef.current = null;
+       }
     }
   }, [shouldHideLowerThird, data?.mode, d?.id]);
 
@@ -133,14 +139,22 @@ export default function OverlayNotaPage() {
     setRideStarted(false);
   }, [data?.data?.id]);
 
+  // Regula o Cronômetro e Oculta 10s após interrompido
   useEffect(() => {
     if (data?.timerRunning) {
       setTimerVisible(true);
       setRideStarted(true);
+      if (timerTimeoutRef.current) {
+          clearTimeout(timerTimeoutRef.current);
+          timerTimeoutRef.current = null;
+      }
+    } else if (elapsedTime > 0 || (d && d.tempo > 0)) {
+      // Backend parou o cronômetro ou tem nota (fechou o ride)
       if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
-    } else if (elapsedTime > 0) {
-      // Backend parou o cronômetro
-      timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 5000);
+      timerTimeoutRef.current = setTimeout(() => {
+          setTimerVisible(false);
+          timerTimeoutRef.current = null;
+      }, 10000); // Fica 10s na tela depois de paralisar
     } else {
       setTimerVisible(false);
     }
@@ -159,7 +173,10 @@ export default function OverlayNotaPage() {
           // Atingiu 8 segundos visuais
           setTimerVisible((prev) => {
              if (prev && !timerTimeoutRef.current) {
-                 timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 5000);
+                 timerTimeoutRef.current = setTimeout(() => {
+                     setTimerVisible(false);
+                     timerTimeoutRef.current = null;
+                 }, 10000); // Max Hide at delay
              }
              return prev;
           });
