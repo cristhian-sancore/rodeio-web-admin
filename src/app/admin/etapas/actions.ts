@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 const p = prisma;
+import { logSystemAction } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -321,10 +322,30 @@ export async function executeRawSql(sql: string) {
       data = { affectedRows: count };
     }
 
+    await logSystemAction(session.user.name || 'Root', 'SQL_EXEC', { sql, isSelect });
+
     return { success: true, data };
   } catch (err: any) {
     console.error('ERRO SQL ROOT:', err);
     return { success: false, error: err.message };
+  }
+}
+
+export async function checkVMixStatus() {
+  try {
+    const config = await prisma.configuracao.findFirst();
+    if (!config || !config.vmixUrl) return { online: false, error: 'vMix URL não configurada' };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2s timeout
+    
+    // Tentativa silenciosa de ping
+    const res = await fetch(config.vmixUrl, { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timeoutId);
+
+    return { online: res.status >= 200 && res.status < 500 };
+  } catch (err) {
+    return { online: false };
   }
 }
 

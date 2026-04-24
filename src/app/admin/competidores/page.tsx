@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { User, Trash2, Edit, Search, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { createCompetidor, deleteCompetidor } from "./actions";
+import ExcelActions from "./ExcelActions";
 
 export default async function CompetidoresPage({ searchParams }: { searchParams: Promise<{ q?: string, error?: string }> }) {
   const { q, error } = await searchParams;
@@ -59,8 +60,11 @@ export default async function CompetidoresPage({ searchParams }: { searchParams:
 
       {/* Lista de Competidores */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <h2 style={{ fontSize: '1.25rem', color: '#fff', margin: 0 }}>Atletas Cadastrados ({competidores.length})</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+             <h2 style={{ fontSize: '1.25rem', color: '#fff', margin: 0 }}>Atletas Cadastrados ({competidores.length})</h2>
+             <ExcelActions data={competidores} />
+          </div>
           
           <form method="GET" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <div style={{ position: 'relative' }}>

@@ -190,3 +190,13 @@ model LogNota {
   dataHora    DateTime @default(now())
   montaria    Montaria @relation(fields: [montariaId], references: [id])
 }
+
+model SystemLog {
+  id          Int      @id @default(autoincrement())
+  usuarioNome String
+  acao        String   // Ex: UPDATE_CONFIG, DELETE_MONTARIA, SQL_EXEC
+  detalhes    String?  // JSON ou texto
+  ip          String?
+  dataHora    DateTime @default(now())
+}
+

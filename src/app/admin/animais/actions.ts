@@ -2,6 +2,9 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logSystemAction } from "@/lib/audit";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -88,3 +91,26 @@ export async function deleteAnimal(formData: FormData) {
   await prisma.animal.delete({ where: { id } });
   revalidatePath('/admin/animais');
 }
+
+export async function importAnimais(data: any[]) {
+  const session = await getServerSession(authOptions);
+  
+  const toCreate = data.map(row => ({
+    nome: String(row.Nome || row.nome || '').trim(),
+    companhia: String(row.Companhia || row.companhia || '').trim(),
+    tipo: String(row.Tipo || row.tipo || 'Touro').trim(),
+  })).filter(a => a.nome.length > 2);
+
+  if (toCreate.length === 0) return { error: 'Nenhum dado válido encontrado na planilha.' };
+
+  await prisma.animal.createMany({ data: toCreate });
+  
+  await logSystemAction(session?.user?.name || 'Sistema', 'IMPORT_EXCEL', { 
+    tipo: 'ANIMAIS', 
+    quantidade: toCreate.length 
+  });
+
+  revalidatePath('/admin/animais');
+  return { success: true, count: toCreate.length };
+}
+

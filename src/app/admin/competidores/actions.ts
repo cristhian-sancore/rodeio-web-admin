@@ -2,6 +2,9 @@
 
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { logSystemAction } from "@/lib/audit";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
@@ -89,3 +92,27 @@ export async function deleteCompetidor(formData: FormData) {
   await prisma.competidor.delete({ where: { id } });
   revalidatePath('/admin/competidores');
 }
+
+export async function importCompetidores(data: any[]) {
+  const session = await getServerSession(authOptions);
+  
+  // Limpar e validar dados
+  const toCreate = data.map(row => ({
+    nome: String(row.Nome || row.nome || '').trim(),
+    cidade: String(row.Cidade || row.cidade || '').trim(),
+    uf: String(row.UF || row.uf || '').trim().toUpperCase().substring(0, 2),
+  })).filter(c => c.nome.length > 2);
+
+  if (toCreate.length === 0) return { error: 'Nenhum dado válido encontrado na planilha.' };
+
+  await prisma.competidor.createMany({ data: toCreate });
+  
+  await logSystemAction(session?.user?.name || 'Sistema', 'IMPORT_EXCEL', { 
+    tipo: 'COMPETIDORES', 
+    quantidade: toCreate.length 
+  });
+
+  revalidatePath('/admin/competidores');
+  return { success: true, count: toCreate.length };
+}
+

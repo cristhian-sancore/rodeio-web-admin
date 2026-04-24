@@ -29,6 +29,11 @@ export default async function SuperAdminPage() {
     include: { competidor: true, animal: true, round: { include: { etapa: true } } }
   });
 
+  const systemLogs = await (prisma as any).systemLog.findMany({
+    take: 10,
+    orderBy: { dataHora: 'desc' },
+  });
+
   return (
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -156,6 +161,32 @@ export default async function SuperAdminPage() {
           </div>
         </div>
 
+      <div style={{ marginTop: '3rem' }}>
+         <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Activity size={20} color="#4CAF50" /> Log de Auditoria Root (Ações de Sistema)
+         </h2>
+         <div className="premium-card" style={{ padding: 0 }}>
+             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+               <thead>
+                 <tr style={{ textAlign: 'left', borderBottom: '1px solid #333', fontSize: '0.8rem', color: '#666' }}>
+                   <th style={{ padding: '1rem' }}>DATA/HORA</th>
+                   <th>USUÁRIO</th>
+                   <th>AÇÃO</th>
+                   <th>DETALHES</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {systemLogs.map((log: any) => (
+                   <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a', fontSize: '0.85rem' }}>
+                     <td style={{ padding: '0.75rem 1rem', color: '#666' }}>{new Date(log.dataHora).toLocaleString()}</td>
+                     <td style={{ fontWeight: 'bold' }}>{log.usuarioNome}</td>
+                     <td style={{ color: 'var(--primary)' }}>{log.acao}</td>
+                     <td style={{ color: '#888', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.detalhes}</td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+          </div>
       </div>
     </div>
   );

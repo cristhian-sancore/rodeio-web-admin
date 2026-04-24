@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { Cat, Trash2, Shield, Edit, Search, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { createAnimal, deleteAnimal } from "./actions";
+import ExcelActions from "./ExcelActions";
 
 export default async function AnimaisPage({ searchParams }: { searchParams: Promise<{ q?: string, error?: string }> }) {
   const { q, error } = await searchParams;
@@ -21,9 +22,12 @@ export default async function AnimaisPage({ searchParams }: { searchParams: Prom
     <div className="fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ margin: 0 }}>Plantel de Animais</h1>
-        <Link href="/admin/animais/ranking" className="btn-primary" style={{ textDecoration: 'none', background: '#222', border: '1px solid #333' }}>
-          Ver Ranking da Boiada
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <ExcelActions data={animais} />
+          <Link href="/admin/animais/ranking" className="btn-primary" style={{ textDecoration: 'none', background: '#222', border: '1px solid #333' }}>
+            Ver Ranking da Boiada
+          </Link>
+        </div>
       </div>
 
       {error === 'ANIMAL_HAS_LINKS' && (

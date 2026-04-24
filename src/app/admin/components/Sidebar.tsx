@@ -7,6 +7,8 @@ import {
   Trophy, TrendingUp, Gavel, ShieldCheck, LogOut, Menu, X 
 } from "lucide-react";
 import { signOut } from 'next-auth/react';
+import { checkVMixStatus } from '../etapas/actions';
+import { Wifi, WifiOff } from 'lucide-react';
 
 export default function Sidebar({ user }: { user: any }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +17,18 @@ export default function Sidebar({ user }: { user: any }) {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isComentarista = user?.role === 'COMENTARISTA';
   const hasFullAccess = isAdmin || isSuperAdmin || isComentarista;
+  
+  const [vmixOnline, setVmixOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      const res = await checkVMixStatus();
+      setVmixOnline(res.online);
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const NavLink = ({ href, icon: Icon, children }: any) => {
     const isActive = pathname === href || (href !== '/admin' && pathname.startsWith(href));
@@ -94,6 +108,26 @@ export default function Sidebar({ user }: { user: any }) {
           <div style={{ background: 'rgba(212, 175, 55, 0.05)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(212, 175, 55, 0.1)', marginTop: '1.25rem' }}>
             <p style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold' }}>CREDENCIAIS: {user?.role}</p>
             <p style={{ fontSize: '0.9rem', color: '#fff', margin: '2px 0 0', fontWeight: '600' }}>{user?.name || 'Operador'}</p>
+            
+            <div style={{ 
+              marginTop: '0.75rem', 
+              paddingTop: '0.75rem', 
+              borderTop: '1px solid rgba(255,255,255,0.05)',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              fontSize: '0.65rem',
+              color: vmixOnline ? '#4CAF50' : (vmixOnline === false ? '#ff4444' : '#666'),
+              fontWeight: 'bold',
+              textTransform: 'uppercase'
+            }}>
+              <div style={{ 
+                width: '6px', height: '6px', borderRadius: '50%', 
+                background: vmixOnline ? '#4CAF50' : (vmixOnline === false ? '#ff4444' : '#666'),
+                boxShadow: vmixOnline ? '0 0 8px #4CAF50' : 'none' 
+              }} />
+              {vmixOnline ? <><Wifi size={10} /> vMix Online</> : <><WifiOff size={10} /> vMix Offline</>}
+            </div>
           </div>
         </div>
         
