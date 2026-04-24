@@ -355,6 +355,7 @@ export async function getChampionshipRanking(temporadaId: number, modalidade: st
         where: { modalidade },
         include: {
           montarias: {
+            where: { removida: false },
             include: { competidor: true }
           }
         }

@@ -128,7 +128,7 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   const [juizes, montarias] = await Promise.all([
     (prisma as any).juiz.findMany({ orderBy: { nome: 'asc' } }),
     (prisma as any).montaria.findMany({
-      where: { roundId: rId },
+      where: { roundId: rId, removida: false },
       orderBy: [
         { notaTotal: 'asc' }, // Montarias sem nota primeiro
         { dataHora: 'desc' }
