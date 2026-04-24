@@ -92,8 +92,22 @@ export default function ScoringForm({
   const isJ3 = (numJuizes >= 4) && (isAdmin || (user.juizId && round.juiz3Id === user.juizId));
   const isJ4 = (numJuizes >= 4) && (isAdmin || (user.juizId && round.juiz4Id === user.juizId));
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const total = Object.values(notas).reduce((a, b) => a + (b || 0), 0);
+    const isZero = total === 0;
+    const is8s = tempo >= 8;
+    const isDesq = (e.currentTarget.elements.namedItem('desclassificado') as HTMLInputElement).checked;
+
+    if (is8s && isZero && !isDesq) {
+      if (!confirm("⚠️ ALERTA: O tempo foi de 8 segundos mas todas as notas estão ZERADAS. Deseja gravar assim mesmo sem marcar como 'Desclassificado'?")) {
+        e.preventDefault();
+        return;
+      }
+    }
+  };
+
   return (
-    <form action={updateMontariaNota}>
+    <form action={updateMontariaNota} onSubmit={handleSubmit}>
       <input type="hidden" name="montariaId" value={montaria.id} />
       <input type="hidden" name="numJuizes" value={numJuizes} />
       <input type="hidden" name="tempo" value={tempo} />

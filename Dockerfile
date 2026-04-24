@@ -25,6 +25,7 @@ RUN npm run build
 
 # 3. Production image, copy all the files and run next
 FROM base AS runner
+RUN apk add --no-cache postgresql-client
 WORKDIR /app
 
 ENV NODE_ENV=production

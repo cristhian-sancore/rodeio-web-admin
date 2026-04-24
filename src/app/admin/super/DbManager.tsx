@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Terminal, Send, Trash2, Database, Download, Upload, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { executeRawSql } from '../etapas/actions';
+import { executeRawSql, exportDatabaseSql, importDatabaseSql } from '../etapas/actions';
 
 export default function DbManager() {
   const [sql, setSql] = useState('');
@@ -32,6 +32,47 @@ export default function DbManager() {
     }
   };
 
+  const handleExport = async () => {
+    setLoading(true);
+    try {
+      const res = await exportDatabaseSql();
+      if (res.success && res.sql) {
+        const blob = new Blob([res.sql], { type: 'text/sql' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rodeio_backup_${new Date().toISOString().split('T')[0]}.sql`;
+        a.click();
+      } else {
+        alert("Erro ao exportar: " + res.error);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!confirm("⚠️ ATENÇÃO: Isso irá substituir TODO o banco de dados atual pelo conteúdo do arquivo. Deseja continuar?")) return;
+
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const sqlText = evt.target?.result as string;
+      const res = await importDatabaseSql(sqlText);
+      if (res.success) {
+        alert("Banco de dados restaurado com sucesso! Recarregue a página.");
+        window.location.reload();
+      } else {
+        alert("Erro na restauração: " + res.error);
+      }
+      setLoading(false);
+    };
+    reader.readAsText(file);
+  };
+
+
   const clearDatabase = async () => {
     if (!confirm("⚠️ PERIGO: Isso apagará TODOS os dados do rodeio (Etapas, Peões, Notas). Tem certeza absoluta?")) return;
     const password = prompt("Digite a senha MASTER para confirmar:");
@@ -42,6 +83,22 @@ export default function DbManager() {
       const sqlToClear = `TRUNCATE TABLE "LogNota", "Montaria", "RoundReserva", "Round", "Etapa", "Temporada", "Competidor", "Animal" RESTART IDENTITY CASCADE;`;
       const res = await executeRawSql(sqlToClear);
       if (res.success) alert("Banco de dados limpo com sucesso!");
+      else setError(res.error || "Erro ao limpar");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetSeasonOnly = async () => {
+    if (!confirm("⚠️ Isso apagará TODAS as temporadas, etapas e notas lançadas, mas MANTERÁ os competidores e animais cadastrados. Deseja continuar?")) return;
+    const password = prompt("Digite a senha MASTER para confirmar (RODEIOWEB_RESET):");
+    if (password !== 'RODEIOWEB_RESET') return alert("Senha incorreta");
+
+    setLoading(true);
+    try {
+      const sqlToClear = `TRUNCATE TABLE "LogNota", "Montaria", "RoundReserva", "Round", "Etapa", "Temporada" RESTART IDENTITY CASCADE;`;
+      const res = await executeRawSql(sqlToClear);
+      if (res.success) alert("Resultados limpos com sucesso! Cadastros preservados.");
       else setError(res.error || "Erro ao limpar");
     } finally {
       setLoading(false);
@@ -59,9 +116,12 @@ export default function DbManager() {
             <h3 style={{ margin: 0 }}>Zona de Perigo</h3>
           </div>
           <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '1.5rem' }}>Ações destrutivas e alterações estruturais no banco de dados.</p>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button onClick={clearDatabase} className="btn-secondary" style={{ flex: 1, color: '#ff4444', border: '1px solid #ff4444', height: 'auto', padding: '10px' }}>
-              <Trash2 size={16} /> Limpar Banco (Zerar)
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button onClick={resetSeasonOnly} className="btn-secondary" style={{ width: '100%', color: 'var(--primary)', border: '1px solid var(--primary)' }}>
+               Zerar Resultados (Mantém Atletas/Animais)
+            </button>
+            <button onClick={clearDatabase} className="btn-secondary" style={{ width: '100%', color: '#ff4444', border: '1px solid #ff4444', opacity: 0.5 }}>
+               Zerar TUDO (Limpeza Total)
             </button>
           </div>
         </div>
@@ -73,12 +133,15 @@ export default function DbManager() {
           </div>
           <p style={{ fontSize: '0.8rem', color: '#888', marginBottom: '1.5rem' }}>Gerencie as cópias de segurança do seu evento.</p>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button disabled className="btn-secondary" style={{ flex: 1, opacity: 0.5 }}>
+            <button onClick={handleExport} disabled={loading} className="btn-secondary" style={{ flex: 1 }}>
               <Download size={16} /> Exportar SQL
             </button>
-            <button disabled className="btn-secondary" style={{ flex: 1, opacity: 0.5 }}>
-              <Upload size={16} /> Importar SQL
-            </button>
+            <div style={{ flex: 1, position: 'relative' }}>
+               <input type="file" accept=".sql" onChange={handleImport} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+               <button disabled={loading} className="btn-secondary" style={{ width: '100%' }}>
+                 <Upload size={16} /> Importar SQL
+               </button>
+            </div>
           </div>
           <p style={{ fontSize: '0.6rem', color: '#555', marginTop: '10px', textAlign: 'center' }}>* Backup automatizado via Docker ativado.</p>
         </div>

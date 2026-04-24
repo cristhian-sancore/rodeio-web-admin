@@ -5,6 +5,9 @@ const p = prisma;
 import { logSystemAction } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
+import { exec } from "child_process";
+import { promisify } from "util";
+const execAsync = promisify(exec);
 import { authOptions } from "@/lib/auth";
 import { sendToVMix, triggerVMixOverlay } from "@/lib/vmix";
 import { getCompetidorStageRank } from "@/lib/ranking";
@@ -360,6 +363,44 @@ export async function deactivateVMixOverlay() {
   } catch (err) {
     console.error('Erro ao desativar Vmix Overlay:', err);
     return { success: false };
+  }
+}
+
+export async function exportDatabaseSql() {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
+
+  try {
+    const dbUrl = process.env.DATABASE_URL || '';
+    // Extrai os dados da URL (ex: postgresql://user:pass@host:port/db)
+    // Usaremos a própria URL que o pg_dump entende
+    const { stdout } = await execAsync(`pg_dump "${dbUrl}"`);
+    
+    await logSystemAction(session.user.name || 'Root', 'BACKUP_EXPORT', { size: stdout.length });
+    return { success: true, sql: stdout };
+  } catch (err: any) {
+    console.error('Erro ao exportar banco:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function importDatabaseSql(sql: string) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
+
+  try {
+    const dbUrl = process.env.DATABASE_URL || '';
+    // CUIDADO: Isso substitui o banco atual.
+    // Usamos o comando psql
+    const child = exec(`psql "${dbUrl}"`);
+    child.stdin?.write(sql);
+    child.stdin?.end();
+
+    await logSystemAction(session.user.name || 'Root', 'BACKUP_IMPORT', { size: sql.length });
+    return { success: true };
+  } catch (err: any) {
+    console.error('Erro ao importar banco:', err);
+    return { success: false, error: err.message };
   }
 }
 

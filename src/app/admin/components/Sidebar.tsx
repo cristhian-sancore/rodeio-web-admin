@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Users, Cat, Calendar, Settings, 
-  Trophy, TrendingUp, Gavel, ShieldCheck, LogOut, Menu, X 
+  Trophy, TrendingUp, Gavel, ShieldCheck, LogOut, Menu, X, User
 } from "lucide-react";
 import { signOut } from 'next-auth/react';
 import { checkVMixStatus } from '../etapas/actions';
@@ -163,15 +163,28 @@ export default function Sidebar({ user }: { user: any }) {
           )}
           
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ margin: '0 0 1.5rem 0', padding: '0 0.5rem' }}>
+              <NavLink href="/admin/perfil" icon={User}>Meu Perfil</NavLink>
+            </div>
             <button 
               onClick={() => signOut({ callbackUrl: '/login' })}
               style={{ 
-                display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.85rem 1.25rem', 
-                borderRadius: '10px', color: '#ff4444', background: 'transparent',
-                border: '1px solid rgba(255, 68, 68, 0.1)', fontWeight: '600', cursor: 'pointer', fontSize: '0.95rem'
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                padding: '0.85rem 1.25rem', 
+                borderRadius: '10px', 
+                color: '#ff4444', 
+                background: 'rgba(255, 68, 68, 0.05)',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '600',
+                transition: 'all 0.2s',
+                fontSize: '0.95rem'
               }}
             >
-              <LogOut size={20} /> Encerrar Painel
+              <LogOut size={20} /> Sair do Painel
             </button>
           </div>
         </nav>
