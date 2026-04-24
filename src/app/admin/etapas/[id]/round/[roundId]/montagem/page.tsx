@@ -15,7 +15,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
   const rId = parseInt(roundId);
   const eId = parseInt(id);
 
-  const [round, competidores, animais, montarias, reservas] = await Promise.all([
+  const [round, competidores, animais, montarias, reservas, previousRoundData] = await Promise.all([
     prisma.round.findUnique({ where: { id: rId }, include: { etapa: true } }),
     prisma.competidor.findMany({ orderBy: { nome: 'asc' } }),
     prisma.animal.findMany({ orderBy: { nome: 'asc' } }),
@@ -27,8 +27,14 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
       where: { roundId: rId },
       include: { animal: true },
       orderBy: { ordem: 'asc' }
+    }),
+    // Busca pre-round info para o botão de atalho
+    prisma.round.findFirst({
+      where: { etapaId: eId } // apenas para popular uma possível query, refino na renderização
     })
   ]);
+
+  const hasPreviousRound = round && round.numero > 1;
 
   if (!round) return <div>Round não encontrado.</div>;
 
@@ -133,6 +139,22 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
               <AlertCircle size={14} /> Somente atletas não escalados aparecem como disponíveis.
             </p>
           </div>
+
+          {hasPreviousRound && montarias.length < competidores.length && (
+             <form action={async () => { 
+                'use server'; 
+                const { importRidersFromPreviousRound } = await import('../../../../actions'); 
+                await importRidersFromPreviousRound(eId, rId); 
+             }} style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                 <p style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: '10px' }}>
+                     Acelere o processo importando os peões do round anterior. Eles virão sem touro sorteado ("A DEFINIR").
+                 </p>
+                 <button type="submit" className="btn-secondary" style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                     <ListOrdered size={16} /> Importar Todos os Peões do Round Anterior
+                 </button>
+             </form>
+          )}
+
         </div>
 
         {/* Lista de Montarias Montadas */}
@@ -156,11 +178,31 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
                   
                   <div>
                     <h4 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>{m.competidor.nome}</h4>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
-                      <Cat size={14} color="#666" />
-                      <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 'bold' }}>{m.animal.nome}</span>
-                      <span style={{ fontSize: '0.7rem', color: '#444' }}>({m.animal.companhia})</span>
-                    </div>
+                    
+                    {m.animal.nome === 'A DEFINIR' ? (
+                       <form action={async (formData) => { 
+                          'use server'; 
+                          const animalId = parseInt(formData.get('animalId') as string);
+                          if(animalId) {
+                             await prisma.montaria.update({ where: { id: m.id }, data: { animalId } });
+                             revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`);
+                          }
+                       }} style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+                           <select name="animalId" required style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '5px', borderRadius: '4px', maxWidth: '200px' }}>
+                              <option value="">Sortear / Selecionar {round.modalidade}...</option>
+                              {animaisFiltrados.map(a => (
+                                 <option key={a.id} value={a.id}>{a.nome} ({a.companhia})</option>
+                              ))}
+                           </select>
+                           <button type="submit" className="btn-primary" style={{ padding: '0 10px', fontSize: '0.8rem' }}>Salvar</button>
+                       </form>
+                    ) : (
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                         <Cat size={14} color="#666" />
+                         <span style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 'bold' }}>{m.animal.nome}</span>
+                         <span style={{ fontSize: '0.7rem', color: '#444' }}>({m.animal.companhia})</span>
+                       </div>
+                    )}
                   </div>
                 </div>
 
