@@ -160,6 +160,7 @@ export default async function SuperAdminPage() {
              </div>
           </div>
         </div>
+      </div>
 
       <div style={{ marginTop: '3rem' }}>
          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

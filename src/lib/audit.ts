@@ -1,8 +1,8 @@
-import { p } from "./db";
+import { prisma } from "./db";
 
 export async function logSystemAction(usuarioNome: string, acao: string, detalhes?: any) {
   try {
-    await p.systemLog.create({
+    await prisma.systemLog.create({
       data: {
         usuarioNome,
         acao,
