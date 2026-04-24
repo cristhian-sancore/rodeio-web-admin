@@ -44,8 +44,10 @@ export default function OverlayNotaPage() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerVisible, setTimerVisible] = useState(false);
   const [rideStarted, setRideStarted] = useState(false);
+  const [nameScale, setNameScale] = useState(1);
   const timerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const serverOffsetRef = useRef(0);
+  const nameRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     document.documentElement.style.background = 'transparent';
@@ -82,6 +84,25 @@ export default function OverlayNotaPage() {
     const es = connectSSE();
     return () => es.close();
   }, []);
+
+  // Lógica de Scale para Nomes Gigantes
+  useEffect(() => {
+    if (nameRef.current) {
+        // Ignora a escala atual para medir tamanho real brute
+        const originalTransform = nameRef.current.style.transform;
+        nameRef.current.style.transform = 'none';
+        
+        const nameWidth = nameRef.current.scrollWidth;
+        const maxAllowed = 800; // Pixels máximos até encostar nas notas
+        
+        if (nameWidth > maxAllowed) {
+            setNameScale(maxAllowed / nameWidth);
+        } else {
+            setNameScale(1);
+        }
+        nameRef.current.style.transform = originalTransform;
+    }
+  }, [data?.data?.competidor]);
 
   useEffect(() => {
     // Nova montaria / Peão diferente
@@ -169,9 +190,10 @@ export default function OverlayNotaPage() {
           background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(5, 5, 5, 1) 100%);
           border-left: 12px solid #D4AF37; padding: 30px 60px 30px 50px;
           clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 350px;
+          max-width: 900px; overflow: visible; display: flex; flex-direction: column; justify-content: center;
         }
-        .mode-ID .competidor-name { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; white-space: nowrap; }
-        .mode-ID .animal-name { color: #D4AF37; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; border-top: 1px solid rgba(212,175,55,0.3); padding-top: 5px; }
+        .mode-ID .competidor-name { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; white-space: nowrap; transform-origin: left center; }
+        .mode-ID .animal-name { color: #D4AF37; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; border-top: 1px solid rgba(212,175,55,0.3); padding-top: 5px; width: 100%; }
         
         .mode-ID .judges-section {
           background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -40px;
@@ -297,7 +319,7 @@ export default function OverlayNotaPage() {
           </div>
 
           <div className="info-card">
-             <h1 className="competidor-name">{d.competidor}</h1>
+             <h1 ref={nameRef} className="competidor-name" style={{ transform: `scale(${nameScale})` }}>{d.competidor}</h1>
              <span className="animal-name">{d.animal}</span>
           </div>
 
