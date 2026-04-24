@@ -88,13 +88,14 @@ export default function OverlayNotaPage() {
     const calibrateTime = async () => {
        try {
          const t0 = Date.now();
-         const res = await fetch('/api/overlay/current', { cache: 'no-store' });
+         const res = await fetch(`/api/overlay/current?t=${Date.now()}`, { cache: 'no-store' });
          const json = await res.json();
          const t1 = Date.now();
          
          if (json.serverTime) {
             const ping = (t1 - t0) / 2;
-            serverOffsetRef.current = json.serverTime - (t1 - ping);
+            const freshOffset = json.serverTime - (t1 - ping);
+            serverOffsetRef.current = serverOffsetRef.current === 0 ? freshOffset : (serverOffsetRef.current * 0.7) + (freshOffset * 0.3);
             console.log(`[Overlay] Calibrado! Ping: ${ping.toFixed(0)}ms, Offset: ${serverOffsetRef.current.toFixed(0)}ms`);
          }
        } catch (e) {
@@ -111,10 +112,11 @@ export default function OverlayNotaPage() {
         try {
           const json = JSON.parse(event.data);
           if (json.active) {
-            // Se o payload vier com serverTime, atualizamos o offset usando recepção simples (ajuste fino contínuo)
+            // Calibração contínua baseada no sinal do servidor
             if (json.serverTime) {
-               // Aqui não temos ping exato, mas mantemos a tendência detectada na calibração inicial
-               // serverOffsetRef.current = json.serverTime - Date.now(); 
+               const currentOffset = json.serverTime - Date.now();
+               // Média simples para evitar pulos bruscos no cronômetro
+               serverOffsetRef.current = (serverOffsetRef.current * 0.8) + (currentOffset * 0.2);
             }
             setData(json);
             setVisible(true);

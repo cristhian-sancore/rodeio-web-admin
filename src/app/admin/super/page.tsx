@@ -12,7 +12,7 @@ export default async function SuperAdminPage() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
 
-  if (user?.role !== 'ADMIN') {
+  if (user?.role !== 'SUPER_ADMIN') {
     redirect('/admin');
   }
 

@@ -11,9 +11,10 @@ import { signOut } from 'next-auth/react';
 export default function Sidebar({ user }: { user: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   const isComentarista = user?.role === 'COMENTARISTA';
-  const hasFullAccess = isAdmin || isComentarista;
+  const hasFullAccess = isAdmin || isSuperAdmin || isComentarista;
 
   const NavLink = ({ href, icon: Icon, children }: any) => {
     const isActive = pathname === href || (href !== '/admin' && pathname.startsWith(href));
@@ -120,7 +121,7 @@ export default function Sidebar({ user }: { user: any }) {
                 <>
                   <hr style={{ border: 'none', borderTop: '1px solid #222', margin: '0.8rem 0.5rem' }} />
                   <NavLink href="/admin/usuarios" icon={ShieldCheck}>Usuários</NavLink>
-                  {isAdmin && <NavLink href="/admin/super" icon={ShieldCheck}>Super Admin</NavLink>}
+                  {isSuperAdmin && <NavLink href="/admin/super" icon={ShieldCheck}>Super Admin</NavLink>}
                   <NavLink href="/admin/configuracoes" icon={Settings}>Configurações</NavLink>
                 </>
               )}

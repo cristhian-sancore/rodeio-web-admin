@@ -308,7 +308,7 @@ export async function saveConfig(formData: FormData) {
 
 export async function executeRawSql(sql: string) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'ADMIN') return { success: false, error: 'Não autorizado' };
+  if (session?.user?.role !== 'SUPER_ADMIN') return { success: false, error: 'Não autorizado' };
 
   try {
     const isSelect = sql.trim().toLowerCase().startsWith('select');
