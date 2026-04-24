@@ -324,7 +324,8 @@ export default function OverlayNotaPage() {
               <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* CHAMADA (FULL) */}
       {mode === 'CHAMADA' && d && (
