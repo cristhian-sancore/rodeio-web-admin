@@ -26,23 +26,21 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
   const start = async () => {
     setIsRunning(true);
     justStoppedRef.current = false;
-    lockRef.current = false; // Limpar qualquer trava residual de paradas anteriores
-    
-    // Sempre resetar para 0 ao iniciar
+    lockRef.current = false; 
     setTempo(0);
     
-    // Sincronizar com o servidor PRIMEIRO para pegar a hora oficial do banco
+    const t0 = Date.now();
     const res = await toggleTimer(true);
+    const t1 = Date.now();
     
     if (res.success && res.timerStartedAt && res.serverTime) {
-      // Calcular o fuso/atraso em relação ao servidor
-      serverOffsetRef.current = res.serverTime - Date.now();
+      const pingDeRede = (t1 - t0) / 2; // Estima latência de ida e volta
+      const dataAvisoLocal = t1 - pingDeRede; // Que horas eram no celular quando o server computou
       
-      // Usar a hora do SERVIDOR como referência para sincronia total com o overlay
+      serverOffsetRef.current = res.serverTime - dataAvisoLocal;
       startTimeRef.current = new Date(res.timerStartedAt).getTime();
       animate();
     } else {
-      // Fallback em caso de falha na API
       serverOffsetRef.current = 0;
       startTimeRef.current = Date.now();
       animate();
