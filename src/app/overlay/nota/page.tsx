@@ -42,6 +42,8 @@ export default function OverlayNotaPage() {
   const [data, setData] = useState<OverlayData | null>(null);
   const [visible, setVisible] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [timerVisible, setTimerVisible] = useState(false);
+  const timerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const serverOffsetRef = useRef(0);
 
   useEffect(() => {
@@ -81,14 +83,38 @@ export default function OverlayNotaPage() {
   }, []);
 
   useEffect(() => {
+    if (data?.timerRunning) {
+      setTimerVisible(true);
+      if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
+    } else if (elapsedTime > 0) {
+      // Backend parou o cronômetro
+      timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 500);
+    } else {
+      setTimerVisible(false);
+    }
+  }, [data?.timerRunning]);
+
+  useEffect(() => {
     let animationFrameId: number;
     const updateTimer = () => {
       if (data?.timerRunning && data.timerStartedAt) {
         const start = new Date(data.timerStartedAt).getTime();
         const currentRemoteTime = Date.now() + serverOffsetRef.current;
         const elapsed = (currentRemoteTime - start) / 1000;
-        setElapsedTime(elapsed >= 8 ? 8 : elapsed);
-        animationFrameId = requestAnimationFrame(updateTimer);
+        
+        if (elapsed >= 8) {
+          setElapsedTime(8);
+          // Atingiu 8 segundos visuais
+          setTimerVisible((prev) => {
+             if (prev && !timerTimeoutRef.current) {
+                 timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 500);
+             }
+             return prev;
+          });
+        } else {
+          setElapsedTime(elapsed);
+          animationFrameId = requestAnimationFrame(updateTimer);
+        }
       }
     };
     if (data?.timerRunning) animationFrameId = requestAnimationFrame(updateTimer);
@@ -129,7 +155,9 @@ export default function OverlayNotaPage() {
           position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
           display: flex; align-items: stretch; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
           width: max-content; min-width: 800px;
+          opacity: 1; transition: opacity 0.5s ease;
         }
+        .mode-ID .nota-container.hidden { opacity: 0; pointer-events: none; }
         .mode-ID .info-card {
           background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(5, 5, 5, 1) 100%);
           border-left: 12px solid #D4AF37; padding: 30px 60px 30px 50px;
@@ -164,16 +192,16 @@ export default function OverlayNotaPage() {
         }
         .mode-ID .badge-pos { background: #D4AF37; color: #000; }
 
-        /* --- CRONÔMETRO INDEPENDENTE TOP-LEFT --- */
-        .timer-top-left {
-          position: fixed; top: 40px; left: 40px;
-          background: #000; border: 3px solid #D4AF37; border-left: 15px solid #D4AF37;
+        /* --- CRONÔMETRO INDEPENDENTE TOP-RIGHT --- */
+        .timer-top-right {
+          position: fixed; top: 40px; right: 40px;
+          background: #000; border: 3px solid #D4AF37; border-right: 15px solid #D4AF37;
           color: #fff; display: flex; flex-direction: column; padding: 15px 30px;
           border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
           opacity: 1; transition: opacity 0.5s ease;
-          clip-path: polygon(0 0, 100% 0, 95% 100%, 0% 100%);
+          clip-path: polygon(5% 0, 100% 0, 100% 100%, 0% 100%);
         }
-        .timer-top-left.hidden { opacity: 0; }
+        .timer-top-right.hidden { opacity: 0; pointer-events: none; }
         .timer-label { color: #D4AF37; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: -5px; }
         .timer-value { font-size: 4.5rem; font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1; }
 
@@ -206,7 +234,7 @@ export default function OverlayNotaPage() {
       
       {/* CRONÔMETRO INDEPENDENTE */}
       {(data?.timerRunning || elapsedTime > 0) && (
-        <div className={`timer-top-left ${(elapsedTime === 0 && !data?.timerRunning) ? 'hidden' : ''}`}>
+        <div className={`timer-top-right ${!timerVisible ? 'hidden' : ''}`}>
            <span className="timer-label">TEMPO</span>
            <span className="timer-value">{elapsedTime.toFixed(2)}s</span>
         </div>
@@ -246,7 +274,7 @@ export default function OverlayNotaPage() {
 
       {/* LOWER THIRD (ID) */}
       {mode === 'ID' && d && (
-        <div className="nota-container">
+        <div className={`nota-container ${timerVisible ? 'hidden' : ''}`}>
           {/* HEADER BADGES (RANK E DIFF) */}
           <div className="header-badges">
             {d.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
