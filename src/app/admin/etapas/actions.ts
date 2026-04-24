@@ -324,6 +324,16 @@ export async function toggleTimer(running: boolean, finalTempo?: number) {
         }
       });
 
+      // 2. Automação vMix: Se o cronômetro iniciar, chutar o Overlay pra tela
+      if (running && currentConfig.vmixUrl) {
+        try {
+           const { triggerVMixOverlay } = await import('@/lib/vmix');
+           await triggerVMixOverlay(currentConfig as any, currentConfig.vmixOverlayChannel || 1, 'In');
+        } catch (vErr) {
+           console.error("Erro ao ativar Overlay no vMix via Cronômetro", vErr);
+        }
+      }
+
       // 2. Se parou e tem tempo final, salvar na montaria ativa imediatamente
       if (!running && finalTempo !== undefined && config.montariaAtivaId) {
         await tx.montaria.update({
@@ -741,5 +751,60 @@ export async function updateRankingCongelado(status: boolean) {
   revalidatePath('/overlay/nota');
   revalidatePath('/');
   revalidatePath('/ranking');
+}
+
+export async function importRidersFromPreviousRound(etapaId: number, currentRoundId: number) {
+  // 1. Descobre qual é o Round Anterior baseado no número do atual
+  const currentRound = await p.round.findUnique({ where: { id: currentRoundId } });
+  if (!currentRound || currentRound.numero <= 1) return { error: 'Gatilho desativado: Este já é o primeiro round ou formato inválido.' };
+
+  const prevRound = await p.round.findFirst({
+    where: { etapaId, numero: currentRound.numero - 1 }
+  });
+
+  if (!prevRound) return { error: 'Nenhum round anterior foi localizado nesta etapa para copiar os competidores.' };
+
+  // 2. Coleta os peões do round passado
+  const prevMontarias = await p.montaria.findMany({
+    where: { roundId: prevRound.id, removida: false },
+    select: { competidorId: true }
+  });
+
+  if (prevMontarias.length === 0) return { error: 'A súmula do round anterior estava vazia.' };
+
+  // 3. Verifica quem JÁ está escalado no round atual pra não duplicar
+  const currentMontarias = await p.montaria.findMany({
+    where: { roundId: currentRoundId, removida: false },
+    select: { competidorId: true }
+  });
+  const escaladosSet = new Set(currentMontarias.map(m => m.competidorId));
+
+  const peoesParaImportar = prevMontarias
+    .map(m => m.competidorId)
+    // Remove duplicados da lista antiga e checa se já tá na atual
+    .filter((id, index, self) => self.indexOf(id) === index && !escaladosSet.has(id));
+
+  if (peoesParaImportar.length === 0) return { error: 'Todos os peões do round anterior já foram escalados neste round.' };
+
+  // 4. Garante a existência do Animal Fantasma "A DEFINIR"
+  let animalFantasma = await p.animal.findFirst({ where: { nome: 'A DEFINIR' } });
+  if (!animalFantasma) {
+    animalFantasma = await p.animal.create({
+      data: { nome: 'A DEFINIR', companhia: 'ORGANIZACAO', tipo: currentRound.modalidade === 'Touro' ? 'Touro' : 'Cavalo' }
+    });
+  }
+
+  // 5. Gera as montarias limpas
+  const batchData = peoesParaImportar.map(compId => ({
+    roundId: currentRoundId,
+    competidorId: compId,
+    animalId: animalFantasma.id,
+    etapaId
+  }));
+
+  await p.montaria.createMany({ data: batchData });
+
+  revalidatePath(`/admin/etapas/${etapaId}/round/${currentRoundId}/montagem`);
+  return { success: true, importados: peoesParaImportar.length };
 }
 
