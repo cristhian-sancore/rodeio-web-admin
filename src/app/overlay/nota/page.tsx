@@ -105,9 +105,9 @@ export default function OverlayNotaPage() {
   }, [data?.data?.competidor]);
 
   useEffect(() => {
-    // Nova montaria / Peão diferente
+    // Nova montaria = Reseta o suspense do Lower Third
     setRideStarted(false);
-  }, [data?.data?.competidorId]);
+  }, [data?.data?.id]);
 
   useEffect(() => {
     if (data?.timerRunning) {
