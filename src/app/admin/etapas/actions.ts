@@ -36,7 +36,7 @@ export async function updateMontariaNota(formData: FormData) {
   if (!session) throw new Error("Não autorizado");
 
   const user = session.user as any;
-  const isAdmin = user.role === 'ADMIN';
+  const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
 
   const mId = parseInt(formData.get('montariaId') as string);
   const tempo = parseFloat(formData.get('tempo') as string || '0');

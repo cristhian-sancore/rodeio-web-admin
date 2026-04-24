@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
 
   const [competidoresCount, animaisCount, etapasCount, juizesCount, montariasCount, roundsDoJuiz] = await Promise.all([
     prisma.competidor.count(),
