@@ -306,6 +306,20 @@ export async function saveConfig(formData: FormData) {
   redirect('/admin/configuracoes?success=true');
 }
 
+export async function deactivateVMixOverlay() {
+  try {
+    const config = await prisma.configuracao.findFirst();
+    if (config && config.vmixUrl) {
+      const { triggerVMixOverlay } = await import('@/lib/vmix');
+      await triggerVMixOverlay(config as any, config.vmixOverlayChannel || 1, 'Out');
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('Erro ao desativar Vmix Overlay:', err);
+    return { success: false };
+  }
+}
+
 export async function toggleTimer(running: boolean, finalTempo?: number) {
   try {
     const timerStartedAt = running ? new Date() : null;

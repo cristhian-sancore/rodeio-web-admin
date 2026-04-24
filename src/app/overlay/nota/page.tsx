@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { deactivateVMixOverlay } from '@/app/admin/etapas/actions';
 
 interface OverlayData {
   active: boolean;
@@ -70,6 +71,7 @@ export default function OverlayNotaPage() {
        }
        ltHideTimeoutRef.current = setTimeout(() => {
            setLowerThirdForcedHide(true);
+           deactivateVMixOverlay(); // Desativa vMix quando atingir 60s
        }, 60000); // 60 segundos de permanência máxima do gráfico principal
     } else {
        if (ltHideTimeoutRef.current) {
@@ -154,6 +156,7 @@ export default function OverlayNotaPage() {
       timerTimeoutRef.current = setTimeout(() => {
           setTimerVisible(false);
           timerTimeoutRef.current = null;
+          deactivateVMixOverlay(); // Desativa vMix quando o cronômetro sumir (10s após stop)
       }, 10000); // Fica 10s na tela depois de paralisar
     } else {
       setTimerVisible(false);
@@ -176,6 +179,7 @@ export default function OverlayNotaPage() {
                  timerTimeoutRef.current = setTimeout(() => {
                      setTimerVisible(false);
                      timerTimeoutRef.current = null;
+                     deactivateVMixOverlay(); // Desativa vMix
                  }, 10000); // Max Hide at delay
              }
              return prev;
