@@ -96,25 +96,36 @@ export default function Sidebar({ user }: { user: any }) {
           </div>
         </div>
         
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1 }}>
-          <NavLink href="/admin" icon={LayoutDashboard}>Dashboard</NavLink>
-          {isAdmin && <NavLink href="/admin/super" icon={ShieldCheck}>Super Admin</NavLink>}
-          {isAdmin && <NavLink href="/admin/configuracoes" icon={Settings}>Configurações</NavLink>}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
           
+          <div style={{ fontSize: '0.65rem', color: '#555', fontWeight: 'bold', letterSpacing: '1.5px', marginTop: '1rem', padding: '0 1.25rem' }}>OPERACIONAL</div>
+          
+          <NavLink href="/admin" icon={LayoutDashboard}>Dashboard</NavLink>
+          
+          {isAdmin && <NavLink href="/admin/execucao" icon={Trophy}>Lançar Notas</NavLink>}
+          {user?.role === 'JUIZ' && <NavLink href="/admin/execucao" icon={Trophy}>Painel do Juiz</NavLink>}
+          
+          <NavLink href="/admin/ranking" icon={TrendingUp}>Resultados & Rankings</NavLink>
+
+          <div style={{ fontSize: '0.65rem', color: '#555', fontWeight: 'bold', letterSpacing: '1.5px', marginTop: '1.5rem', padding: '0 1.25rem' }}>GERENCIAMENTO</div>
+
           {hasFullAccess && (
             <>
               <NavLink href="/admin/etapas" icon={Calendar}>Etapas</NavLink>
               <NavLink href="/admin/competidores" icon={Users}>Competidores</NavLink>
               <NavLink href="/admin/animais" icon={Cat}>Boiada/Cavalaria</NavLink>
               <NavLink href="/admin/juizes" icon={Gavel}>Juízes Oficiais</NavLink>
-              <NavLink href="/admin/usuarios" icon={ShieldCheck}>Usuários</NavLink>
-              <hr style={{ border: 'none', borderTop: '1px solid #222', margin: '1rem 0.5rem' }} />
+              
+              {isAdmin && (
+                <>
+                  <hr style={{ border: 'none', borderTop: '1px solid #222', margin: '0.8rem 0.5rem' }} />
+                  <NavLink href="/admin/usuarios" icon={ShieldCheck}>Usuários</NavLink>
+                  {isAdmin && <NavLink href="/admin/super" icon={ShieldCheck}>Super Admin</NavLink>}
+                  <NavLink href="/admin/configuracoes" icon={Settings}>Configurações</NavLink>
+                </>
+              )}
             </>
           )}
-
-          <NavLink href="/admin/ranking" icon={TrendingUp}>Resultados & Rankings</NavLink>
-          {isAdmin && <NavLink href="/admin/execucao" icon={Trophy}>Lançar Notas</NavLink>}
-          {user?.role === 'JUIZ' && <NavLink href="/admin/execucao" icon={Trophy}>Painel do Juiz</NavLink>}
           
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button 
