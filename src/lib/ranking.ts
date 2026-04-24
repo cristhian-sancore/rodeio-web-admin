@@ -98,7 +98,13 @@ export async function getTopHighlights() {
 export async function getCompetidorStageRank(etapaId: number, competidorId: number) {
   const { peoes } = await getSeasonRanking();
   const idx = peoes.findIndex((p: any) => p.id === competidorId);
-  return { rank: idx + 1 };
+  const firstPlacePoints = peoes[0]?.pontosLiga || 0;
+  const myPoints = peoes[idx]?.pontosLiga || 0;
+  
+  return { 
+    rank: idx + 1,
+    diff: firstPlacePoints - myPoints
+  };
 }
 
 export async function getBestOfRound(roundId: number) {

@@ -81,8 +81,8 @@ export async function getOverlayDataPayload() {
         animalCompanhia: montaria.animal.companhia,
         animalMedia: mediaAnimal,
 
-        etapaRank: stageRankData.rank > 0 ? `${stageRankData.rank}º` : '---',
-        etapaDiff: stageRankData.rank > 1 ? `-${stageRankData.diff.toFixed(2)}` : (stageRankData.rank === 1 ? 'LÍDER' : ''),
+        etapaRank: (stageRankData.rank || 0) > 0 ? `${stageRankData.rank}º` : '---',
+        etapaDiff: (stageRankData.rank || 0) > 1 ? `-${(stageRankData.diff || 0).toFixed(2)}` : (stageRankData.rank === 1 ? 'LÍDER' : ''),
         
         // --- NOTAS INDIVIDUAIS E NOMES DOS JUIZES ---
         j1Nome: montaria.round.juiz1?.nome || 'J1',
