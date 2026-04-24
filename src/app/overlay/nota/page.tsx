@@ -143,11 +143,11 @@ export default function OverlayNotaPage() {
           padding: 20px 40px 20px 80px; display: flex; gap: 40px;
           clip-path: polygon(40px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%);
         }
-        .mode-ID .judge-box { border-left: 3px solid #D4AF37; padding-left: 15px; min-width: 170px; display: flex; flex-direction: column; justify-content: space-between; }
-        .mode-ID .judge-title { font-size: 1.1rem; color: #D4AF37; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; display: block; background: rgba(0,0,0,0.3); padding: 4px 8px; width: fit-content; }
-        .mode-ID .judge-score-label { font-size: 0.9rem; color: #D4AF37; font-weight: bold; text-transform: uppercase; opacity: 0.8; }
-        .mode-ID .judge-score-value { color: #fff; font-weight: 700; font-size: 1.8rem; line-height: 1; }
-        .mode-ID .subtotal { font-size: 2.8rem; color: #fff; font-weight: 950; margin-top: 6px; border-top: 1px solid rgba(212, 175, 55, 0.3); padding-top: 6px; line-height: 1; }
+        .mode-ID .judge-box { border-left: 5px solid #D4AF37; padding-left: 20px; min-width: 250px; display: flex; flex-direction: column; justify-content: space-between; }
+        .mode-ID .judge-title { font-size: 1.6rem; color: #D4AF37; font-weight: 950; text-transform: uppercase; margin-bottom: 10px; display: block; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 4px; width: fit-content; letter-spacing: 1px; }
+        .mode-ID .judge-score-label { font-size: 1.3rem; color: #D4AF37; font-weight: 900; text-transform: uppercase; opacity: 0.9; margin-right: 5px; }
+        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2.8rem; line-height: 1; }
+        .mode-ID .subtotal { font-size: 4rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 2px solid rgba(212, 175, 55, 0.4); padding-top: 10px; line-height: 1; text-align: center; }
         
         .mode-ID .final-score-card {
           min-width: 250px; background: linear-gradient(180deg, #F9D976 0%, #D4AF37 100%);
@@ -261,14 +261,14 @@ export default function OverlayNotaPage() {
              {[1,2,3,4].slice(0, numJuizes).map(i => (
                <div key={i} className="judge-box">
                   <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
-                  <div style={{ display: 'flex', gap: '15px', marginBottom: '4px' }}>
-                    <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', gap: '20px', marginBottom: '8px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
                       <span className="judge-score-label">P:</span>
-                      <span className="judge-score-value"> {formatScore((d as any)[`j${i}P`])}</span>
+                      <span className="judge-score-value">{formatScore((d as any)[`j${i}P`])}</span>
                     </div>
-                    <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
                       <span className="judge-score-label">T:</span>
-                      <span className="judge-score-value"> {formatScore((d as any)[`j${i}A`])}</span>
+                      <span className="judge-score-value">{formatScore((d as any)[`j${i}A`])}</span>
                     </div>
                   </div>
                   <div className="subtotal">{formatScore((d as any)[`j${i}Total`])}</div>
