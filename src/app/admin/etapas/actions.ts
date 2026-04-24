@@ -337,7 +337,9 @@ export async function executeRawSql(sql: string) {
     return { success: true, data };
   } catch (err: any) {
     console.error('ERRO SQL ROOT:', err);
-    return { success: false, error: err.message };
+    // 🛡️ OFUSCAÇÃO DE ERROS (PENTEST MEGA)
+    // Não retornar a mensagem original do banco de dados para evitar vazamento de schema.
+    return { success: false, error: 'Falha na execução do comando SQL. Verifique a sintaxe ou privilégios.' };
   }
 }
 
@@ -688,7 +690,6 @@ export async function updateMontariaAtiva(montariaId: number | null) {
     create: { id: 1, montariaAtivaId: montariaId, numJuizes: 2, titulo: "Rodeio Web" }
   });
 
-  // Automação vMix: Se ativou uma montaria, envia os dados base e rank
   if (montariaId) {
     try {
       const montaria = await prisma.montaria.findUnique({

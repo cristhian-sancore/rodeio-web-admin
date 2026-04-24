@@ -22,12 +22,11 @@ export const authOptions: NextAuthOptions = {
           
           console.log("---- FOUND USER?", !!user);
 
-          if (!user) return null;
+          const isValid = user ? await bcrypt.compare(credentials.password, user.password) : await bcrypt.compare(credentials.password, "$2b$10$abcdefghijklmnopqrstuv");
 
-          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-          console.log("---- PASSWORD VALID?", isPasswordValid);
-
-          if (!isPasswordValid) return null;
+          if (!user || !isValid) {
+            return null;
+          }
 
           return {
             id: user.id.toString(),
