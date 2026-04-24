@@ -246,7 +246,6 @@ export default function JuizDashboardPage() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    minHeight: '100vh',
     minHeight: '100dvh',
     background: 'linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%)',
     display: 'flex',

@@ -323,7 +323,7 @@ export async function saveConfig(formData: FormData) {
 
 export async function executeRawSql(sql: string) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'SUPER_ADMIN') return { success: false, error: 'Não autorizado' };
+  if ((session?.user as any)?.role !== 'SUPER_ADMIN') return { success: false, error: 'Não autorizado' };
 
   try {
     const isSelect = sql.trim().toLowerCase().startsWith('select');
@@ -336,7 +336,7 @@ export async function executeRawSql(sql: string) {
       data = { affectedRows: count };
     }
 
-    await logSystemAction(session.user.name || 'Root', 'SQL_EXEC', { sql, isSelect });
+    await logSystemAction((session?.user as any)?.name || 'Root', 'SQL_EXEC', { sql, isSelect });
 
     return { success: true, data };
   } catch (err: any) {
@@ -387,7 +387,7 @@ export async function deactivateVMixOverlay() {
 
 export async function exportDatabaseSql() {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
+  if ((session?.user as any)?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
 
   try {
     const dbUrl = process.env.DATABASE_URL || '';
@@ -395,7 +395,7 @@ export async function exportDatabaseSql() {
     // Usaremos a própria URL que o pg_dump entende
     const { stdout } = await execAsync(`pg_dump "${dbUrl}"`);
     
-    await logSystemAction(session.user.name || 'Root', 'BACKUP_EXPORT', { size: stdout.length });
+    await logSystemAction((session?.user as any)?.name || 'Root', 'BACKUP_EXPORT', { size: stdout.length });
     return { success: true, sql: stdout };
   } catch (err: any) {
     console.error('Erro ao exportar banco:', err);
@@ -405,7 +405,7 @@ export async function exportDatabaseSql() {
 
 export async function importDatabaseSql(sql: string) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
+  if ((session?.user as any)?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
 
   try {
     const dbUrl = process.env.DATABASE_URL || '';
@@ -415,7 +415,7 @@ export async function importDatabaseSql(sql: string) {
     child.stdin?.write(sql);
     child.stdin?.end();
 
-    await logSystemAction(session.user.name || 'Root', 'BACKUP_IMPORT', { size: sql.length });
+    await logSystemAction((session?.user as any)?.name || 'Root', 'BACKUP_IMPORT', { size: sql.length });
     return { success: true };
   } catch (err: any) {
     console.error('Erro ao importar banco:', err);

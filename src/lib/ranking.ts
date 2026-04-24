@@ -93,7 +93,7 @@ export async function getTopHighlights() {
 
   return {
     etapaNome: etapa?.nome || 'Etapa Atual',
-    campeonatoNome: temporada?.nome || 'Campeonato 2026',
+    campeonatoNome: temporada?.titulo || 'Campeonato 2026',
     etapaCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].notaAcumulada.toFixed(1), competidorId: peoes[0].id } : null,
     etapaAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
     campeonatoCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].pontosLiga.toFixed(1), competidorId: peoes[0].id } : null,
@@ -152,4 +152,8 @@ export async function getAnimalRanking(mode: string, roundId?: number, etapaId?:
 
 export async function getChampionshipRanking(temporadaId: number, modalidade?: string) {
    return getOverlayRankingData('CAMPEONATO_COMPETIDOR', undefined, undefined, temporadaId);
+}
+
+export async function getSeasonRanking() {
+   return getRanking({});
 }

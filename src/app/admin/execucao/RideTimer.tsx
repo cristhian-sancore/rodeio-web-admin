@@ -6,10 +6,16 @@ import { toggleTimer } from '../etapas/actions';
 
 interface RideTimerProps {
   initialValue: number;
+  onTimeUpdate?: (val: number) => void;
 }
 
-export default function RideTimer({ initialValue }: RideTimerProps) {
+export default function RideTimer({ initialValue, onTimeUpdate }: RideTimerProps) {
   const [tempo, setTempo] = useState(initialValue);
+
+  const _setTempo = (val: number) => {
+    setTempo(val);
+    if (onTimeUpdate) onTimeUpdate(val);
+  };
   const [isRunning, setIsRunning] = useState(false);
   const justStoppedRef = useRef(false);
   const lockRef = useRef(false);
@@ -27,7 +33,7 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
     setIsRunning(true);
     justStoppedRef.current = false;
     lockRef.current = false; 
-    setTempo(0);
+    _setTempo(0);
     
     const t0 = Date.now();
     const res = await toggleTimer(true);
@@ -62,7 +68,7 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
       }
     }
     
-    setTempo(valueToSave);
+    _setTempo(valueToSave);
     justStoppedRef.current = true;
     lockRef.current = true;
     
@@ -82,7 +88,7 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
       if (elapsed >= 8.00) {
         stop(8.00);
       } else {
-        setTempo(elapsed);
+        _setTempo(elapsed);
         requestRef.current = requestAnimationFrame(animate);
       }
     }
@@ -110,13 +116,13 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
       lockRef.current = false;
       justStoppedRef.current = false;
       lastInitialRef.current = initialValue;
-      setTempo(initialValue);
+      _setTempo(initialValue);
       return;
     }
 
     // Só aceita sync do servidor se não estiver rodando nem com a trava ativa
     if (!isRunning && !justStoppedRef.current && !lockRef.current) {
-      setTempo(initialValue);
+      _setTempo(initialValue);
     }
     
     return () => {
@@ -132,7 +138,7 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
           type="number"
           step="0.01"
           value={formatTempo(tempo)}
-          onChange={(e) => setTempo(parseFloat(e.target.value) || 0)}
+          onChange={(e) => _setTempo(parseFloat(e.target.value) || 0)}
           style={{ width: '100%', padding: '1rem', paddingRight: '4rem', background: '#000', border: '1px solid #333', borderRadius: '10px', color: '#fff', fontSize: '1.2rem', fontWeight: 'bold' }} 
         />
         <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: tempo >= 8 ? 'var(--primary)' : '#444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

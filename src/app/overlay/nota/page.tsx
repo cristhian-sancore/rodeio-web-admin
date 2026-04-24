@@ -13,6 +13,7 @@ interface OverlayData {
     title: string;
     list: Array<{ pos: number; nome: string; info: string; nota: string; extra: string; }>;
   };
+  rankingCongelado?: boolean;
   data?: {
     id: number;
     competidor: string;
@@ -175,7 +176,7 @@ export default function OverlayNotaPage() {
           clearTimeout(timerTimeoutRef.current);
           timerTimeoutRef.current = null;
       }
-    } else if (elapsedTime > 0 || (d && d.tempo > 0)) {
+    } else if (elapsedTime > 0 || (d && parseFloat(d.tempo) > 0)) {
       // Backend parou o cronômetro ou tem nota (fechou o ride)
       if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
       timerTimeoutRef.current = setTimeout(() => {
@@ -229,7 +230,7 @@ export default function OverlayNotaPage() {
   const rankingPage = typeof data?.rankingPage === 'number' ? data.rankingPage : 0;
   const itemsPerPage = 10;
 
-  const displayRanking = isRanking && data.rankingData ? {
+  const displayRanking = isRanking && data?.rankingData ? {
     ...data.rankingData,
     list: data.rankingData.list.slice(rankingPage * itemsPerPage, (rankingPage + 1) * itemsPerPage)
   } : null;
@@ -375,7 +376,7 @@ export default function OverlayNotaPage() {
         <div className={`nota-container ${(shouldHideLowerThird || lowerThirdForcedHide) ? 'hidden' : ''}`}>
           {/* HEADER BADGES (RANK E DIFF) */}
           <div className="header-badges">
-            {!data.rankingCongelado && d.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
+            {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
           </div>
 
           <div className="info-card">
@@ -414,7 +415,7 @@ export default function OverlayNotaPage() {
           <div className="chamada-grid">
             <div className="side-photo photo-rider"><img src={d.competidorFoto} alt="P" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: '#D4AF37', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.competidorCidade}</div></div>
             <div className="center-info">
-              <div style={{ fontSize: '6rem', fontWeight: 950, color: '#000', WebkitTextStroke: '2px #D4AF37', textShadow: '0 0 20px #D4AF37', fontStyle: 'italic', fontStyle: 'italic', letterSpacing: '-5px' }}>CONFRONTO</div>
+              <div style={{ fontSize: '6rem', fontWeight: 950, color: '#000', WebkitTextStroke: '2px #D4AF37', textShadow: '0 0 20px #D4AF37', fontStyle: 'italic', letterSpacing: '-5px' }}>CONFRONTO</div>
               <h1 style={{ fontSize: '7rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 0.85, margin: '20px 0 0', color: '#fff' }}>{d.competidor}</h1>
               <div style={{ fontSize: '4rem', color: '#D4AF37', fontWeight: 800, margin: '10px 0', textTransform: 'uppercase' }}>{d.animal}</div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '50px' }}>

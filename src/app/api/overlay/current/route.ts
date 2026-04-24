@@ -49,7 +49,7 @@ export async function getOverlayDataPayload() {
 
     // --- CÁLCULO DE ESTATÍSTICAS PARA A CHAMADA ---
     const champRank = await getChampionshipRanking(montaria.round.etapaId);
-    const myChampPos = champRank?.list?.find(r => r.competidorId === montaria.competidorId);
+    const myChampPos = (champRank?.list as any[])?.find(r => r.competidorId === montaria.competidorId);
     
     const paradas = montaria.competidor.montarias.filter(m => m.notaTotal > 8).length; // Consideramos parada nota > 8
     const totalMontarias = montaria.competidor.montarias.length;
