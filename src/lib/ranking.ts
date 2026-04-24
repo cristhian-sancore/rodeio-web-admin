@@ -79,3 +79,54 @@ export async function getSeasonRanking() {
 
   return { peoes, touros };
 }
+
+export async function getTopHighlights() {
+  const { peoes, touros } = await getSeasonRanking();
+  const temporada = await prisma.temporada.findFirst({ where: { ativa: true } });
+  const etapa = await prisma.etapa.findFirst({ where: { ativa: true }, orderBy: { id: 'desc' } });
+
+  return {
+    etapaNome: etapa?.nome || 'Etapa Atual',
+    campeonatoNome: temporada?.nome || 'Campeonato 2026',
+    etapaCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].pontosLiga.toFixed(1), competidorId: peoes[0].id } : null,
+    etapaAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
+    campeonatoCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].pontosLiga.toFixed(1), competidorId: peoes[0].id } : null,
+    campeonatoAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
+  };
+}
+
+export async function getCompetidorStageRank(etapaId: number, competidorId: number) {
+  const { peoes } = await getSeasonRanking();
+  const idx = peoes.findIndex((p: any) => p.id === competidorId);
+  return { rank: idx + 1 };
+}
+
+export async function getBestOfRound(roundId: number) {
+  const montaria = await prisma.montaria.findFirst({
+    where: { roundId, desclassificado: false },
+    orderBy: { notaTotal: 'desc' },
+    include: { competidor: true, animal: true }
+  });
+  if (!montaria) return null;
+  return { nome: montaria.competidor.nome, animal: montaria.animal.nome, nota: montaria.notaTotal.toFixed(2) };
+}
+
+export async function getOverlayRankingData(mode: string, roundId?: number, etapaId?: number, temporadaId?: number) {
+  const { peoes, touros } = await getSeasonRanking();
+  if (mode.includes('ANIMAL')) {
+     return { list: touros.map((t, idx) => ({ pos: idx + 1, nome: t.nome, info: t.cia, nota: t.media.toFixed(2), animalId: t.id })) };
+  }
+  return { list: peoes.map((p, idx) => ({ pos: idx + 1, nome: p.nome, info: p.origem, nota: p.pontosLiga.toFixed(1), competidorId: p.id })) };
+}
+
+export async function getCompetidorRanking(mode: string, roundId?: number, etapaId?: number, temporadaId?: number, modalidade?: string) {
+   return getOverlayRankingData(mode, roundId, etapaId, temporadaId);
+}
+
+export async function getAnimalRanking(mode: string, roundId?: number, etapaId?: number, temporadaId?: number, modalidade?: string) {
+   return getOverlayRankingData(mode, roundId, etapaId, temporadaId);
+}
+
+export async function getChampionshipRanking(temporadaId: number, modalidade?: string) {
+   return getOverlayRankingData('CAMPEONATO_COMPETIDOR', undefined, undefined, temporadaId);
+}
