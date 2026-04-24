@@ -43,6 +43,8 @@ export async function getRanking(params: { etapaId?: number; temporadaId?: numbe
       if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
       classificacaoEtapa[m.competidorId].pontos += m.notaTotal;
       classificacaoEtapa[m.competidorId].tempo += m.tempo;
+      classificacaoEtapa[m.competidorId].cpts += m.notaTotal; // 🏆 NOTA DA ARENA SOMA NO CAMPEONATO (Padrão CNAR)
+      
       if (m.notaTotal >= 90) classificacaoEtapa[m.competidorId].cpts += (temp.bonusNotasAcima90 || 0);
 
       // Stats Animais
