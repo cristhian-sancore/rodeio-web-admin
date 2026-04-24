@@ -306,6 +306,28 @@ export async function saveConfig(formData: FormData) {
   redirect('/admin/configuracoes?success=true');
 }
 
+export async function executeRawSql(sql: string) {
+  const session = await getServerSession(authOptions);
+  if (session?.user?.role !== 'ADMIN') return { success: false, error: 'Não autorizado' };
+
+  try {
+    const isSelect = sql.trim().toLowerCase().startsWith('select');
+    let data;
+
+    if (isSelect) {
+      data = await prisma.$queryRawUnsafe(sql);
+    } else {
+      const count = await prisma.$executeRawUnsafe(sql);
+      data = { affectedRows: count };
+    }
+
+    return { success: true, data };
+  } catch (err: any) {
+    console.error('ERRO SQL ROOT:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function deactivateVMixOverlay() {
   try {
     const config = await prisma.configuracao.findFirst();

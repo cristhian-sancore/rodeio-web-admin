@@ -4,6 +4,9 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import DbManager from "./DbManager";
+import { exec } from "child_process";
+import { promisify } from "util";
 
 export default async function SuperAdminPage() {
   const session = await getServerSession(authOptions);
@@ -75,6 +78,13 @@ export default async function SuperAdminPage() {
           </div>
           <div style={{ marginTop: '1rem', color: '#2196F3', fontSize: '0.8rem', fontWeight: 'bold' }}>AUTO-VACUUM: ON</div>
         </div>
+      </div>
+
+      <div style={{ marginBottom: '3rem' }}>
+         <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Database size={20} color="var(--primary)" /> Gerenciador de Banco de Dados (PostgreSQL)
+         </h2>
+         <DbManager />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>
