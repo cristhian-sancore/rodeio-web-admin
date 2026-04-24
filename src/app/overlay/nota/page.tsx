@@ -84,6 +84,25 @@ export default function OverlayNotaPage() {
   useEffect(() => {
     document.documentElement.style.background = 'transparent';
     document.body.style.background = 'transparent';
+
+    const calibrateTime = async () => {
+       try {
+         const t0 = Date.now();
+         const res = await fetch('/api/overlay/current', { cache: 'no-store' });
+         const json = await res.json();
+         const t1 = Date.now();
+         
+         if (json.serverTime) {
+            const ping = (t1 - t0) / 2;
+            serverOffsetRef.current = json.serverTime - (t1 - ping);
+            console.log(`[Overlay] Calibrado! Ping: ${ping.toFixed(0)}ms, Offset: ${serverOffsetRef.current.toFixed(0)}ms`);
+         }
+       } catch (e) {
+          console.error("Erro ao calibrar tempo", e);
+       }
+    };
+
+    calibrateTime();
     
     const connectSSE = () => {
       const eventSource = new EventSource('/api/overlay/stream');
@@ -92,7 +111,11 @@ export default function OverlayNotaPage() {
         try {
           const json = JSON.parse(event.data);
           if (json.active) {
-            if (json.serverTime) serverOffsetRef.current = json.serverTime - Date.now();
+            // Se o payload vier com serverTime, atualizamos o offset usando recepção simples (ajuste fino contínuo)
+            if (json.serverTime) {
+               // Aqui não temos ping exato, mas mantemos a tendência detectada na calibração inicial
+               // serverOffsetRef.current = json.serverTime - Date.now(); 
+            }
             setData(json);
             setVisible(true);
           } else {

@@ -89,6 +89,20 @@ export default function RideTimer({ initialValue }: RideTimerProps) {
   };
 
   useEffect(() => {
+    const calibrate = async () => {
+       try {
+         const t0 = Date.now();
+         const res = await fetch('/api/overlay/current', { cache: 'no-store' });
+         const json = await res.json();
+         const t1 = Date.now();
+         if (json.serverTime) {
+            const ping = (t1 - t0) / 2;
+            serverOffsetRef.current = json.serverTime - (t1 - ping);
+         }
+       } catch(e) {}
+    };
+    calibrate();
+
     // Se trocou de peão, liberar trava e resetar
     if (initialValue !== lastInitialRef.current) {
       lockRef.current = false;
