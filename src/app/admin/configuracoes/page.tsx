@@ -10,7 +10,8 @@ import { redirect } from "next/navigation";
 
 export default async function ConfigPage({ searchParams }: { searchParams: Promise<{ error?: string, success?: string }> }) {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'ADMIN') redirect('/admin');
+  const userRole = (session?.user as any)?.role;
+  if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') redirect('/admin');
   const { error, success } = await searchParams;
 
   const configData = await prisma.configuracao.findUnique({ where: { id: 1 } });
@@ -39,11 +40,50 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
       <h1 style={{ marginBottom: '2.5rem', fontSize: '2.2rem', fontWeight: '900' }}>Configurações do <span style={{color:'var(--primary)'}}>Painel</span></h1>
       
       {success && (
-        <div style={{ background: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', padding: '1.2rem', borderRadius: '12px', border: '1px solid currentColor', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: 'bold', fontSize: '1.1rem', animation: 'slideDown 0.4s easeOut' }}>
+        <div style={{ background: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', padding: '1.2rem', borderRadius: '12px', border: '1px solid currentColor', marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem', fontWeight: 'bold', fontSize: '1.1rem' }}>
           <Settings size={24} />
           <span>Configurações salvas com sucesso no banco de dados!</span>
         </div>
       )}
+
+      {/* CENTRAL DE OVERLAYS - VMIX/OBS */}
+      <div className="premium-card" style={{ marginBottom: '3rem', borderLeft: '5px solid #2196F3' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+          <div style={{ width: '45px', height: '45px', background: 'rgba(33, 150, 243, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Layout size={24} color="#2196F3" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', color: '#fff', margin: 0 }}>Links de Transmissão (Overlays)</h2>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Copie esses links e insira como 'Web Browser' no vMix ou OBS.</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+          <div style={{ padding: '1.5rem', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px' }}>
+            <div style={{ color: 'var(--primary)', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📺 PLACAR DE NOTAS</div>
+            <code style={{ display: 'block', background: '#111', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', color: '#aaa', border: '1px solid #222' }}>
+              /overlay/nota
+            </code>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.7rem', color: '#555' }}>Exibe a nota total e os nomes na arena.</p>
+          </div>
+
+          <div style={{ padding: '1.5rem', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px' }}>
+            <div style={{ color: '#2196F3', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>👤 PRÓXIMO COMPETIDOR (NEXT)</div>
+            <code style={{ display: 'block', background: '#111', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', color: '#aaa', border: '1px solid #222' }}>
+              /overlay/chamada
+            </code>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.7rem', color: '#555' }}>Tela cheia com foto e estatísticas do peão.</p>
+          </div>
+
+          <div style={{ padding: '1.5rem', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px' }}>
+            <div style={{ color: '#9c27b0', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>🏆 RANKING DO RODEIO</div>
+            <code style={{ display: 'block', background: '#111', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', color: '#aaa', border: '1px solid #222' }}>
+              /overlay/ranking
+            </code>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.7rem', color: '#555' }}>Tabela dinâmica com os 10 melhores da etapa.</p>
+          </div>
+        </div>
+      </div>
       <form action={saveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '3rem' }}>
         <div className="premium-card" style={{ borderLeft: '5px solid var(--primary)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>

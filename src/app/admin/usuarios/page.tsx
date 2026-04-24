@@ -66,15 +66,15 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {(user.role === 'ADMIN' || (user.role === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA')) && (
+                  {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
                     <Link href={`/admin/usuarios/${u.id}/editar`} style={{ padding: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#fff', cursor: 'pointer', border: '1px solid #333' }}>
                       <Edit size={16} />
                     </Link>
                   )}
-                  {(user.role === 'ADMIN' || (user.role === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA')) && (
+                  {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
                     <form action={deleteUser}>
                       <input type="hidden" name="id" value={u.id} />
-                      <button type="submit" style={{ padding: '6px', background: 'rgba(255,68,68,0.1)', borderRadius: '4px', color: '#ff4444', cursor: 'pointer', border: '1px solid currentColor' }}>
+                      <button type="submit" onClick={(e) => {if(!confirm('Deseja realmente remover este usuário?')) e.preventDefault();}} style={{ padding: '6px', background: 'rgba(255,68,68,0.1)', borderRadius: '4px', color: '#ff4444', cursor: 'pointer', border: '1px solid currentColor' }}>
                         <Trash2 size={16} />
                       </button>
                     </form>
