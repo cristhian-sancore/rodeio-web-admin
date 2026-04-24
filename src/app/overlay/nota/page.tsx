@@ -45,9 +45,33 @@ export default function OverlayNotaPage() {
   const [timerVisible, setTimerVisible] = useState(false);
   const [rideStarted, setRideStarted] = useState(false);
   const [nameScale, setNameScale] = useState(1);
+  const [lowerThirdForcedHide, setLowerThirdForcedHide] = useState(false);
   const timerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const ltHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const serverOffsetRef = useRef(0);
   const nameRef = useRef<HTMLHeadingElement>(null);
+
+  const d = data?.data;
+  const hasAnyScore = !!d && (
+      (d as any).j1P > 0 || (d as any).j1A > 0 || (d as any).j1Total > 0 ||
+      (d as any).j2P > 0 || (d as any).j2A > 0 || (d as any).j2Total > 0 ||
+      (d as any).j3P > 0 || (d as any).j3A > 0 || (d as any).j3Total > 0 ||
+      (d as any).j4P > 0 || (d as any).j4A > 0 || (d as any).j4Total > 0
+  );
+  const shouldHideLowerThird = timerVisible || (rideStarted && !hasAnyScore);
+
+  // Escuta visibilidade do Lower Third e força a saída da tela após 10 segundos ininterruptos
+  useEffect(() => {
+    if (!shouldHideLowerThird && data?.mode === 'ID' && d) {
+       setLowerThirdForcedHide(false);
+       if (ltHideTimeoutRef.current) clearTimeout(ltHideTimeoutRef.current);
+       ltHideTimeoutRef.current = setTimeout(() => {
+           setLowerThirdForcedHide(true);
+       }, 10000);
+    } else {
+       if (ltHideTimeoutRef.current) clearTimeout(ltHideTimeoutRef.current);
+    }
+  }, [shouldHideLowerThird, data?.mode, d?.id]);
 
   useEffect(() => {
     document.documentElement.style.background = 'transparent';
@@ -116,7 +140,7 @@ export default function OverlayNotaPage() {
       if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
     } else if (elapsedTime > 0) {
       // Backend parou o cronômetro
-      timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 500);
+      timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 5000);
     } else {
       setTimerVisible(false);
     }
@@ -135,7 +159,7 @@ export default function OverlayNotaPage() {
           // Atingiu 8 segundos visuais
           setTimerVisible((prev) => {
              if (prev && !timerTimeoutRef.current) {
-                 timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 500);
+                 timerTimeoutRef.current = setTimeout(() => setTimerVisible(false), 5000);
              }
              return prev;
           });
@@ -302,17 +326,8 @@ export default function OverlayNotaPage() {
       )}
 
       {/* LOWER THIRD (ID) */}
-      {mode === 'ID' && d && (() => {
-         const hasAnyScore = (
-             (d as any).j1P > 0 || (d as any).j1A > 0 || (d as any).j1Total > 0 ||
-             (d as any).j2P > 0 || (d as any).j2A > 0 || (d as any).j2Total > 0 ||
-             (d as any).j3P > 0 || (d as any).j3A > 0 || (d as any).j3Total > 0 ||
-             (d as any).j4P > 0 || (d as any).j4A > 0 || (d as any).j4Total > 0
-         );
-         const shouldHideLowerThird = timerVisible || (rideStarted && !hasAnyScore);
-         
-         return (
-        <div className={`nota-container ${shouldHideLowerThird ? 'hidden' : ''}`}>
+      {mode === 'ID' && d && (
+        <div className={`nota-container ${(shouldHideLowerThird || lowerThirdForcedHide) ? 'hidden' : ''}`}>
           {/* HEADER BADGES (RANK E DIFF) */}
           <div className="header-badges">
             {!data.rankingCongelado && d.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
@@ -346,8 +361,7 @@ export default function OverlayNotaPage() {
               <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
           </div>
         </div>
-        );
-      })()}
+      )}
 
       {/* CHAMADA (FULL) */}
       {mode === 'CHAMADA' && d && (
