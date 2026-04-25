@@ -20,7 +20,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const config = await prisma.configuracao.findFirst();
+  let config = null;
+  try {
+    config = await prisma.configuracao.findFirst();
+  } catch (err) {
+    // Falha silenciosa durante o build (prerender)
+  }
   const primaryColor = config?.primaryColor || '#d4af37';
 
   return (
