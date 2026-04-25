@@ -1,12 +1,13 @@
 import { prisma } from "./db";
 
-export async function getRanking(params: { etapaId?: number; temporadaId?: number }) {
-  const { etapaId, temporadaId } = params;
+export async function getRanking(params: { roundId?: number; etapaId?: number; temporadaId?: number }) {
+  const { roundId, etapaId, temporadaId } = params;
 
   // 1. Buscar montarias filtradas
   const montarias = await prisma.montaria.findMany({
     where: {
       removida: false,
+      ...(roundId ? { roundId } : {}),
       ...(etapaId ? { etapaId } : {}),
       ...(temporadaId ? { etapa: { temporadaId } } : {}),
     },
@@ -147,13 +148,32 @@ export async function getBestOfRound(roundId: number) {
 
 export async function getOverlayRankingData(mode: string, roundId?: number, etapaId?: number, temporadaId?: number) {
   const isCampeonato = mode.includes('CAMPEONATO');
-  const { peoes, touros } = await getRanking({ etapaId: isCampeonato ? undefined : etapaId, temporadaId });
+  const isNoite = mode.includes('NOITE');
+  
+  const { peoes, touros } = await getRanking({ 
+    roundId: isNoite ? roundId : undefined,
+    etapaId: (isCampeonato || isNoite) ? undefined : etapaId, 
+    temporadaId 
+  });
+
+  let title = "RANKING";
+  if (mode === 'NOITE_COMPETIDOR') title = "CLASSIFICAÇÃO DA NOITE";
+  if (mode === 'ETAPA_COMPETIDOR') title = "MELHORES DA ETAPA";
+  if (mode === 'CAMPEONATO_COMPETIDOR') title = "RANKING DO CAMPEONATO";
+  if (mode === 'NOITE_ANIMAL') title = "MELHORES TOUROS (NOITE)";
+  if (mode === 'ETAPA_ANIMAL') title = "MELHORES TOUROS (ETAPA)";
+  if (mode === 'CAMPEONATO_ANIMAL') title = "MELHORES TOUROS (TEMPORADA)";
+  if (mode.includes('BOIADA')) title = "RANKING DE BOIADAS";
 
   if (mode.includes('ANIMAL')) {
-     return { list: touros.map((t, idx) => ({ pos: idx + 1, nome: t.nome, info: t.cia, nota: t.media.toFixed(2), animalId: t.id })) };
+     return { 
+       title,
+       list: touros.map((t, idx) => ({ pos: idx + 1, nome: t.nome, info: t.cia, nota: t.media.toFixed(2), animalId: t.id })) 
+     };
   }
   
   return { 
+    title,
     list: peoes.map((p, idx) => ({ 
       pos: idx + 1, 
       nome: p.nome, 

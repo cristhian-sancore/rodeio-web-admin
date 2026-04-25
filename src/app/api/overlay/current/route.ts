@@ -16,7 +16,16 @@ export async function getOverlayDataPayload() {
 
     // Prioridade para Ranking se estiver ativo
     if (config.rankingMode && config.rankingMode !== 'OFF') {
-      const rankingData = await getOverlayRankingData(config.rankingMode);
+      const activeMontaria = config.montariaAtivaId 
+        ? await prisma.montaria.findUnique({ where: { id: config.montariaAtivaId }, select: { roundId: true, etapaId: true } })
+        : null;
+
+      const rankingData = await getOverlayRankingData(
+        config.rankingMode, 
+        activeMontaria?.roundId, 
+        activeMontaria?.etapaId
+      );
+
       return { 
         active: true, 
         mode: 'RANKING',
