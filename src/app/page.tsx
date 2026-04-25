@@ -224,25 +224,25 @@ export default async function Home() {
       <section className="features">
         <div className="feature-card">
           <div className="feature-icon">📺</div>
-          <h3>Gráficos vMix</h3>
-          <p>Overlays profissionais de alta resolução com transparência real para suas melhores transmissões.</p>
+          <h3>Transmissão HD</h3>
+          <p>Acompanhe cada segundo das montarias com a melhor tecnologia de replay e informações em tempo real.</p>
         </div>
 
         <div className="feature-card">
           <div className="feature-icon">🤠</div>
-          <h3>Gestão Completa</h3>
-          <p>Administre competidores, etapas, boiadas e montarias em um único lugar, de forma intuitiva.</p>
+          <h3>Elite da Arena</h3>
+          <p>Conheça os competidores e animais que desafiam a gravidade em busca do título de campeão.</p>
         </div>
 
         <div className="feature-card">
-          <div className="feature-icon">📊</div>
-          <h3>Dados em Tempo Real</h3>
-          <p>Resultados e rankings atualizados instantaneamente para o público e o painel administrativo.</p>
+          <div className="feature-icon">🏆</div>
+          <h3>Resultados Oficiais</h3>
+          <p>Ranking atualizado instantaneamente para você saber quem lidera a arena a cada saída de brete.</p>
         </div>
       </section>
 
       <footer>
-        <p>&copy; 2026 Rodeio Pro - Tecnologia para o Campo.</p>
+        <p>&copy; 2026 Rodeio Pro - A Emoção da Arena em Tempo Real.</p>
       </footer>
     </div>
   )
