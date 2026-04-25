@@ -9,7 +9,13 @@ import {
   Search, CheckCircle2, Timer, Trophy
 } from "lucide-react";
 import Link from "next/link";
-import { updateMontariaNota, updateRankingMode, updateRankingPage, updateOverlayMode } from "../etapas/actions";
+import { 
+  updateMontariaNota, 
+  updateRankingMode, 
+  updateRankingPage, 
+  updateOverlayMode,
+  updateRankingCongelado
+} from "../etapas/actions";
 import SumulaList from "./SumulaList";
 import { getCompetidorStageRank, getOverlayRankingData } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
@@ -177,11 +183,11 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
             </div>
             
             {(config as any).rankingCongelado ? (
-                <button formAction={async () => { 'use server'; const { updateRankingCongelado } = await import('../etapas/actions'); await updateRankingCongelado(false); }} className="btn-secondary" style={{ background: '#222', color: '#fff' }}>
+                <button formAction={updateRankingCongelado.bind(null, false)} className="btn-secondary" style={{ background: '#222', color: '#fff' }}>
                    Restaurar Auto
                 </button>
             ) : (
-                <button formAction={async () => { 'use server'; const { updateRankingCongelado } = await import('../etapas/actions'); await updateRankingCongelado(true); }} className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>
+                <button formAction={updateRankingCongelado.bind(null, true)} className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>
                    Congelar Site & Overlay
                 </button>
             )}
@@ -195,9 +201,8 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           <h3 style={{ margin: 0, fontSize: '1rem' }}>Formato da Chamada (VMIX)</h3>
         </div>
         
-        <form style={{ display: 'flex', gap: '1rem' }}>
-          <button 
-            formAction={async () => { 'use server'; await updateOverlayMode('ID'); }} 
+        <form style={{ displ          <button 
+            formAction={updateOverlayMode.bind(null, 'ID')} 
             className="btn-secondary" 
             style={{ 
               flex: 1, 
@@ -214,9 +219,9 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
             <span style={{ fontWeight: 'bold' }}>IDENTIFICAÇÃO</span>
             <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>RODAPÉ (LOWER THIRD)</span>
           </button>
-
+ 
           <button 
-            formAction={async () => { 'use server'; await updateOverlayMode('CHAMADA'); }} 
+            formAction={updateOverlayMode.bind(null, 'CHAMADA')} 
             className="btn-secondary" 
             style={{ 
               flex: 1, 
@@ -232,6 +237,7 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           >
             <span style={{ fontWeight: 'bold' }}>CHAMADA DE GALA</span>
             <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>TELA CHEIA + ESTATÍSTICAS</span>
+          </button>TICAS</span>
           </button>
         </form>
       </div>
@@ -251,13 +257,13 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           {/* LINHA 1: PEÃO */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
             <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#666', width: '60px' }}>PEÃO:</span>
-            <button formAction={async () => { 'use server'; await updateRankingMode('NOITE_COMPETIDOR'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_COMPETIDOR' ? 'var(--primary)' : '#222', color: config.rankingMode === 'NOITE_COMPETIDOR' ? '#000' : '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'NOITE_COMPETIDOR')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_COMPETIDOR' ? 'var(--primary)' : '#222', color: config.rankingMode === 'NOITE_COMPETIDOR' ? '#000' : '#fff' }}>
               Noite
             </button>
-            <button formAction={async () => { 'use server'; await updateRankingMode('ETAPA_COMPETIDOR'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_COMPETIDOR' ? 'var(--primary)' : '#222', color: config.rankingMode === 'ETAPA_COMPETIDOR' ? '#000' : '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'ETAPA_COMPETIDOR')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_COMPETIDOR' ? 'var(--primary)' : '#222', color: config.rankingMode === 'ETAPA_COMPETIDOR' ? '#000' : '#fff' }}>
               Etapa
             </button>
-            <button formAction={async () => { 'use server'; await updateRankingMode('CAMPEONATO_COMPETIDOR'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_COMPETIDOR' ? 'var(--primary)' : '#222', color: config.rankingMode === 'CAMPEONATO_COMPETIDOR' ? '#000' : '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'CAMPEONATO_COMPETIDOR')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_COMPETIDOR' ? 'var(--primary)' : '#222', color: config.rankingMode === 'CAMPEONATO_COMPETIDOR' ? '#000' : '#fff' }}>
               Campeonato
             </button>
           </div>
@@ -265,13 +271,13 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           {/* LINHA 2: TOURO */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
             <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#666', width: '60px' }}>TOURO:</span>
-            <button formAction={async () => { 'use server'; await updateRankingMode('NOITE_ANIMAL'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_ANIMAL' ? '#ff4444' : '#222', color: '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'NOITE_ANIMAL')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_ANIMAL' ? '#ff4444' : '#222', color: '#fff' }}>
               Noite
             </button>
-            <button formAction={async () => { 'use server'; await updateRankingMode('ETAPA_ANIMAL'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_ANIMAL' ? '#ff4444' : '#222', color: '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'ETAPA_ANIMAL')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_ANIMAL' ? '#ff4444' : '#222', color: '#fff' }}>
               Etapa
             </button>
-            <button formAction={async () => { 'use server'; await updateRankingMode('CAMPEONATO_ANIMAL'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_ANIMAL' ? '#ff4444' : '#222', color: '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'CAMPEONATO_ANIMAL')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_ANIMAL' ? '#ff4444' : '#222', color: '#fff' }}>
               Campeonato
             </button>
           </div>
@@ -279,13 +285,13 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           {/* LINHA 3: BOIADA */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
             <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#666', width: '60px' }}>BOIADA:</span>
-            <button formAction={async () => { 'use server'; await updateRankingMode('NOITE_BOIADA'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'NOITE_BOIADA')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'NOITE_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
               Noite
             </button>
-            <button formAction={async () => { 'use server'; await updateRankingMode('ETAPA_BOIADA'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'ETAPA_BOIADA')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'ETAPA_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
               Etapa
             </button>
-            <button formAction={async () => { 'use server'; await updateRankingMode('CAMPEONATO_BOIADA'); }} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
+            <button formAction={updateRankingMode.bind(null, 'CAMPEONATO_BOIADA')} className="btn-secondary" style={{ flex: 1, minWidth: '140px', background: config.rankingMode === 'CAMPEONATO_BOIADA' ? '#ff4444' : '#222', color: '#fff' }}>
               Campeonato
             </button>
           </div>
@@ -295,15 +301,15 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
             {/* CONTROLE DE PAGINAÇÃO MANUAL */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#000', padding: '5px 15px', borderRadius: '8px', border: '1px solid #333' }}>
-              <button formAction={async () => { 'use server'; await updateRankingPage(-1); }} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>◄ Anterior</button>
+              <button formAction={updateRankingPage.bind(null, -1)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>◄ Anterior</button>
               <div style={{ textAlign: 'center', minWidth: '80px' }}>
                  <div style={{ fontSize: '0.6rem', color: '#666' }}>PÁGINA</div>
                  <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--primary)' }}>{((config as any).rankingPage || 0) + 1}</div>
               </div>
-              <button formAction={async () => { 'use server'; await updateRankingPage(1); }} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>Próxima ►</button>
+              <button formAction={updateRankingPage.bind(null, 1)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>Próxima ►</button>
             </div>
 
-            <button formAction={async () => { 'use server'; await updateRankingMode('OFF'); }} className="btn-secondary" style={{ minWidth: '120px', background: '#000', color: '#666', border: '1px dashed #444' }}>
+            <button formAction={updateRankingMode.bind(null, 'OFF')} className="btn-secondary" style={{ minWidth: '120px', background: '#000', color: '#666', border: '1px dashed #444' }}>
               LIMPAR OVERLAY
             </button>
           </div>

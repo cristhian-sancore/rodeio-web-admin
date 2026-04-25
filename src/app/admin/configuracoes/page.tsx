@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { Settings, Shield, Palette, Layout, Gavel, Save, Plus, Database, Edit, Trash2, AlertCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { saveConfig, saveTemporada } from "../etapas/actions";
+import { saveConfig, saveTemporada, deleteTemporada } from "../etapas/actions";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -388,7 +388,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
                   <Link href={`/admin/configuracoes/temporada/${temp.id}/editar`} style={{ padding: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#fff', cursor: 'pointer', border: '1px solid #333' }}>
                     <Edit size={16} />
                   </Link>
-                  <form action={async () => { 'use server'; const { deleteTemporada } = await import('../etapas/actions'); await deleteTemporada(temp.id); }}>
+                  <form action={deleteTemporada.bind(null, temp.id)}>
                     <button type="submit" style={{ padding: '6px', background: 'rgba(255,68,68,0.1)', borderRadius: '4px', color: '#ff4444', cursor: 'pointer', border: '1px solid currentColor' }}>
                       <Trash2 size={16} />
                     </button>

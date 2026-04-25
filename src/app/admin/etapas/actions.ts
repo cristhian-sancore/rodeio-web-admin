@@ -1073,3 +1073,26 @@ export async function importTopClassifiedRiders(etapaId: number, currentRoundId:
   return { success: true, importados: peoesParaImportar.length };
 }
 
+
+export async function createEtapaAction(formData: FormData) {
+  const nome = formData.get('nome') as string;
+  const cidade = formData.get('cidade') as string;
+  const estado = formData.get('estado') as string;
+  const dataInicio = new Date(formData.get('dataInicio') as string);
+  const dataFinal = new Date(formData.get('dataFinal') as string);
+  const temporadaId = parseInt(formData.get('temporadaId') as string);
+
+  await prisma.etapa.create({
+    data: { 
+      nome, 
+      cidade, 
+      estado, 
+      dataInicio, 
+      dataFinal,
+      temporadaId
+    }
+  });
+
+  revalidatePath('/admin/etapas');
+  revalidatePath('/admin');
+}

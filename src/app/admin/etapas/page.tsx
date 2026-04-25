@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import Link from "next/link";
 import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
-import { deleteEtapa } from "./actions";
+import { deleteEtapa, createEtapaAction } from "./actions";
 
 export default async function EtapasPage(props: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const searchParams = await props.searchParams;
@@ -16,28 +16,7 @@ export default async function EtapasPage(props: { searchParams: Promise<{ [key: 
     orderBy: { dataInicio: 'asc' }
   });
 
-  async function createEtapa(formData: FormData) {
-    'use server';
-    const nome = formData.get('nome') as string;
-    const cidade = formData.get('cidade') as string;
-    const estado = formData.get('estado') as string;
-    const dataInicio = new Date(formData.get('dataInicio') as string);
-    const dataFinal = new Date(formData.get('dataFinal') as string);
-    const temporadaId = parseInt(formData.get('temporadaId') as string);
 
-    await prisma.etapa.create({
-      data: { 
-        nome, 
-        cidade, 
-        estado, 
-        dataInicio, 
-        dataFinal,
-        temporadaId
-      }
-    });
-
-    revalidatePath('/admin/etapas');
-  }
 
   if (temporadas.length === 0) {
     return (
@@ -68,7 +47,7 @@ export default async function EtapasPage(props: { searchParams: Promise<{ [key: 
       {/* Formulario de Cadastro */}
       <div className="premium-card" style={{ marginBottom: '3rem', maxWidth: '800px' }}>
         <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', color: '#fff' }}>Agendar Nova Etapa</h2>
-        <form action={createEtapa} className="grid-2">
+        <form action={createEtapaAction} className="grid-2">
           
           <div style={{ gridColumn: 'span 2' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Vincular a qual Circuito / Temporada?</label>
