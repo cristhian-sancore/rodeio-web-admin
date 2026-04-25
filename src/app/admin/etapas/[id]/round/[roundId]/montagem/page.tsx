@@ -2,9 +2,18 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { Plus, Trash2, User, Cat, Target, ArrowLeft, Save, AlertCircle, Edit, ListOrdered } from "lucide-react";
+import { Plus, Trash2, User, Cat, Target, ArrowLeft, Save, AlertCircle, Edit, ListOrdered, Trophy } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { 
+  addMontariaAction, 
+  removeMontariaSorteio, 
+  updateMontariaAnimalAction, 
+  addRoundReserva, 
+  deleteRoundReserva,
+  importTopClassifiedRiders,
+  importRidersFromPreviousRound
+} from "../../../../actions";
 import SearchableSelect from "../../../../../components/SearchableSelect";
 
 export default async function MontagemRoundPage({ params }: { params: { id: string, roundId: string } }) {
@@ -46,42 +55,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
     return a.tipo.toLowerCase() === 'touro';
   });
 
-  async function addMontaria(formData: FormData) {
-    'use server';
-    const rawCompetidor = formData.get('competidorId');
-    const rawAnimal = formData.get('animalId');
-    console.log("Raw form data:", { rawCompetidor, rawAnimal, rId });
 
-    const competidorId = parseInt(rawCompetidor as string);
-    const animalId = parseInt(rawAnimal as string);
-
-    if (isNaN(competidorId) || isNaN(animalId)) {
-      console.log("INVALID IDS, cannot create montaria.");
-      return; 
-    }
-
-    // Verificar duplicidade
-    const existing = await prisma.montaria.findFirst({
-      where: { competidorId, roundId: rId, removida: false }
-    });
-
-    if (!existing) {
-      await prisma.montaria.create({
-        data: { competidorId, animalId, roundId: rId, etapaId: eId }
-      });
-    }
-    revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`);
-  }
-
-  async function deleteMontaria(mId: number) {
-    'use server';
-    const userSession = await getServerSession(authOptions);
-    await prisma.montaria.update({ 
-      where: { id: mId },
-      data: { removida: true, removidaPor: userSession?.user?.name || 'Desconhecido', removidaEm: new Date() }
-    });
-    revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`);
-  }
 
   return (
     <div className="fade-in">
@@ -104,7 +78,9 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
             <Target size={20} color="var(--primary)" /> Adicionar à Súmula
           </h3>
           
-          <form action={addMontaria} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <form action={addMontariaAction} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <input type="hidden" name="roundId" value={rId} />
+            <input type="hidden" name="etapaId" value={eId} />
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#888' }}>Atleta (Peão)</label>
               <SearchableSelect 
@@ -147,23 +123,19 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
                  </p>
                  
                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    <form action={async () => { 'use server'; const { importTopClassifiedRiders } = await import('../../../../actions'); await importTopClassifiedRiders(eId, rId, 10); }}>
+                    <form action={importTopClassifiedRiders.bind(null, eId, rId, 10)}>
                         <button type="submit" className="btn-secondary" style={{ width: '100%', fontSize: '0.75rem', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                            <Trophy size={14} /> Top 10 Etapa
                         </button>
                     </form>
-                    <form action={async () => { 'use server'; const { importTopClassifiedRiders } = await import('../../../../actions'); await importTopClassifiedRiders(eId, rId, 15); }}>
+                    <form action={importTopClassifiedRiders.bind(null, eId, rId, 15)}>
                         <button type="submit" className="btn-secondary" style={{ width: '100%', fontSize: '0.75rem', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                            <Trophy size={14} /> Top 15 Etapa
                         </button>
                     </form>
                  </div>
 
-                 <form action={async () => { 
-                    'use server'; 
-                    const { importRidersFromPreviousRound } = await import('../../../../actions'); 
-                    await importRidersFromPreviousRound(eId, rId); 
-                 }}>
+                 <form action={importRidersFromPreviousRound.bind(null, eId, rId)}>
                      <button type="submit" className="btn-secondary" style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'rgba(255,255,255,0.02)', border: '1px dashed #333' }}>
                          <ListOrdered size={16} /> Importar Todos do Round Anterior
                      </button>
@@ -196,14 +168,10 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
                     <h4 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>{m.competidor.nome}</h4>
                     
                     {m.animal.nome === 'A DEFINIR' ? (
-                       <form action={async (formData) => { 
-                          'use server'; 
-                          const animalId = parseInt(formData.get('animalId') as string);
-                          if(animalId) {
-                             await prisma.montaria.update({ where: { id: m.id }, data: { animalId } });
-                             revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`);
-                          }
-                       }} style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+                       <form action={updateMontariaAnimalAction} style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+                           <input type="hidden" name="montariaId" value={m.id} />
+                           <input type="hidden" name="roundId" value={rId} />
+                           <input type="hidden" name="etapaId" value={eId} />
                            <select name="animalId" required style={{ background: '#222', color: '#fff', border: '1px solid #444', padding: '5px', borderRadius: '4px', maxWidth: '200px' }}>
                               <option value="">Sortear / Selecionar {round.modalidade}...</option>
                               {animaisFiltrados.map(a => (
@@ -226,7 +194,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
                   <Link href={`/admin/etapas/${id}/round/${roundId}/montaria/${m.id}/editar`} style={{ padding: '0.5rem', color: '#888', display: 'flex', alignItems: 'center' }}>
                     <Edit size={18} />
                   </Link>
-                  <form action={async () => { 'use server'; await prisma.montaria.update({ where: { id: m.id }, data: { removida: true, removidaPor: session?.user?.name || 'Desconhecido', removidaEm: new Date() } }); revalidatePath(`/admin/etapas/${id}/round/${roundId}/montagem`); }}>
+                  <form action={removeMontariaSorteio.bind(null, m.id, rId, eId)}>
                     <button type="submit" style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '0.5rem', transition: 'color 0.2s ease', display: 'flex', alignItems: 'center' }}>
                       <Trash2 size={20} />
                     </button>
@@ -255,7 +223,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
               <ListOrdered size={20} color="#ff4444" /> Curral de Reserva (Repasses)
             </h3>
 
-            <form action={async (formData) => { 'use server'; const { addRoundReserva } = await import('../../../../actions'); await addRoundReserva(formData); }} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+            <form action={addRoundReserva} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
               <input type="hidden" name="roundId" value={roundId} />
               <input type="hidden" name="etapaId" value={id} />
               <div style={{ flex: 3 }}>
@@ -288,7 +256,7 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
                       <div style={{ fontSize: '0.8rem', color: '#666' }}>{r.animal.companhia}</div>
                     </div>
                   </div>
-                  <form action={async () => { 'use server'; const { deleteRoundReserva } = await import('../../../../actions'); await deleteRoundReserva(r.id, rId, eId); }}>
+                  <form action={deleteRoundReserva.bind(null, r.id, rId, eId)}>
                     <button type="submit" style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={16} /></button>
                   </form>
                 </div>

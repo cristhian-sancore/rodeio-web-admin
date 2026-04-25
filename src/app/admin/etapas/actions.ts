@@ -263,6 +263,48 @@ export async function deleteRoundReserva(reservaId: number, roundId: number, eta
   revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
 }
 
+export async function addMontariaAction(formData: FormData) {
+  const roundId = parseInt(formData.get('roundId') as string);
+  const etapaId = parseInt(formData.get('etapaId') as string);
+  const competidorId = parseInt(formData.get('competidorId') as string);
+  const animalId = parseInt(formData.get('animalId') as string);
+
+  if (isNaN(competidorId) || isNaN(animalId)) return;
+
+  const existing = await p.montaria.findFirst({
+    where: { competidorId, roundId, removida: false }
+  });
+
+  if (!existing) {
+    await p.montaria.create({
+      data: { competidorId, animalId, roundId, etapaId }
+    });
+  }
+  revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+}
+
+export async function removeMontariaSorteio(montariaId: number, roundId: number, etapaId: number) {
+  const session = await getServerSession(authOptions);
+  await p.montaria.update({ 
+    where: { id: montariaId },
+    data: { removida: true, removidaPor: session?.user?.name || 'Desconhecido', removidaEm: new Date() }
+  });
+  revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+}
+
+export async function updateMontariaAnimalAction(formData: FormData) {
+  const montariaId = parseInt(formData.get('montariaId') as string);
+  const animalId = parseInt(formData.get('animalId') as string);
+  const roundId = parseInt(formData.get('roundId') as string);
+  const etapaId = parseInt(formData.get('etapaId') as string);
+
+  if (animalId) {
+    await p.montaria.update({ where: { id: montariaId }, data: { animalId } });
+    revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+  }
+}
+
+
 export async function applyRepasse(montariaId: number, roundId: number) {
   // Encontrar a primeira reserva disponível
   const reserva = await p.roundReserva.findFirst({
