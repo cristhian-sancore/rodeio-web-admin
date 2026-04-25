@@ -85,7 +85,11 @@ export default function OverlayNotaPage() {
         labelRank: block?.style?.labelText || 'RANK ETAPA',
         labelDiff: 'DIFF LÍDER',
         labelScore: 'NOTA FINAL',
-        font: config.fontFamily || 'Inter'
+        font: config.fontFamily || 'Inter',
+        borderRadius: block?.style?.borderRadius ?? 0,
+        opacity: block?.style?.opacity ?? 1,
+        useGradient: block?.style?.useGradient ?? false,
+        fontScale: block?.style?.fontScale ?? 1
      };
   })();
 
@@ -278,7 +282,11 @@ export default function OverlayNotaPage() {
         /* --- VARIÁVEIS DO CONSTRUTOR --- */
         :root {
           --accent: ${overlayStyle.accent};
+          --accent-gradient: ${overlayStyle.useGradient ? `linear-gradient(180deg, ${overlayStyle.accent} 0%, rgba(0,0,0,0.5) 100%)` : overlayStyle.accent};
           --bg-overlay: ${overlayStyle.background};
+          --radius: ${overlayStyle.borderRadius}px;
+          --opacity: ${overlayStyle.opacity};
+          --font-scale: ${overlayStyle.fontScale};
         }
 
         /* --- MODO ID (DESIGN ORIGINAL RESTAURADO) --- */
@@ -287,12 +295,15 @@ export default function OverlayNotaPage() {
           display: flex; align-items: stretch; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
           width: max-content; min-width: 800px;
           opacity: 1; transition: opacity 0.5s ease;
+          zoom: var(--font-scale);
         }
         .mode-ID .nota-container.hidden { opacity: 0; pointer-events: none; }
         .mode-ID .info-card {
-          background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, var(--bg-overlay) 100%);
+          background: var(--bg-overlay);
+          opacity: var(--opacity);
           border-left: 12px solid var(--accent); padding: 30px 60px 30px 50px;
           clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 350px;
+          border-radius: var(--radius) 0 0 var(--radius);
           max-width: 900px; overflow: visible; display: flex; flex-direction: column; justify-content: center;
         }
         .mode-ID .competidor-name { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; white-space: nowrap; transform-origin: left center; }
@@ -310,10 +321,11 @@ export default function OverlayNotaPage() {
         .mode-ID .subtotal { font-size: 4rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 2px solid rgba(212, 175, 55, 0.4); padding-top: 10px; line-height: 1; text-align: center; }
         
         .mode-ID .final-score-card {
-          min-width: 250px; background: linear-gradient(180deg, #F9D976 0%, var(--accent) 100%);
+          min-width: 250px; background: var(--accent-gradient);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           padding: 20px 40px 20px 60px; clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
           margin-left: -40px;
+          border-radius: 0 var(--radius) var(--radius) 0;
         }
         .mode-ID .total-value { font-size: 5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
         

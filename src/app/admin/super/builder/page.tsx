@@ -341,6 +341,33 @@ export default function DragDropBuilder() {
                     )}
 
                     <div>
+                        <label style={styleLabel}>ESTILO DE PREENCHIMENTO</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                           <button onClick={() => updateBlock(selectedBlock.id, { style: { ...selectedBlock.style, useGradient: false } })} style={toggleBtnStyle(!selectedBlock.style?.useGradient)}>SÓLIDO</button>
+                           <button onClick={() => updateBlock(selectedBlock.id, { style: { ...selectedBlock.style, useGradient: true } })} style={toggleBtnStyle(!!selectedBlock.style?.useGradient)}>GRADIENTE</button>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                       <div>
+                          <label style={styleLabel}>ARREDONDAMENTO</label>
+                          <input type="range" min="0" max="50" value={selectedBlock.style?.borderRadius || 0} onChange={e => updateBlock(selectedBlock.id, { style: { ...selectedBlock.style, borderRadius: parseInt(e.target.value) } })} style={{ width: '100%' }} />
+                       </div>
+                       <div>
+                          <label style={styleLabel}>OPACIDADE</label>
+                          <input type="range" min="0.1" max="1" step="0.1" value={selectedBlock.style?.opacity || 1} onChange={e => updateBlock(selectedBlock.id, { style: { ...selectedBlock.style, opacity: parseFloat(e.target.value) } })} style={{ width: '100%' }} />
+                       </div>
+                    </div>
+
+                    <div>
+                        <label style={styleLabel}>ESCALA DA FONTE (ZOOM)</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                           <input type="range" min="0.5" max="2" step="0.1" value={selectedBlock.style?.fontScale || 1} onChange={e => updateBlock(selectedBlock.id, { style: { ...selectedBlock.style, fontScale: parseFloat(e.target.value) } })} style={{ flex: 1 }} />
+                           <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{selectedBlock.style?.fontScale || 1}x</span>
+                        </div>
+                    </div>
+
+                    <div>
                         <label style={styleLabel}>ALINHAMENTO DO CONTEÚDO</label>
                         <div style={{ display: 'flex', gap: '4px', background: '#111', padding: '4px', borderRadius: '10px', border: '1px solid #222' }}>
                            {['left', 'center', 'right'].map(a => (
@@ -410,6 +437,12 @@ const quickActionStyle = {
   display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid #222',
   boxShadow: '0 4px 10px rgba(0,0,0,0.5)'
 };
+
+const toggleBtnStyle = (active: boolean) => ({
+  flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #222',
+  background: active ? '#222' : 'transparent', color: active ? '#fff' : '#444',
+  fontSize: '0.65rem', fontWeight: '900', cursor: 'pointer', transition: 'all 0.2s'
+});
 
 const styleLabel = { fontSize: '0.65rem', color: '#444', fontWeight: '900', display: 'block', marginBottom: '10px', textTransform: 'uppercase' as const, letterSpacing: '1.5px' };
 const styleInput = { width: '100%', background: '#111', border: '1px solid #1a1a1a', color: '#fff', padding: '14px', borderRadius: '12px', fontSize: '0.85rem', outline: 'none', transition: 'border-color 0.2s' };
