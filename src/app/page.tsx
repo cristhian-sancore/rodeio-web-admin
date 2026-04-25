@@ -14,8 +14,13 @@ export default async function Home() {
   const temporada = await prisma.temporada.findFirst({ where: { ativa: true } });
   const etapaAtiva = await prisma.etapa.findFirst({ where: { ativa: true }, orderBy: { id: 'desc' } });
   
-  // Buscar config do Google Drive para os vídeos
-  const config = await prisma.configuracao.findUnique({ where: { id: 1 } });
+  // Buscar config do Google Drive para os vídeos e layout do construtor
+  let config: any = null;
+  try {
+    config = await prisma.configuracao.findUnique({ where: { id: 1 } });
+  } catch (err) {
+    console.error("Erro ao carregar config na Home:", err);
+  }
   const folderId = config?.googleDriveFolderId || null;
   
   let replayMap: Record<string, { id: string, thumb: string | null }> = {};

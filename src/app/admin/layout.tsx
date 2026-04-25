@@ -9,7 +9,13 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  const config = await prisma.configuracao.findFirst();
+  
+  let config = null;
+  try {
+    config = await prisma.configuracao.findFirst();
+  } catch (err) {
+    console.error("Erro ao carregar config no AdminLayout:", err);
+  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
