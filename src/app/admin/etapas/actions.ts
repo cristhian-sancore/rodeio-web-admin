@@ -371,7 +371,10 @@ export async function saveConfig(formData: FormData) {
         replayExportPath: formData.get('replayExportPath') as string,
         vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
         googleDriveFolderId: (formData.get('googleDriveFolderId') as string) || null,
-        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null
+        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null,
+        homeHeroTitle: formData.get('homeHeroTitle') as string,
+        homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
+        homeHeroImage: formData.get('homeHeroImage') as string
       },
       create: { 
         id: 1, 
@@ -385,7 +388,10 @@ export async function saveConfig(formData: FormData) {
         replayExportPath: formData.get('replayExportPath') as string,
         vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
         googleDriveFolderId: (formData.get('googleDriveFolderId') as string) || null,
-        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null
+        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null,
+        homeHeroTitle: formData.get('homeHeroTitle') as string,
+        homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
+        homeHeroImage: formData.get('homeHeroImage') as string
       }
     });
 

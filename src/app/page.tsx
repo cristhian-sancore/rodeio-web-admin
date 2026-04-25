@@ -85,11 +85,13 @@ export default async function Home() {
     <div className="landing-body">
       {/* Hero Section */}
       <section className="hero">
-        <div className="hero-bg"></div>
+        <div className="hero-bg" style={{ 
+          backgroundImage: config?.homeHeroImage ? `url(${config.homeHeroImage})` : "url('/hero-rodeo.png')" 
+        }}></div>
         <div className="hero-content">
-          <h1 className="hero-title">Rodeio Pro</h1>
+          <h1 className="hero-title">{config?.homeHeroTitle || "Rodeio Pro"}</h1>
           <p className="hero-subtitle">
-            A plataforma definitiva para gestão de eventos, pontuações em tempo real e integração total com transmissões vMix.
+            {config?.homeHeroSubtitle || "A plataforma definitiva para gestão de eventos, pontuações em tempo real e integração total com transmissões vMix."}
           </p>
           <div className="cta-group">
             <Link href="/live" className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>

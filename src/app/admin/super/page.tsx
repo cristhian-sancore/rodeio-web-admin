@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import DbManager from "./DbManager";
+import CmsManager from "./CmsManager";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -20,7 +21,8 @@ export default async function SuperAdminPage() {
     prisma.user.count(),
     prisma.montaria.count(),
     // Mock database size for SQLite
-    Promise.resolve("64 KB")
+    Promise.resolve("64 KB"),
+    prisma.configuracao.findFirst()
   ]);
 
   const recentActivity = await prisma.montaria.findMany({
@@ -90,6 +92,10 @@ export default async function SuperAdminPage() {
             <Database size={20} color="var(--primary)" /> Gerenciador de Banco de Dados (PostgreSQL)
          </h2>
          <DbManager />
+      </div>
+
+      <div style={{ marginBottom: '3rem' }}>
+          <CmsManager config={config} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>
