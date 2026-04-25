@@ -152,21 +152,30 @@ export async function POST(req: Request) {
 
         if (juizesQueEnviaram.size >= nJ) {
            const { sendToVMix } = await import("@/lib/vmix");
-           const { getRanking } = await import("@/lib/ranking");
+           const { getCompetidorStageRank } = await import("@/lib/ranking");
            
            // Buscar ranking atual para o overlay
-           const { peoes } = await getRanking({ etapaId: montaria.round.etapaId });
-           const myPos = peoes.find(p => p.id === montaria.competidorId);
+           const stageRank = await getCompetidorStageRank(montaria.round.etapaId, montaria.competidorId);
 
            await sendToVMix(config as any, {
-              competidor: montaria.competidorId ? (await prisma.competidor.findUnique({ where: { id: montaria.competidorId } }))?.nome || '---' : '---',
+              competidor: (await prisma.competidor.findUnique({ where: { id: montaria.competidorId } }))?.nome || '---',
               animal: (await prisma.animal.findUnique({ where: { id: montaria.animalId } }))?.nome || '---',
+              etapaNome: (await prisma.etapa.findUnique({ where: { id: montaria.round.etapaId } }))?.nome || '---',
+              // Notas detalhadas (Peão e Animal)
+              j1p: tempNotas.j1p, j1a: tempNotas.j1a,
+              j2p: tempNotas.j2p, j2a: tempNotas.j2a,
+              j3p: tempNotas.j3p, j3a: tempNotas.j3a,
+              j4p: tempNotas.j4p, j4a: tempNotas.j4a,
+              // Somas por Juiz
               j1: tempNotas.j1p + tempNotas.j1a,
               j2: tempNotas.j2p + tempNotas.j2a,
               j3: tempNotas.j3p + tempNotas.j3a,
               j4: tempNotas.j4p + tempNotas.j4a,
+              // Totais calculados
+              notaPeao: totalPeao,
+              notaAnimal: totalAnimal,
               total: notaTotal,
-              etapaRank: myPos ? myPos.rank.toString() : '---'
+              etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
            });
         }
       } catch (vmixErr) {

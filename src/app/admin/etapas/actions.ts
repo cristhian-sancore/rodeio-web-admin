@@ -891,38 +891,43 @@ export async function updateRankingPage(delta: number) {
   }
 }
 export async function sendManualToOverlay(montariaId: number) {
-  const montaria = await prisma.montaria.findUnique({
-    where: { id: montariaId },
-    include: { 
-      competidor: true, 
-      animal: true, 
-      etapa: { select: { nome: true } } 
-    }
-  });
-
-  const config = await prisma.configuracao.findUnique({ where: { id: 1 } });
-
-  if (montaria && config?.vmixUrl) {
-    const { getCompetidorStageRank } = await import('@/lib/ranking');
-    const stageRank = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
-
-    await sendToVMix(config as any, {
-      competidor: montaria.competidor.nome,
-      animal: montaria.animal.nome,
-      etapaNome: (montaria as any).etapa?.nome,
-      j1p: montaria.j1Peao, j1a: montaria.j1Animal,
-      j2p: montaria.j2Peao, j2a: montaria.j2Animal,
-      j3p: montaria.j3Peao, j3a: montaria.j3Animal,
-      j4p: montaria.j4Peao, j4a: montaria.j4Animal,
-      j1: montaria.j1Peao + montaria.j1Animal,
-      j2: montaria.j2Peao + montaria.j2Animal,
-      j3: montaria.j3Peao + montaria.j3Animal,
-      j4: montaria.j4Peao + montaria.j4Animal,
-      notaPeao: montaria.notaPeao,
-      notaAnimal: montaria.notaAnimal,
-      total: montaria.notaTotal,
-      etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
+  try {
+    const montaria = await prisma.montaria.findUnique({
+      where: { id: montariaId },
+      include: { 
+        competidor: true, 
+        animal: true, 
+        etapa: { select: { nome: true } } 
+      }
     });
+
+    const config = await prisma.configuracao.findFirst();
+
+    if (montaria && config?.vmixUrl) {
+      const { getCompetidorStageRank } = await import('@/lib/ranking');
+      const stageRank = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
+
+      await sendToVMix(config as any, {
+        competidor: montaria.competidor.nome,
+        animal: montaria.animal.nome,
+        etapaNome: (montaria as any).etapa?.nome,
+        j1p: montaria.j1Peao, j1a: montaria.j1Animal,
+        j2p: montaria.j2Peao, j2a: montaria.j2Animal,
+        j3p: montaria.j3Peao, j3a: montaria.j3Animal,
+        j4p: montaria.j4Peao, j4a: montaria.j4Animal,
+        j1: montaria.j1Peao + montaria.j1Animal,
+        j2: montaria.j2Peao + montaria.j2Animal,
+        j3: montaria.j3Peao + montaria.j3Animal,
+        j4: montaria.j4Peao + montaria.j4Animal,
+        notaPeao: montaria.notaPeao,
+        notaAnimal: montaria.notaAnimal,
+        total: montaria.notaTotal,
+        etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
+      });
+    }
+  } catch (err) {
+    console.error("ERRO CRÍTICO SEND_MANUAL_OVERLAY:", err);
+    throw new Error("Falha ao enviar para o vMix. Verifique a conexão e configuração do IP.");
   }
 }
 
