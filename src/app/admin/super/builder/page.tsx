@@ -20,7 +20,11 @@ import {
   ChevronDown,
   Settings,
   Image as ImageIcon,
-  Palette
+  Palette,
+  Shield,
+  Radio,
+  Gavel,
+  Type
 } from 'lucide-react';
 import Link from 'next/link';
 import { saveConfig } from '@/app/admin/etapas/actions';
@@ -30,37 +34,58 @@ const PAGES = [
   { id: 'RANKING', label: 'Rankings Públicos', icon: <Trophy size={18} /> },
   { id: 'COMPETIDORES', label: 'Atletas', icon: <Users size={18} /> },
   { id: 'ANIMAIS', label: 'Boiada', icon: <Cat size={18} /> },
+  { id: 'OVERLAYS', label: 'Gráficos (vMix)', icon: <Monitor size={18} color="#e74c3c" /> },
+  { id: 'PAINEIS', label: 'Painéis (Juiz/Coment.)', icon: <Gavel size={18} color="#3498db" /> },
+  { id: 'ADMIN', label: 'Painel Admin', icon: <Shield size={18} color="#2ecc71" /> },
 ];
 
 const BLOCK_TYPES = [
+  // Site
   { type: 'HERO', label: 'Banner Principal', icon: '🖼️', pages: ['HOME'] },
   { type: 'HIGHLIGHTS', label: 'Destaques', icon: '🎬', pages: ['HOME'] },
   { type: 'RANKINGS', label: 'Ranking', icon: '🏆', pages: ['HOME', 'RANKING'] },
-  { type: 'FEATURES', label: 'Cards de Info', icon: '✨', pages: ['HOME'] },
   { type: 'GALLERY', label: 'Galeria de Fotos', icon: '📷', pages: ['HOME', 'COMPETIDORES', 'ANIMAIS'] },
   { type: 'SPONSORS', label: 'Patrocinadores', icon: '🤝', pages: ['HOME'] },
+  // Overlays
+  { type: 'LOWER_THIRD', label: 'Tarja de Atleta', icon: '🏷️', pages: ['OVERLAYS'] },
+  { type: 'SCORE_BOARD', label: 'Placar de Notas', icon: '🔢', pages: ['OVERLAYS'] },
+  { type: 'FULL_RANKING', label: 'Ranking Tela Cheia', icon: '📺', pages: ['OVERLAYS'] },
+  // Paineis
+  { type: 'JUDGE_VOTE', label: 'Teclado de Notas', icon: '⌨️', pages: ['PAINEIS'] },
+  { type: 'COMMENTATOR_FEED', label: 'Feed do Comentarista', icon: '🎙️', pages: ['PAINEIS'] },
+  { type: 'STATS_CARD', label: 'Card de Estatísticas', icon: '📊', pages: ['PAINEIS', 'ADMIN'] },
 ];
 
 export default function SiteBuilderPage() {
   const [activePage, setActivePage] = useState('HOME');
   const [layouts, setLayouts] = useState<any>({});
+  const [brand, setBrand] = useState({
+    primaryColor: '#d4af37',
+    secondaryColor: '#111111',
+    logoUrl: '',
+    siteName: 'RODEIO PRO'
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState('desktop');
 
-  // Carregar configurações iniciais
   useEffect(() => {
     async function load() {
       const res = await fetch('/api/public/config');
       const config = await res.json();
       setLayouts(config.siteLayouts || {
-        HOME: [
-          { id: 'h1', type: 'HERO', title: 'Banner Principal', visible: true },
-          { id: 'r1', type: 'RANKINGS', title: 'Ranking Home', visible: true }
-        ],
+        HOME: [{ id: 'h1', type: 'HERO', title: 'Banner Principal', visible: true }],
         RANKING: [{ id: 'rr1', type: 'RANKINGS', title: 'Ranking Completo', visible: true }],
         COMPETIDORES: [{ id: 'cc1', type: 'GALLERY', title: 'Grid de Atletas', visible: true }],
-        ANIMAIS: [{ id: 'aa1', type: 'GALLERY', title: 'Grid de Animais', visible: true }]
+        OVERLAYS: [{ id: 'lt1', type: 'LOWER_THIRD', title: 'GC de Atleta', visible: true }],
+        PAINEIS: [{ id: 'jv1', type: 'JUDGE_VOTE', title: 'Interface de Votação', visible: true }],
+        ADMIN: [{ id: 'st1', type: 'STATS_CARD', title: 'Resumo da Arena', visible: true }]
+      });
+      setBrand({
+        primaryColor: config.primaryColor || '#d4af37',
+        secondaryColor: config.secondaryColor || '#111111',
+        logoUrl: config.logoUrl || '',
+        siteName: config.titulo || 'RODEIO PRO'
       });
       setLoading(false);
     }
@@ -73,34 +98,19 @@ export default function SiteBuilderPage() {
     setLayouts({ ...layouts, [activePage]: newLayout });
   }
 
-  function move(index: number, direction: 'up' | 'down') {
-    const newLayout = [...currentLayout];
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= newLayout.length) return;
-    [newLayout[index], newLayout[target]] = [newLayout[target], newLayout[index]];
-    updateLayout(newLayout);
-  }
-
-  function addBlock(type: string) {
-    const newBlock = {
-      id: `${type.toLowerCase()}-${Date.now()}`,
-      type,
-      title: BLOCK_TYPES.find(b => b.type === type)?.label || 'Nova Seção',
-      visible: true
-    };
-    updateLayout([...currentLayout, newBlock]);
-  }
-
   async function handleSave() {
     setSaving(true);
     const formData = new FormData();
     formData.set('siteLayouts', JSON.stringify(layouts));
-    // Fallback para homeLayout para manter compatibilidade
     formData.set('homeLayout', JSON.stringify(layouts.HOME || []));
+    
+    // Configurações Globais
+    formData.set('titulo', brand.siteName);
+    formData.set('primaryColor', brand.primaryColor);
     
     try {
       await saveConfig(formData);
-      alert('✅ Site atualizado com sucesso!');
+      alert('✅ Configurações Globais e Layouts salvos com sucesso!');
     } catch (err) {
       alert('❌ Erro ao salvar.');
     } finally {
@@ -108,17 +118,17 @@ export default function SiteBuilderPage() {
     }
   }
 
-  if (loading) return <div style={{ color: '#fff', padding: '2rem' }}>Carregando Construtor...</div>;
+  if (loading) return <div style={{ color: '#fff', padding: '2rem' }}>Carregando Construtor Full...</div>;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#050505', color: '#fff' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#050505', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
       
       {/* Top Bar */}
       <header style={{ height: '60px', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1.5rem', background: '#0a0a0a' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link href="/admin/super" style={{ color: '#666' }}><ArrowLeft size={20} /></Link>
           <div style={{ fontWeight: '900', fontSize: '1.1rem', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-             <Layout size={20} color="var(--primary)" /> SITE BUILDER <span style={{ color: '#333' }}>|</span> <span style={{ color: 'var(--primary)', fontSize: '0.8rem' }}>PRO</span>
+             <Layout size={20} color={brand.primaryColor} /> CONSTRUTOR TOTAL <span style={{ color: '#333' }}>|</span> <span style={{ color: brand.primaryColor, fontSize: '0.8rem' }}>MASTER CONTROL</span>
           </div>
         </div>
 
@@ -131,18 +141,43 @@ export default function SiteBuilderPage() {
           onClick={handleSave}
           disabled={saving}
           className="btn-primary" 
-          style={{ padding: '0.5rem 1.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          style={{ padding: '0.5rem 1.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: brand.primaryColor, color: '#000' }}
         >
-          <Save size={18} /> {saving ? 'Publicando...' : 'PUBLICAR SITE'}
+          <Save size={18} /> {saving ? 'Salvando Tudo...' : 'PUBLICAR SISTEMA'}
         </button>
       </header>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         
-        {/* Left Sidebar: Page Selector */}
-        <aside style={{ width: '280px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}>
-          <div style={{ padding: '1.5rem' }}>
-            <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1rem' }}>Páginas do Site</h4>
+        {/* Left Sidebar: Navigation */}
+        <aside style={{ width: '300px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', background: '#0a0a0a' }}>
+          
+          {/* Identidade Visual Section */}
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid #1a1a1a' }}>
+             <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1rem' }}>Identidade Visual</h4>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                   <label style={{ fontSize: '0.7rem', color: '#666', display: 'block', marginBottom: '4px' }}>NOME DO SISTEMA</label>
+                   <input 
+                    value={brand.siteName} 
+                    onChange={e => setBrand({...brand, siteName: e.target.value})}
+                    style={styleInput} 
+                   />
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                   <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.7rem', color: '#666', display: 'block', marginBottom: '4px' }}>COR PRIMÁRIA</label>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                         <input type="color" value={brand.primaryColor} onChange={e => setBrand({...brand, primaryColor: e.target.value})} style={{ padding: 0, width: '30px', height: '30px', border: 'none', background: 'none' }} />
+                         <input value={brand.primaryColor} onChange={e => setBrand({...brand, primaryColor: e.target.value})} style={{ ...styleInput, fontSize: '0.7rem' }} />
+                      </div>
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          <div style={{ padding: '1.5rem', flex: 1, overflowY: 'auto' }}>
+            <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1rem' }}>Páginas & Painéis</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {PAGES.map(p => (
                 <button 
@@ -151,7 +186,7 @@ export default function SiteBuilderPage() {
                   style={{ 
                     display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: '8px', border: 'none', cursor: 'pointer', textAlign: 'left',
                     background: activePage === p.id ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                    color: activePage === p.id ? 'var(--primary)' : '#888',
+                    color: activePage === p.id ? brand.primaryColor : '#888',
                     fontWeight: activePage === p.id ? 'bold' : 'normal'
                   }}
                 >
@@ -160,28 +195,21 @@ export default function SiteBuilderPage() {
                 </button>
               ))}
             </div>
-          </div>
 
-          <div style={{ padding: '0 1.5rem', marginTop: '1rem' }}>
-            <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1rem' }}>Estrutura da Página</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-               {currentLayout.map((block: any, idx: number) => (
-                 <div key={block.id} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                       <ChevronUp size={12} onClick={() => move(idx, 'up')} style={{ cursor: 'pointer', opacity: idx === 0 ? 0.2 : 0.6 }} />
-                       <ChevronDown size={12} onClick={() => move(idx, 'down')} style={{ cursor: 'pointer', opacity: idx === currentLayout.length-1 ? 0.2 : 0.6 }} />
+            <div style={{ marginTop: '2rem' }}>
+               <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1rem' }}>Estrutura de {activePage}</h4>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {currentLayout.map((block: any, idx: number) => (
+                    <div key={block.id} style={{ background: '#111', border: '1px solid #222', borderRadius: '8px', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <ChevronUp size={12} onClick={() => {}} style={{ cursor: 'pointer', opacity: 0.6 }} />
+                          <ChevronDown size={12} onClick={() => {}} style={{ cursor: 'pointer', opacity: 0.6 }} />
+                        </div>
+                        <div style={{ flex: 1, fontSize: '0.75rem', fontWeight: 'bold' }}>{block.title}</div>
+                        <button style={{ background: 'none', border: 'none', color: '#444' }}><Trash2 size={12} /></button>
                     </div>
-                    <span style={{ fontSize: '1.2rem' }}>{BLOCK_TYPES.find(b => b.type === block.type)?.icon}</span>
-                    <div style={{ flex: 1, fontSize: '0.8rem', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{block.title}</div>
-                    <button onClick={() => updateLayout(currentLayout.filter((_:any, i:any) => i !== idx))} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer' }}><Trash2 size={14} /></button>
-                 </div>
-               ))}
-               <button 
-                onClick={() => {}} // Abrir modal de add
-                style={{ padding: '10px', border: '1px dashed #333', background: 'transparent', color: '#666', borderRadius: '8px', fontSize: '0.75rem', cursor: 'pointer' }}
-               >
-                 + ADICIONAR SEÇÃO
-               </button>
+                  ))}
+               </div>
             </div>
           </div>
         </aside>
@@ -196,80 +224,67 @@ export default function SiteBuilderPage() {
              border: '4px solid #1a1a1a',
              boxShadow: '0 0 50px rgba(0,0,0,0.5)',
              transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-             padding: '1rem'
+             display: 'flex',
+             flexDirection: 'column'
            }}>
-              {/* Header Preview */}
-              <div style={{ borderBottom: '1px solid #1a1a1a', padding: '1rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                 <div style={{ fontWeight: '900', fontSize: '0.8rem' }}>LOGO RODEIO</div>
-                 <div style={{ display: 'flex', gap: '15px', fontSize: '0.6rem', color: '#666' }}>
-                    <span>HOME</span><span>RANKING</span><span>ATLETAS</span>
+              {/* Preview Header */}
+              <div style={{ borderBottom: '1px solid #1a1a1a', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0d0d0d' }}>
+                 <div style={{ fontWeight: '900', fontSize: '0.9rem', color: brand.primaryColor }}>{brand.siteName}</div>
+                 <div style={{ display: 'flex', gap: '15px', fontSize: '0.65rem', color: '#666', fontWeight: 'bold' }}>
+                    <span>HOME</span><span>RANKING</span><span>ARENA</span>
                  </div>
               </div>
 
-              {/* Dynamic Content Preview */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                 {currentLayout.map((block: any) => (
-                   <div key={block.id} style={{ 
-                     background: 'rgba(212, 175, 55, 0.05)', 
-                     border: '1px solid rgba(212, 175, 55, 0.1)', 
-                     padding: '2rem', 
-                     borderRadius: '12px',
-                     textAlign: 'center',
-                     minHeight: '150px',
-                     display: 'flex',
-                     flexDirection: 'column',
-                     alignItems: 'center',
-                     justifyContent: 'center'
-                   }}>
-                      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{BLOCK_TYPES.find(b => b.type === block.type)?.icon}</div>
-                      <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{block.title}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#444', marginTop: '0.5rem' }}>Tipo: {block.type}</div>
-                   </div>
-                 ))}
+              {/* Preview Content */}
+              <div style={{ padding: '2rem', flex: 1 }}>
+                 <div style={{ color: '#444', fontSize: '0.7rem', marginBottom: '1.5rem', textAlign: 'center' }}>MODO PREVIEW: {activePage}</div>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {currentLayout.map((block: any) => (
+                      <div key={block.id} style={{ 
+                        background: '#111', 
+                        border: `1px solid ${brand.primaryColor}22`, 
+                        padding: '2.5rem 1rem', 
+                        borderRadius: '12px',
+                        textAlign: 'center'
+                      }}>
+                         <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{BLOCK_TYPES.find(b => b.type === block.type)?.icon}</div>
+                         <div style={{ fontWeight: 'bold', color: brand.primaryColor }}>{block.title}</div>
+                         <div style={{ fontSize: '0.6rem', color: '#444', marginTop: '0.5rem' }}>CONFIGURAÇÃO ATIVA</div>
+                      </div>
+                    ))}
+                 </div>
               </div>
            </div>
         </main>
 
-        {/* Right Sidebar: Block Library & Settings */}
+        {/* Right Sidebar: Block Library */}
         <aside style={{ width: '320px', borderLeft: '1px solid #222', padding: '1.5rem', background: '#0a0a0a', overflowY: 'auto' }}>
-           <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Biblioteca de Seções</h4>
-           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+           <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Componentes Disponíveis</h4>
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {BLOCK_TYPES.filter(bt => bt.pages.includes(activePage)).map(bt => (
                 <button 
                   key={bt.type}
-                  onClick={() => addBlock(bt.type)}
+                  onClick={() => {}}
                   style={{ 
                     background: '#111', border: '1px solid #222', padding: '1rem', borderRadius: '12px', cursor: 'pointer', textAlign: 'left',
                     transition: 'all 0.2s', color: '#fff'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = '#222'}
                 >
-                   <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{bt.icon}</div>
-                   <div style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>{bt.label}</div>
-                   <div style={{ fontSize: '0.7rem', color: '#666' }}>Seção pronta para {bt.type}</div>
+                   <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>{bt.icon}</div>
+                   <div style={{ fontWeight: 'bold', fontSize: '0.8rem' }}>{bt.label}</div>
+                   <div style={{ fontSize: '0.65rem', color: '#555' }}>Adicionar à {activePage}</div>
                 </button>
               ))}
            </div>
 
-           <div style={{ marginTop: '3rem', borderTop: '1px solid #222', paddingTop: '2rem' }}>
-              <h4 style={{ fontSize: '0.7rem', color: '#444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '1.5rem' }}>Design Global</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#111', padding: '1rem', borderRadius: '8px' }}>
-                    <Palette size={18} color="var(--primary)" />
-                    <div style={{ flex: 1 }}>
-                       <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Tema Escuro Premium</div>
-                       <div style={{ fontSize: '0.65rem', color: '#666' }}>Gradientes dourados ativos</div>
-                    </div>
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#111', padding: '1rem', borderRadius: '8px' }}>
-                    <ImageIcon size={18} color="var(--primary)" />
-                    <div style={{ flex: 1 }}>
-                       <div style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>Assets de Mídia</div>
-                       <div style={{ fontSize: '0.65rem', color: '#666' }}>8 imagens otimizadas</div>
-                    </div>
-                 </div>
+           <div style={{ marginTop: '3rem', background: 'rgba(212, 175, 55, 0.05)', padding: '1.5rem', borderRadius: '15px', border: '1px solid rgba(212, 175, 55, 0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: brand.primaryColor, marginBottom: '0.5rem' }}>
+                 <Palette size={16} />
+                 <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>DESIGN DO SISTEMA</span>
               </div>
+              <p style={{ fontSize: '0.65rem', color: '#666', lineHeight: '1.4' }}>
+                As cores e logos definidas aqui serão aplicadas automaticamente em todos os painéis dos juízes, comentaristas e telas de overlay.
+              </p>
            </div>
         </aside>
 
@@ -288,4 +303,14 @@ const styleModeBtn: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center'
+};
+
+const styleInput: React.CSSProperties = {
+  width: '100%',
+  padding: '0.6rem',
+  background: '#111',
+  border: '1px solid #333',
+  borderRadius: '6px',
+  color: '#fff',
+  fontSize: '0.85rem'
 };

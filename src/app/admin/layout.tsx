@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import Sidebar from "./components/Sidebar";
 
 export default async function AdminLayout({
@@ -8,11 +9,12 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
+  const config = await prisma.configuracao.findFirst();
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
       {/* Sidebar Component (Client Side for Mobile Toggle) */}
-      <Sidebar user={session?.user} />
+      <Sidebar user={session?.user} config={config} />
 
       {/* Main Content Area */}
       <main style={{ 

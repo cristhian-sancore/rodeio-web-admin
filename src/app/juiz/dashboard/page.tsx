@@ -515,7 +515,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
   },
   animalName: {
-    color: '#d4af37',
+    color: 'var(--primary)',
     fontSize: 'clamp(1.1rem, 3.5vw, 1.8rem)',
     fontWeight: '700',
   },
@@ -573,7 +573,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 'clamp(12px, 3vw, 20px)',
     color: '#fff',
     outline: 'none',
-    caretColor: '#d4af37',
+    caretColor: 'var(--primary)',
   },
   notaRange: {
     color: '#555',

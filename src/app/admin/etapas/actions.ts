@@ -376,7 +376,11 @@ export async function saveConfig(formData: FormData) {
         homeHeroTitle: formData.get('homeHeroTitle') as string,
         homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
         homeHeroImage: formData.get('homeHeroImage') as string,
-        homeLayout: formData.get('homeLayout') ? JSON.parse(formData.get('homeLayout') as string) : undefined
+        homeLayout: formData.get('homeLayout') ? JSON.parse(formData.get('homeLayout') as string) : undefined,
+        siteLayouts: formData.get('siteLayouts') ? JSON.parse(formData.get('siteLayouts') as string) : undefined,
+        primaryColor: formData.get('primaryColor') as string,
+        secondaryColor: formData.get('secondaryColor') as string,
+        logoUrl: formData.get('logoUrl') as string
       },
       create: { 
         id: 1, 
@@ -394,25 +398,23 @@ export async function saveConfig(formData: FormData) {
         homeHeroTitle: formData.get('homeHeroTitle') as string,
         homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
         homeHeroImage: formData.get('homeHeroImage') as string,
-        homeLayout: formData.get('homeLayout') ? JSON.parse(formData.get('homeLayout') as string) : []
+        homeLayout: formData.get('homeLayout') ? JSON.parse(formData.get('homeLayout') as string) : [],
+        siteLayouts: formData.get('siteLayouts') ? JSON.parse(formData.get('siteLayouts') as string) : {},
+        primaryColor: formData.get('primaryColor') as string,
+        secondaryColor: formData.get('secondaryColor') as string,
+        logoUrl: formData.get('logoUrl') as string
       }
     });
 
-    console.log('✅ CONFIG SAVED TO DB:', {
-      url: formData.get('vmixUrl'),
-      inputId: formData.get('vmixInputId'),
-      replay: formData.get('vmixReplayInputId'),
-      path: formData.get('replayExportPath')
-    });
+    console.log('✅ FULL CONFIG SAVED');
   } catch (err) {
     console.error('❌ ERROR SAVING CONFIG:', err);
   }
 
   revalidatePath('/admin/configuracoes');
   revalidatePath('/admin/execucao');
-
-  const { redirect } = await import('next/navigation');
-  redirect('/admin/configuracoes?success=true');
+  revalidatePath('/admin/super/builder');
+  revalidatePath('/');
 }
 
 export async function executeRawSql(sql: string) {

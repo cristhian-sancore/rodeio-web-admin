@@ -10,7 +10,7 @@ import { signOut } from 'next-auth/react';
 import { checkVMixStatus } from '../etapas/actions';
 import { Wifi, WifiOff } from 'lucide-react';
 
-export default function Sidebar({ user }: { user: any }) {
+export default function Sidebar({ user, config }: { user: any, config: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
@@ -18,6 +18,10 @@ export default function Sidebar({ user }: { user: any }) {
   const isComentarista = user?.role === 'COMENTARISTA';
   const hasFullAccess = isAdmin || isSuperAdmin || isComentarista;
   
+  const siteName = config?.titulo || 'RODEIO PRO';
+  const firstName = siteName.split(' ')[0];
+  const restName = siteName.split(' ').slice(1).join(' ');
+
   const [vmixOnline, setVmixOnline] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -65,7 +69,7 @@ export default function Sidebar({ user }: { user: any }) {
         display: 'none', // Overridden by global CSS on small screens
         backdropFilter: 'blur(8px)'
       }}>
-        <h2 style={{ fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>Rodeio<span style={{color:'#fff'}}>Admin</span></h2>
+        <h2 style={{ fontSize: '1.2rem', color: 'var(--primary)', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>{firstName}<span style={{color:'#fff'}}>{restName}</span></h2>
         <button 
           onClick={() => setIsOpen(!isOpen)} 
           style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
@@ -104,7 +108,7 @@ export default function Sidebar({ user }: { user: any }) {
       >
         
         <div style={{ marginBottom: '3rem', padding: '0 1rem' }}>
-          <h1 style={{ color: 'var(--primary)', fontSize: '1.8rem', fontWeight: '900', letterSpacing: '1px' }}>RODEIO<span style={{color:'#fff'}}>ADMIN</span></h1>
+          <h1 style={{ color: 'var(--primary)', fontSize: '1.8rem', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase' }}>{firstName}<span style={{color:'#fff'}}>{restName}</span></h1>
           <div style={{ background: 'rgba(212, 175, 55, 0.05)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(212, 175, 55, 0.1)', marginTop: '1.25rem' }}>
             <p style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold' }}>CREDENCIAIS: {user?.role}</p>
             <p style={{ fontSize: '0.9rem', color: '#fff', margin: '2px 0 0', fontWeight: '600' }}>{user?.name || 'Operador'}</p>
