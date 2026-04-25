@@ -50,6 +50,7 @@ export default function UserForm({ juizes, currentUserRole }: { juizes: any[], c
             <option value="JUIZ">Juiz (Acesso ao Lançamento)</option>
             {isAdminOrSuper && <option value="COMENTARISTA">Comentarista (Gestão de Evento)</option>}
             {isAdminOrSuper && <option value="ADMIN">Administrador (Acesso Total)</option>}
+            {currentUserRole === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">Super Admin (Root)</option>}
             {!isAdminOrSuper && <option value="USER">Usuário Comum</option>}
           </select>
         </div>
