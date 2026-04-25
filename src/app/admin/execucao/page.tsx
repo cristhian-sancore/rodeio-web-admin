@@ -201,7 +201,8 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           <h3 style={{ margin: 0, fontSize: '1rem' }}>Formato da Chamada (VMIX)</h3>
         </div>
         
-        <form style={{ displ          <button 
+        <form style={{ display: 'flex', gap: '1rem' }}>
+          <button 
             formAction={updateOverlayMode.bind(null, 'ID')} 
             className="btn-secondary" 
             style={{ 
@@ -237,7 +238,6 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           >
             <span style={{ fontWeight: 'bold' }}>CHAMADA DE GALA</span>
             <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>TELA CHEIA + ESTATÍSTICAS</span>
-          </button>TICAS</span>
           </button>
         </form>
       </div>
