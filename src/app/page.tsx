@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import Link from 'next/link'
-import { Trophy, TrendingUp, Play, Star, Award, Zap, ChevronRight } from 'lucide-react'
+import { Trophy, TrendingUp, Play, Star, Award, Zap, ChevronRight, Users, PawPrint } from 'lucide-react'
 import './landing.css'
 import { getTopHighlights, getCompetidorRanking, getChampionshipRanking } from '@/lib/ranking'
 import { getReplayFileMap } from '@/lib/gdrive'
@@ -83,6 +83,28 @@ export default async function Home() {
 
   return (
     <div className="landing-body">
+      <nav className="landing-nav">
+        <div className="nav-container">
+          <Link href="/" className="nav-logo">
+            {config?.homeHeroTitle || "Rodeio Pro"}
+          </Link>
+          <div className="nav-links">
+            <Link href="/live">
+              <TrendingUp size={18} /> AO VIVO
+            </Link>
+            <Link href="/ranking">
+              <Trophy size={18} /> RANKINGS
+            </Link>
+            <Link href="/competidores">
+              <Users size={18} /> COMPETIDORES
+            </Link>
+            <Link href="/animais">
+              <PawPrint size={18} /> BOIADA
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-bg" style={{ 
