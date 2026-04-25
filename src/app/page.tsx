@@ -77,7 +77,11 @@ export default async function Home() {
       nota: highlights?.campeonatoAnimal?.nota || '0.00',
       pos: 'RANKING GERAL',
       video: highlights?.campeonatoAnimal ? findVideo('', highlights.campeonatoAnimal.nome) : null,
-      link: highlights?.campeonatoAnimal ? `/animais/${highlights.campeonatoAnimal.animalId  // Layout dinâmico do Page Builder
+      link: highlights?.campeonatoAnimal ? `/animais/${highlights.campeonatoAnimal.animalId}` : '#'
+    }
+  ];
+
+  // Layout dinâmico do Page Builder
   const layout = (config?.homeLayout as any[]) || [
     { id: 'hero', type: 'HERO', visible: true },
     { id: 'highlights', type: 'HIGHLIGHTS', visible: true },
