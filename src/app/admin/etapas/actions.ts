@@ -12,6 +12,8 @@ import { authOptions } from "@/lib/auth";
 import { sendToVMix, triggerVMixOverlay } from "@/lib/vmix";
 import { getCompetidorStageRank } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
+import pdf from "pdf-parse";
+import { Buffer } from "buffer";
 
 export async function createRound(etapaId: number, numero: number, juiz1Id?: number, juiz2Id?: number, juiz3Id?: number, juiz4Id?: number, modalidade?: string, dataAgenda?: Date) {
   const cleanId = (id?: any) => {
@@ -1190,4 +1192,90 @@ export async function importRoundMontariasAction(roundId: number, etapaId: numbe
     totalErrors: errors.length
   };
 }
+
+export async function importRoundPdfAction(roundId: number, etapaId: number, formData: FormData) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("Não autorizado");
+
+  const file = formData.get('file') as File;
+  if (!file) return { success: false, error: 'Nenhum arquivo enviado.' };
+
+  try {
+    const bytes = await file.arrayBuffer();
+    const data = await pdf(Buffer.from(bytes));
+    const text = data.text;
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+
+    console.log('📄 PDF EXTRAÍDO:', text.length, 'caracteres,', lines.length, 'linhas');
+
+    const [allCompetidores, allAnimais] = await Promise.all([
+      p.competidor.findMany({ select: { id: true, nome: true } }),
+      p.animal.findMany({ select: { id: true, nome: true } })
+    ]);
+
+    const aDefinir = await p.animal.findFirst({ where: { nome: 'A DEFINIR' } });
+
+    let successCount = 0;
+    let errors: string[] = [];
+
+    // Normalização para busca
+    const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+    
+    const compsMap = allCompetidores.map(c => ({ id: c.id, nome: normalize(c.nome) }));
+    const animalsMap = allAnimais.map(a => ({ id: a.id, nome: normalize(a.nome) }));
+
+    for (const line of lines) {
+      const normLine = normalize(line);
+      
+      // Tentar encontrar um competidor na linha
+      const foundComp = compsMap.find(c => normLine.includes(c.nome));
+      if (!foundComp) continue;
+
+      // Tentar encontrar um animal na linha (excluindo o nome do competidor da busca)
+      const lineWithoutComp = normLine.replace(foundComp.nome, '');
+      const foundAnimal = animalsMap.find(a => lineWithoutComp.includes(a.nome));
+
+      const finalAnimalId = foundAnimal ? foundAnimal.id : (aDefinir?.id || 1);
+
+      // Verificar duplicados
+      const exists = await p.montaria.findFirst({
+        where: { roundId, competidorId: foundComp.id, removida: false }
+      });
+
+      if (exists) continue;
+
+      await p.montaria.create({
+        data: {
+          roundId,
+          competidorId: foundComp.id,
+          animalId: finalAnimalId,
+          notaJ1A: 0, notaJ1P: 0, notaJ2A: 0, notaJ2P: 0,
+          notaJ3A: 0, notaJ3P: 0, notaJ4A: 0, notaJ4P: 0,
+          notaTotal: 0, tempo: 0
+        }
+      });
+
+      successCount++;
+    }
+
+    await logSystemAction(session?.user?.name || 'Sistema', 'IMPORT_ROUND_PDF', {
+      roundId,
+      etapaId,
+      count: successCount
+    });
+
+    revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+
+    return { 
+      success: true, 
+      count: successCount,
+      textPreview: text.substring(0, 100) + '...'
+    };
+
+  } catch (err) {
+    console.error('❌ ERRO AO PROCESSAR PDF:', err);
+    return { success: false, error: 'Falha ao ler o PDF. O arquivo pode estar protegido ou ser uma imagem.' };
+  }
+}
+
 
