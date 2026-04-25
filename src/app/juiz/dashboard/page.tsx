@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { signOut } from 'next-auth/react';
+import { LogOut } from 'lucide-react';
 
 interface MontariaData {
   id: number;
@@ -149,12 +151,32 @@ export default function JuizDashboardPage() {
         <div style={styles.headerLeft}>
           <span style={styles.headerTitle}>PAINEL DO JUIZ</span>
         </div>
-        {data && (
-          <div style={styles.headerRight}>
-            <span style={styles.juizBadge}>JUIZ {data.juizNumero}</span>
-            <span style={styles.juizName}>{data.juizNome}</span>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {data && (
+            <div style={styles.headerRight}>
+              <span style={styles.juizBadge}>JUIZ {data.juizNumero}</span>
+              <span style={styles.juizName}>{data.juizNome}</span>
+            </div>
+          )}
+          <button 
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{
+              background: 'rgba(255, 68, 68, 0.1)',
+              border: '1px solid #ff4444',
+              color: '#ff4444',
+              padding: '0.4rem 0.8rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '0.8rem'
+            }}
+          >
+            <LogOut size={14} /> LOGOFF
+          </button>
+        </div>
       </div>
 
       {!data ? (

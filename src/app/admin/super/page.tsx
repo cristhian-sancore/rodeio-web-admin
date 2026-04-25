@@ -18,7 +18,7 @@ export default async function SuperAdminPage() {
     redirect('/admin');
   }
 
-  const [usersCount, totalLogs, databaseSize] = await Promise.all([
+  const [usersCount, totalLogs, databaseSize, config] = await Promise.all([
     prisma.user.count(),
     prisma.montaria.count(),
     // Mock database size for SQLite
