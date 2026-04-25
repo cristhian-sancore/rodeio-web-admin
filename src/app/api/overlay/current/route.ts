@@ -83,6 +83,8 @@ export async function getOverlayDataPayload() {
 
         etapaRank: (stageRankData.rank || 0) > 0 ? `${stageRankData.rank}º` : '---',
         etapaDiff: (stageRankData.rank || 0) > 1 ? `-${(stageRankData.diff || 0).toFixed(2)}` : (stageRankData.rank === 1 ? 'LÍDER' : ''),
+        etapaNotaAcumulada: (stageRankData.notaAcumulada || 0).toFixed(1),
+        roundNumero: montaria.round.numero,
         
         // --- NOTAS INDIVIDUAIS E NOMES DOS JUIZES ---
         j1Nome: montaria.round.juiz1?.nome || 'J1',

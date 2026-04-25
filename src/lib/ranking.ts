@@ -130,7 +130,8 @@ export async function getCompetidorStageRank(etapaId: number, competidorId: numb
   
   return { 
     rank: idx + 1,
-    diff: firstPlacePoints - myPoints
+    diff: firstPlacePoints - myPoints,
+    notaAcumulada: myPoints
   };
 }
 

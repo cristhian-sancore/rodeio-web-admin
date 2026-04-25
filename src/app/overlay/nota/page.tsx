@@ -33,6 +33,8 @@ interface OverlayData {
     tempo: string;
     etapaRank?: string;
     etapaDiff?: string;
+    etapaNotaAcumulada?: string;
+    roundNumero?: number;
     desclassificado: boolean;
   };
   timerRunning?: boolean;
@@ -378,6 +380,9 @@ export default function OverlayNotaPage() {
           <div className="header-badges">
             {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">RANK ETAPA: #{d.etapaRank}</div>}
             {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
+            {!data?.rankingCongelado && d?.etapaNotaAcumulada && (d.roundNumero || 0) > 1 && parseFloat(d.etapaNotaAcumulada) > 0 && (
+              <div className="badge badge-acumulada" style={{ background: '#D4AF37', color: '#000' }}>SOMA ETAPA: {d.etapaNotaAcumulada}</div>
+            )}
           </div>
 
           <div className="info-card">
