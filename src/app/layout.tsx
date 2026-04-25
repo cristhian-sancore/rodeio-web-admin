@@ -27,14 +27,24 @@ export default async function RootLayout({
     // Falha silenciosa durante o build (prerender)
   }
   const primaryColor = config?.primaryColor || '#d4af37';
+  const secondaryColor = config?.secondaryColor || '#111111';
+  const fontFamily = config?.fontFamily || 'Inter';
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="pt-br" className={`${geistSans.variable} ${geistMono.variable}`}>
       <head>
         <title>{config?.titulo || 'RODEIO PRO'}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href={`https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@400;700;900&display=swap`} rel="stylesheet" />
         <style dangerouslySetInnerHTML={{ __html: `
           :root {
             --primary: ${primaryColor};
+            --secondary: ${secondaryColor};
+            --font-main: '${fontFamily}', sans-serif;
+          }
+          body {
+            font-family: var(--font-main);
           }
         `}} />
       </head>

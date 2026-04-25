@@ -380,6 +380,7 @@ export async function saveConfig(formData: FormData) {
         siteLayouts: formData.get('siteLayouts') ? JSON.parse(formData.get('siteLayouts') as string) : undefined,
         primaryColor: formData.get('primaryColor') as string,
         secondaryColor: formData.get('secondaryColor') as string,
+        fontFamily: formData.get('fontFamily') as string,
         logoUrl: formData.get('logoUrl') as string
       },
       create: { 
@@ -402,6 +403,7 @@ export async function saveConfig(formData: FormData) {
         siteLayouts: formData.get('siteLayouts') ? JSON.parse(formData.get('siteLayouts') as string) : {},
         primaryColor: formData.get('primaryColor') as string,
         secondaryColor: formData.get('secondaryColor') as string,
+        fontFamily: formData.get('fontFamily') as string,
         logoUrl: formData.get('logoUrl') as string
       }
     });
