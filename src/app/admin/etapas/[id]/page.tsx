@@ -1,6 +1,6 @@
 import { Calendar, MapPin, Trophy, Plus, LayoutGrid, AlertTriangle, Edit, Trash2, Printer } from "lucide-react";
 import Link from "next/link";
-import { createRound, deleteRound } from "../actions";
+import { createRoundAction, deleteRound } from "../actions";
 import { prisma } from "@/lib/db";
 
 export default async function EtapaDetailPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | undefined }> }) {
@@ -36,24 +36,7 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
   const roundsTouros = etapa.rounds.filter(r => r.modalidade === 'Touro');
   const roundsCavalos = etapa.rounds.filter(r => r.modalidade === 'Cavalo' || r.modalidade === 'Cutiano');
 
-  async function handleCreateRound(formData: FormData) {
-    'use server';
-    const modalidade = formData.get('modalidade') as string || 'Touro';
-    
-    let numero = parseInt(formData.get('numero') as string);
-    if (isNaN(numero)) {
-      const roundsDestaModalidade = modalidade === 'Touro' ? roundsTouros : roundsCavalos;
-      numero = roundsDestaModalidade.length + 1;
-    }
-    
-    const j1 = formData.get('juiz1') ? parseInt(formData.get('juiz1') as string) : undefined;
-    const j2 = formData.get('juiz2') ? parseInt(formData.get('juiz2') as string) : undefined;
-    const j3 = formData.get('juiz3') ? parseInt(formData.get('juiz3') as string) : undefined;
-    const j4 = formData.get('juiz4') ? parseInt(formData.get('juiz4') as string) : undefined;
-    const dataAgenda = formData.get('dataAgenda') ? new Date(formData.get('dataAgenda') as string) : undefined;
 
-    await createRound(etapaId, numero, j1, j2, j3, j4, modalidade, dataAgenda);
-  }
 
   return (
     <div>
@@ -127,7 +110,8 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
             <h2 style={{ fontSize: '1.25rem' }}>Cronograma de Rounds</h2>
           </div>
           
-          <form action={handleCreateRound} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: '#111', padding: '1.5rem', borderRadius: '12px', border: '1px solid #333', marginBottom: '2rem' }}>
+          <form action={createRoundAction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: '#111', padding: '1.5rem', borderRadius: '12px', border: '1px solid #333', marginBottom: '2rem' }}>
+            <input type="hidden" name="etapaId" value={etapaId} />
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <div style={{ flex: 2 }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>Modalidade</label>

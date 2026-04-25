@@ -18,6 +18,12 @@ export async function createRound(etapaId: number, numero: number, juiz1Id?: num
     const parsed = parseInt(String(id));
     return (parsed && parsed > 0) ? parsed : null;
   };
+
+  // Validação de data robusta
+  let finalDate = new Date();
+  if (dataAgenda && !isNaN(dataAgenda.getTime())) {
+    finalDate = dataAgenda;
+  }
   
   await p.round.create({
     data: { 
@@ -28,12 +34,49 @@ export async function createRound(etapaId: number, numero: number, juiz1Id?: num
       juiz3Id: cleanId(juiz3Id), 
       juiz4Id: cleanId(juiz4Id), 
       modalidade: modalidade || "Touro",
-      dataAgenda: dataAgenda || new Date()
+      dataAgenda: finalDate
     }
   });
   revalidatePath(`/admin/etapas/${etapaId}`);
   revalidatePath(`/admin/execucao`);
 }
+
+export async function createRoundAction(formData: FormData) {
+  const etapaId = parseInt(formData.get('etapaId') as string);
+  const modalidade = formData.get('modalidade') as string || 'Touro';
+  const numeroRaw = formData.get('numero') as string;
+  
+  let numero = parseInt(numeroRaw);
+  
+  if (isNaN(numero)) {
+    const rounds = await p.round.findMany({
+      where: { etapaId, modalidade }
+    });
+    numero = rounds.length + 1;
+  }
+
+  const cleanId = (val: any) => {
+    const p = parseInt(String(val));
+    return (p && p > 0) ? p : null;
+  };
+
+  const juiz1Id = cleanId(formData.get('juiz1'));
+  const juiz2Id = cleanId(formData.get('juiz2'));
+  const juiz3Id = cleanId(formData.get('juiz3'));
+  const juiz4Id = cleanId(formData.get('juiz4'));
+  
+  const dataAgendaRaw = formData.get('dataAgenda') as string;
+  let dataAgenda = new Date();
+  if (dataAgendaRaw) {
+    const parsed = new Date(dataAgendaRaw);
+    if (!isNaN(parsed.getTime())) {
+      dataAgenda = parsed;
+    }
+  }
+
+  await createRound(etapaId, numero, juiz1Id, juiz2Id, juiz3Id, juiz4Id, modalidade, dataAgenda);
+}
+
 
 export async function updateMontariaNota(formData: FormData) {
   const session = await getServerSession(authOptions);
