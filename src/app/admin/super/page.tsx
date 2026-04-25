@@ -18,12 +18,18 @@ export default async function SuperAdminPage() {
     redirect('/admin');
   }
 
-  const [usersCount, totalLogs, databaseSize, config] = await Promise.all([
+  let config = null;
+  try {
+    config = await prisma.configuracao.findFirst();
+  } catch (e) {
+    console.error("Erro ao carregar config:", e);
+  }
+
+  const [usersCount, totalLogs, databaseSize] = await Promise.all([
     prisma.user.count(),
     prisma.montaria.count(),
     // Mock database size for SQLite
     Promise.resolve("64 KB"),
-    prisma.configuracao.findFirst()
   ]);
 
   const recentActivity = await prisma.montaria.findMany({

@@ -70,9 +70,11 @@ export default function PageBuilder({ config }: { config: any }) {
 
     const formData = new FormData();
     // Adicionar campos obrigatórios para saveConfig não dar erro (buscando da config atual)
-    Object.keys(config).forEach(key => {
-        if (key !== 'homeLayout') formData.append(key, String(config[key]));
-    });
+    if (config) {
+        Object.keys(config).forEach(key => {
+            if (key !== 'homeLayout') formData.append(key, String(config[key]));
+        });
+    }
     
     formData.set('homeLayout', JSON.stringify(layout));
 

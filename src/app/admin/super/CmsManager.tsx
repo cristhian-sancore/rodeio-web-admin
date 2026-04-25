@@ -25,11 +25,13 @@ export default function CmsManager({ config }: CmsManagerProps) {
     // Para não perder as outras configs, vamos anexá-las se possível.
     
     // Adicionar campos existentes da config que não estão no form
-    Object.keys(config).forEach(key => {
-      if (!formData.has(key)) {
-        formData.append(key, String(config[key]));
-      }
-    });
+    if (config) {
+      Object.keys(config).forEach(key => {
+        if (!formData.has(key)) {
+          formData.append(key, String(config[key]));
+        }
+      });
+    }
 
     try {
       await saveConfig(formData);
