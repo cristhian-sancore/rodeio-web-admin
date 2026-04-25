@@ -939,6 +939,50 @@ export async function importRidersFromPreviousRound(etapaId: number, currentRoun
   }));
 
   await p.montaria.createMany({ data: batchData });
+  revalidatePath(`/admin/etapas/${etapaId}/round/${currentRoundId}/montagem`);
+  return { success: true, importados: peoesParaImportar.length };
+}
+
+export async function importTopClassifiedRiders(etapaId: number, currentRoundId: number, limit: number) {
+  const { getRanking } = await import('@/lib/ranking');
+  const { peoes } = await getRanking({ etapaId });
+
+  const topPeoes = peoes.slice(0, limit);
+  if (topPeoes.length === 0) return { error: 'Nenhum competidor classificado encontrado nesta etapa.' };
+
+  // Verifica quem JÁ está escalado
+  const currentMontarias = await p.montaria.findMany({
+    where: { roundId: currentRoundId, removida: false },
+    select: { competidorId: true }
+  });
+  const escaladosSet = new Set(currentMontarias.map(m => m.competidorId));
+
+  const peoesParaImportar = topPeoes.filter(p => !escaladosSet.has(p.id));
+  if (peoesParaImportar.length === 0) return { error: 'Todos os top competidores selecionados já foram escalados.' };
+
+  let animalFantasma = await p.animal.findFirst({ where: { nome: 'A DEFINIR' } });
+  if (!animalFantasma) {
+    animalFantasma = await p.animal.create({
+      data: { nome: 'A DEFINIR', companhia: 'ORGANIZACAO' }
+    });
+  }
+
+  // IMPORTANTE: Criamos em ordem de ranking (1º, 2º, 3º...)
+  // Como o sistema ordena por Data de Criação Decrescente (Latest First), 
+  // o Líder (1º) ficará no final da lista e o último classificado ficará no topo (primeiro a montar).
+  for (const peao of peoesParaImportar) {
+    await p.montaria.create({
+      data: {
+        roundId: currentRoundId,
+        competidorId: peao.id,
+        animalId: animalFantasma.id,
+        etapaId,
+        dataHora: new Date()
+      }
+    });
+    // Pequeno delay para garantir a ordem cronológica no banco
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
 
   revalidatePath(`/admin/etapas/${etapaId}/round/${currentRoundId}/montagem`);
   return { success: true, importados: peoesParaImportar.length };

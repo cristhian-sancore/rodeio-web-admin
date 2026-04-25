@@ -140,19 +140,35 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
             </p>
           </div>
 
-          {hasPreviousRound && montarias.length < competidores.length && (
-             <form action={async () => { 
-                'use server'; 
-                const { importRidersFromPreviousRound } = await import('../../../../actions'); 
-                await importRidersFromPreviousRound(eId, rId); 
-             }} style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                 <p style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: '10px' }}>
-                     Acelere o processo importando os peões do round anterior. Eles virão sem touro sorteado ("A DEFINIR").
+          {hasPreviousRound && (
+             <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                 <p style={{ fontSize: '0.8rem', color: '#aaa', marginBottom: '5px', fontWeight: 'bold' }}>
+                     Importação Inteligente (CNAR):
                  </p>
-                 <button type="submit" className="btn-secondary" style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                     <ListOrdered size={16} /> Importar Todos os Peões do Round Anterior
-                 </button>
-             </form>
+                 
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <form action={async () => { 'use server'; const { importTopClassifiedRiders } = await import('../../../../actions'); await importTopClassifiedRiders(eId, rId, 10); }}>
+                        <button type="submit" className="btn-secondary" style={{ width: '100%', fontSize: '0.75rem', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                           <Trophy size={14} /> Top 10 Etapa
+                        </button>
+                    </form>
+                    <form action={async () => { 'use server'; const { importTopClassifiedRiders } = await import('../../../../actions'); await importTopClassifiedRiders(eId, rId, 15); }}>
+                        <button type="submit" className="btn-secondary" style={{ width: '100%', fontSize: '0.75rem', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                           <Trophy size={14} /> Top 15 Etapa
+                        </button>
+                    </form>
+                 </div>
+
+                 <form action={async () => { 
+                    'use server'; 
+                    const { importRidersFromPreviousRound } = await import('../../../../actions'); 
+                    await importRidersFromPreviousRound(eId, rId); 
+                 }}>
+                     <button type="submit" className="btn-secondary" style={{ width: '100%', padding: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: 'rgba(255,255,255,0.02)', border: '1px dashed #333' }}>
+                         <ListOrdered size={16} /> Importar Todos do Round Anterior
+                     </button>
+                 </form>
+             </div>
           )}
 
         </div>
