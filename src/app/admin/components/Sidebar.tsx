@@ -64,7 +64,7 @@ export default function Sidebar({ user, config }: { user: any, config: any }) {
       {/* 📱 Mobile Top Navigation Header */}
       <header className="mobile-header" style={{ 
         position: 'fixed', top: 0, left: 0, right: 0, height: '64px',
-        background: 'rgba(18, 18, 18, 0.95)', borderBottom: '1px solid #222', zIndex: 600,
+        background: 'var(--secondary, rgba(18, 18, 18, 0.95))', borderBottom: '1px solid rgba(255,255,255,0.05)', zIndex: 600,
         padding: '0 1.5rem', alignItems: 'center', justifyContent: 'space-between',
         display: 'none', // Overridden by global CSS on small screens
         backdropFilter: 'blur(8px)'
@@ -95,8 +95,8 @@ export default function Sidebar({ user, config }: { user: any, config: any }) {
         className={`sidebar ${isOpen ? 'sidebar-open' : ''}`} 
         style={{ 
           width: '280px', 
-          background: '#0a0a0a', 
-          borderRight: '1px solid #1a1a1a', 
+          background: 'var(--secondary, #0a0a0a)', 
+          borderRight: '1px solid rgba(255,255,255,0.05)', 
           padding: '2.5rem 1.25rem', 
           height: '100vh', 
           position: 'sticky', 
@@ -109,7 +109,7 @@ export default function Sidebar({ user, config }: { user: any, config: any }) {
         
         <div style={{ marginBottom: '3rem', padding: '0 1rem' }}>
           <h1 style={{ color: 'var(--primary)', fontSize: '1.8rem', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase' }}>{firstName}<span style={{color:'#fff'}}>{restName}</span></h1>
-          <div style={{ background: 'rgba(212, 175, 55, 0.05)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(212, 175, 55, 0.1)', marginTop: '1.25rem' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '0.8rem 1rem', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.05)', marginTop: '1.25rem' }}>
             <p style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 'bold' }}>CREDENCIAIS: {user?.role}</p>
             <p style={{ fontSize: '0.9rem', color: '#fff', margin: '2px 0 0', fontWeight: '600' }}>{user?.name || 'Operador'}</p>
             
