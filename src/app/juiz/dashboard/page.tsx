@@ -23,6 +23,8 @@ export default function JuizDashboardPage() {
   const [error, setError] = useState('');
   const [notaPeao, setNotaPeao] = useState('');
   const [notaAnimal, setNotaAnimal] = useState('');
+  const [desclassificado, setDesclassificado] = useState(false);
+  const [motivo, setMotivo] = useState('');
   const lastMontariaIdRef = useRef<number | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -35,6 +37,8 @@ export default function JuizDashboardPage() {
         if (lastMontariaIdRef.current !== json.data.id) {
           setNotaPeao(json.data.notaPeao > 0 ? json.data.notaPeao.toString() : '');
           setNotaAnimal(json.data.notaAnimal > 0 ? json.data.notaAnimal.toString() : '');
+          setDesclassificado(json.data.desclassificado || false);
+          setMotivo(json.data.motivo || '');
           setSaved(false);
           lastMontariaIdRef.current = json.data.id;
         }
@@ -44,6 +48,8 @@ export default function JuizDashboardPage() {
         setData(null);
         setNotaPeao('');
         setNotaAnimal('');
+        setDesclassificado(false);
+        setMotivo('');
         setSaved(false);
         lastMontariaIdRef.current = null;
         if (json.message) setError(json.message);
@@ -79,6 +85,8 @@ export default function JuizDashboardPage() {
           juizNumero: data.juizNumero,
           notaPeao: parseFloat(notaPeao || '0'),
           notaAnimal: parseFloat(notaAnimal || '0'),
+          desclassificado,
+          motivo
         }),
       });
 
@@ -91,6 +99,31 @@ export default function JuizDashboardPage() {
       }
     } catch (err) {
       setError('Erro de conexão');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRepasse = async () => {
+    if (!data) return;
+    if (!confirm("⚠️ Confirmar SOLICITAÇÃO DE REPASSE (Troca de Animal)?\n\nEsta ação é irreversível e irá sortear um novo animal da reserva para este competidor.")) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch('/api/juiz/repasse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ montariaId: data.id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        alert("✅ Repasse processado! Aguarde o novo animal aparecer na tela.");
+        fetchData();
+      } else {
+        alert("❌ Erro no repasse: " + (json.error || 'Erro interno'));
+      }
+    } catch (err) {
+      alert("❌ Erro de conexão ao solicitar repasse");
     } finally {
       setSaving(false);
     }
@@ -204,22 +237,85 @@ export default function JuizDashboardPage() {
               </span>
             </div>
 
+            {/* Desclassificação */}
+            <div style={{
+              background: 'rgba(255, 68, 68, 0.05)',
+              border: desclassificado ? '2px solid #ff4444' : '1px solid #333',
+              borderRadius: '15px',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '1rem', cursor: 'pointer' }}>
+                <input 
+                  type="checkbox" 
+                  checked={desclassificado} 
+                  onChange={(e) => { setDesclassificado(e.target.checked); setSaved(false); }}
+                  style={{ width: '24px', height: '24px' }} 
+                />
+                <span style={{ color: '#ff4444', fontWeight: '900', fontSize: '1rem' }}>
+                  ⚠️ DESCLASSIFICAÇÃO / ZERO
+                </span>
+              </label>
+              {desclassificado && (
+                <input 
+                  type="text" 
+                  placeholder="Motivo (opcional)..." 
+                  value={motivo}
+                  onChange={(e) => { setMotivo(e.target.value); setSaved(false); }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: '#000',
+                    border: '1px solid #444',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '0.9rem'
+                  }}
+                />
+              )}
+            </div>
+
             {error && (
               <div style={styles.errorBox}>{error}</div>
             )}
 
-            {/* Botão Enviar */}
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                ...styles.submitBtn,
-                background: saved ? 'linear-gradient(135deg, #16a34a, #22c55e)' : 'linear-gradient(135deg, #b8860b, #d4af37)',
-                opacity: saving ? 0.7 : 1,
-              }}
-            >
-              {saving ? 'SALVANDO...' : saved ? '✓ NOTA SALVA' : '📋 ENVIAR NOTA'}
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Botão Enviar */}
+              <button
+                type="submit"
+                disabled={saving}
+                style={{
+                  ...styles.submitBtn,
+                  background: saved ? 'linear-gradient(135deg, #16a34a, #22c55e)' : 'linear-gradient(135deg, #b8860b, #d4af37)',
+                  opacity: saving ? 0.7 : 1,
+                }}
+              >
+                {saving ? 'SALVANDO...' : saved ? '✓ NOTA SALVA' : '📋 ENVIAR NOTA'}
+              </button>
+
+              {/* Botão Repasse */}
+              <button
+                type="button"
+                onClick={handleRepasse}
+                disabled={saving}
+                style={{
+                  width: '100%',
+                  padding: '1rem',
+                  background: 'transparent',
+                  border: '2px solid #ff4444',
+                  borderRadius: '15px',
+                  color: '#ff4444',
+                  fontWeight: '800',
+                  fontSize: '0.9rem',
+                  opacity: saving ? 0.5 : 1,
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 SOLICITAR REPASSE (TROCAR ANIMAL)
+              </button>
+            </div>
           </form>
         </div>
       )}

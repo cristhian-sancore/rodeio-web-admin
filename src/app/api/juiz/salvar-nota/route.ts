@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { montariaId, juizNumero, notaPeao, notaAnimal } = body;
+    const { montariaId, juizNumero, notaPeao, notaAnimal, desclassificado, motivo } = body;
 
     if (!montariaId || !juizNumero) {
       return NextResponse.json({ success: false, error: 'Dados incompletos' });
@@ -122,11 +122,13 @@ export async function POST(req: Request) {
       prisma.montaria.update({
         where: { id: montariaId },
         data: {
-          [`j${juizNumero}Peao`]: peao,
+          [`j${juizNumero}Peao`]: (desclassificado || montaria.desclassificado) ? 0 : peao,
           [`j${juizNumero}Animal`]: animal,
-          notaPeao: totalPeao,
+          notaPeao: (desclassificado || montaria.desclassificado) ? 0 : totalPeao,
           notaAnimal: totalAnimal,
-          notaTotal: notaTotal,
+          notaTotal: (desclassificado || montaria.desclassificado) ? 0 : notaTotal,
+          desclassificado: desclassificado !== undefined ? desclassificado : montaria.desclassificado,
+          motivo: motivo !== undefined ? motivo : montaria.motivo,
         },
       }),
       // Cria o registro de log para auditoria futura
