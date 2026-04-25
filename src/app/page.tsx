@@ -126,24 +126,28 @@ export default async function Home() {
         switch (block.type) {
           case 'HERO':
             return (
-              <section key={block.id} className="hero">
+              <section key={block.id} className="hero" style={{ 
+                background: block.style?.background || 'var(--secondary)',
+                textAlign: block.style?.align || 'center'
+              }}>
                 <div className="hero-bg" style={{ 
-                  backgroundImage: config?.homeHeroImage ? `url(${config.homeHeroImage})` : "url('/hero-rodeo.png')" 
+                  backgroundImage: config?.homeHeroImage ? `url(${config.homeHeroImage})` : "url('/hero-rodeo.png')",
+                  opacity: 0.4
                 }}></div>
-                <div className="hero-content">
-                  <h1 className="hero-title">{config?.homeHeroTitle || "Rodeio Pro"}</h1>
-                  <p className="hero-subtitle">
-                    {config?.homeHeroSubtitle || "A plataforma definitiva para gestão de eventos, pontuações em tempo real e integração total com transmissões vMix."}
+                <div className="hero-content" style={{ 
+                  margin: block.style?.align === 'left' ? '0 auto 0 0' : (block.style?.align === 'right' ? '0 0 0 auto' : '0 auto'),
+                  textAlign: block.style?.align || 'center'
+                }}>
+                  <h1 className="hero-title" style={{ color: '#fff' }}>{block.title || config?.homeHeroTitle || "Rodeio Pro"}</h1>
+                  <p className="hero-subtitle" style={{ color: block.style?.accent || 'var(--primary)' }}>
+                    {block.subtitle || config?.homeHeroSubtitle || "A plataforma definitiva para gestão de eventos."}
                   </p>
-                  <div className="cta-group">
+                  <div className="cta-group" style={{ justifyContent: block.style?.align === 'left' ? 'flex-start' : (block.style?.align === 'right' ? 'flex-end' : 'center') }}>
                     <Link href="/live" className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>
                       <TrendingUp size={20} /> ARENA AO VIVO
                     </Link>
                     <Link href="/ranking" className="btn-primary">
                       <Trophy size={20} /> VER RANKINGS
-                    </Link>
-                    <Link href="/admin" className="btn-secondary">
-                      Acessar Painel Admin
                     </Link>
                   </div>
                 </div>
@@ -152,9 +156,10 @@ export default async function Home() {
 
           case 'HIGHLIGHTS':
             return highlights && (
-              <section key={block.id} className="highlights-section">
-                <div className="section-header">
-                  <h2>Destaques da Arena</h2>
+              <section key={block.id} className="highlights-section" style={{ background: block.style?.background || 'transparent', textAlign: block.style?.align || 'left' }}>
+                <div className="section-header" style={{ textAlign: block.style?.align || 'left' }}>
+                  <h2 style={{ fontSize: '2.5rem' }}>{block.title}</h2>
+                  <p style={{ color: block.style?.accent || 'var(--primary)', fontWeight: 'bold' }}>{block.subtitle}</p>
                 </div>
                 <div className="highlights-grid">
                   {highlightItems.map((item, idx) => (
@@ -198,11 +203,11 @@ export default async function Home() {
 
           case 'RANKINGS':
             return (
-              <section key={block.id} className="highlights-section" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '60px', padding: '60px 40px' }}>
-                <div className="section-header" style={{ textAlign: 'left', marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <section key={block.id} className="highlights-section" style={{ background: block.style?.background || 'rgba(255,255,255,0.02)', borderRadius: '60px', padding: '60px 40px', textAlign: block.style?.align || 'left' }}>
+                <div className="section-header" style={{ textAlign: block.style?.align || 'left', marginBottom: '40px', display: 'flex', flexDirection: block.style?.align === 'center' ? 'column' : 'row', justifyContent: 'space-between', alignItems: block.style?.align === 'center' ? 'center' : 'flex-end' }}>
                   <div>
-                    <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Ranking Oficial</h2>
-                    <p style={{ color: '#666' }}>{(config as any)?.rankingCongelado ? 'As notas recentes estão em processo de auditoria.' : 'Acompanhe os líderes em tempo real'}</p>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>{block.title}</h2>
+                    <p style={{ color: block.style?.accent || 'var(--primary)', fontWeight: 'bold' }}>{block.subtitle}</p>
                   </div>
                   {!((config as any)?.rankingCongelado) && (
                     <Link href="/ranking" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -299,11 +304,12 @@ export default async function Home() {
 
           case 'SPONSORS':
              return (
-               <section key={block.id} className="highlights-section" style={{ background: '#000', padding: '40px' }}>
-                  <div className="section-header">
-                     <h2 style={{ fontSize: '1.5rem', opacity: 0.5 }}>Patrocinadores Oficiais</h2>
+               <section key={block.id} className="highlights-section" style={{ background: block.style?.background || '#000', padding: '40px' }}>
+                  <div className="section-header" style={{ textAlign: block.style?.align || 'center' }}>
+                     <h2 style={{ fontSize: '1.5rem', color: block.style?.accent || '#fff', opacity: 0.8 }}>{block.title}</h2>
+                     <p style={{ fontSize: '0.8rem', opacity: 0.5 }}>{block.subtitle}</p>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap', opacity: 0.3 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap', opacity: 0.3, marginTop: '2rem' }}>
                      {/* Placeholders para patrocinadores */}
                      <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>SPONSOR A</div>
                      <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>SPONSOR B</div>
@@ -312,6 +318,41 @@ export default async function Home() {
                   </div>
                </section>
              );
+
+          case 'GALLERY':
+            return (
+              <section key={block.id} className="highlights-section" style={{ background: block.style?.background || 'transparent', textAlign: block.style?.align || 'center' }}>
+                <div className="section-header">
+                  <h2 style={{ fontSize: '2.5rem' }}>{block.title}</h2>
+                  <p style={{ color: block.style?.accent || 'var(--primary)', fontWeight: 'bold' }}>{block.subtitle}</p>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem', marginTop: '2rem' }}>
+                  {[1,2,3,4,5,6].map(i => (
+                    <div key={i} style={{ aspectRatio: '1/1', background: 'rgba(255,255,255,0.02)', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ImageIcon size={32} color="#222" />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+
+          case 'COUNTDOWN':
+            return (
+              <section key={block.id} className="highlights-section" style={{ background: block.style?.background || 'transparent', textAlign: 'center' }}>
+                <div className="section-header">
+                  <h2 style={{ fontSize: '2.5rem' }}>{block.title}</h2>
+                  <p style={{ color: block.style?.accent || 'var(--primary)', fontWeight: 'bold' }}>{block.subtitle}</p>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '3rem' }}>
+                  {[ {l: 'DIAS', v: '02'}, {l: 'HORAS', v: '14'}, {l: 'MIN', v: '35'}, {l: 'SEG', v: '10'} ].map((t, i) => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ fontSize: '3.5rem', fontWeight: '900', color: '#fff', background: 'rgba(255,255,255,0.03)', padding: '1rem 1.5rem', borderRadius: '15px', border: '1px solid rgba(255,255,255,0.05)', minWidth: '100px' }}>{t.v}</div>
+                      <span style={{ fontSize: '0.75rem', color: block.style?.accent || 'var(--primary)', fontWeight: 'bold', marginTop: '10px', letterSpacing: '2px' }}>{t.l}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
 
           default:
             return null;
