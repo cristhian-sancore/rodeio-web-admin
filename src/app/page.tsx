@@ -182,7 +182,7 @@ export default async function Home() {
               <div className="table-responsive-wrapper">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <tbody>
-                    {rankingEtapa?.list.slice(0, 5).map((r: any) => (
+                    {rankingEtapa?.list?.slice(0, 5).map((r: any) => (
                       <tr key={r.pos} style={{ borderBottom: '1px solid #111' }}>
                         <td style={{ padding: '12px 10px', color: r.pos <= 3 ? 'var(--primary)' : '#666', fontWeight: 'bold' }}>#{r.pos}</td>
                         <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.nome}</td>
@@ -203,7 +203,7 @@ export default async function Home() {
               <div className="table-responsive-wrapper">
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <tbody>
-                    {rankingChamp?.list.slice(0, 5).map((r: any) => (
+                    {rankingChamp?.list?.slice(0, 5).map((r: any) => (
                       <tr key={r.pos} style={{ borderBottom: '1px solid #111' }}>
                         <td style={{ padding: '12px 10px', color: r.pos <= 3 ? 'var(--primary)' : '#666', fontWeight: 'bold' }}>#{r.pos}</td>
                         <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.nome}</td>

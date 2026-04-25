@@ -390,9 +390,7 @@ export async function exportDatabaseSql() {
   if ((session?.user as any)?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
 
   try {
-    const dbUrl = process.env.DATABASE_URL || '';
-    // Extrai os dados da URL (ex: postgresql://user:pass@host:port/db)
-    // Usaremos a própria URL que o pg_dump entende
+    const dbUrl = (process.env.DATABASE_URL || '').split('?')[0];
     const { stdout } = await execAsync(`pg_dump "${dbUrl}"`);
     
     await logSystemAction((session?.user as any)?.name || 'Root', 'BACKUP_EXPORT', { size: stdout.length });
@@ -408,9 +406,7 @@ export async function importDatabaseSql(sql: string) {
   if ((session?.user as any)?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
 
   try {
-    const dbUrl = process.env.DATABASE_URL || '';
-    // CUIDADO: Isso substitui o banco atual.
-    // Usamos o comando psql
+    const dbUrl = (process.env.DATABASE_URL || '').split('?')[0];
     const child = exec(`psql "${dbUrl}"`);
     child.stdin?.write(sql);
     child.stdin?.end();

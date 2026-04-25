@@ -232,7 +232,7 @@ export default function OverlayNotaPage() {
 
   const displayRanking = isRanking && data?.rankingData ? {
     ...data.rankingData,
-    list: data.rankingData.list.slice(rankingPage * itemsPerPage, (rankingPage + 1) * itemsPerPage)
+    list: data.rankingData.list?.slice(rankingPage * itemsPerPage, (rankingPage + 1) * itemsPerPage) || []
   } : null;
 
   const formatScore = (val: any) => {

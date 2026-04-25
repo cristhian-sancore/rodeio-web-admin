@@ -1,10 +1,18 @@
 'use client';
-import { useState } from 'react';
-import { UserPlus } from 'lucide-react';
+import { useState, useActionState } from 'react';
+import { UserPlus, AlertCircle } from 'lucide-react';
 import { createUser } from './actions';
 
 export default function UserForm({ juizes, currentUserRole }: { juizes: any[], currentUserRole: string }) {
   const [role, setRole] = useState('JUIZ');
+  const [state, formAction, isPending] = useActionState(async (prevState: any, formData: FormData) => {
+      const res = await createUser(formData);
+      if (res.success) {
+          // Limpa o formulário via reload ou reset (revalidatePath já foi chamado no server)
+          window.location.reload(); 
+      }
+      return res;
+  }, { success: false, error: null });
 
   const isAdminOrSuper = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
 
@@ -13,7 +21,15 @@ export default function UserForm({ juizes, currentUserRole }: { juizes: any[], c
       <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <UserPlus size={20} /> Novo Operador
       </h2>
-      <form action={createUser} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+      {state?.error && (
+        <div style={{ padding: '0.75rem', background: 'rgba(255, 68, 68, 0.1)', border: '1px solid #ff4444', borderRadius: '8px', color: '#ff4444', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+          <AlertCircle size={16} />
+          {state.error}
+        </div>
+      )}
+
+      <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: isPending ? 0.6 : 1 }}>
         <div>
           <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Nome de Usuário (Login)</label>
           <input name="username" type="text" required style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} placeholder="Ex: juiz.tiago" />
@@ -61,7 +77,9 @@ export default function UserForm({ juizes, currentUserRole }: { juizes: any[], c
           </div>
         )}
 
-        <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>Criar Conta de Acesso</button>
+        <button type="submit" disabled={isPending} className="btn-primary" style={{ marginTop: '0.5rem' }}>
+          {isPending ? 'PROCESSANDO...' : 'Criar Conta de Acesso'}
+        </button>
       </form>
     </div>
   );

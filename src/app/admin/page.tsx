@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
 import { Users, Cat, Calendar, Trophy, TrendingUp, Gavel } from "lucide-react";
 import Link from "next/link";
@@ -75,7 +76,7 @@ export default async function AdminDashboard() {
                     <div>
                       <h4 style={{ margin: 0, color: 'var(--primary)' }}>{r.etapa.nome}</h4>
                       <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', fontWeight: 'bold' }}>ROUND {r.numero}</p>
-                      <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#666' }}>{r.dataAgenda.toLocaleDateString()}</p>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#666' }}>{r.dataAgenda ? new Date(r.dataAgenda).toLocaleDateString() : '---'}</p>
                     </div>
                     <Link href={`/admin/execucao?roundId=${r.id}`} className="btn-primary" style={{ fontSize: '0.8rem', padding: '0.6rem 1rem', textDecoration: 'none' }}>
                       ABRIR SÚMULA
@@ -101,12 +102,12 @@ export default async function AdminDashboard() {
             {ultimasMontarias.map((m: any) => (
               <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#1a1a1a', borderRadius: '8px' }}>
                 <div>
-                  <h4 style={{ margin: 0 }}>{m.competidor.nome}</h4>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#666' }}>{m.animal.nome} • {m.round.etapa.nome} • Round {m.round.numero}</p>
+                  <h4 style={{ margin: 0 }}>{m.competidor?.nome || '---'}</h4>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#666' }}>{m.animal?.nome || '---'} • {m.round?.etapa?.nome || '---'} • Round {m.round?.numero || '---'}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: m.notaTotal > 0 ? '#d4af37' : '#ff4444' }}>{m.notaTotal.toFixed(2)} pts</span>
-                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>P: {m.notaPeao.toFixed(2)} | A: {m.notaAnimal.toFixed(2)}</p>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: (m.notaTotal || 0) > 0 ? '#d4af37' : '#ff4444' }}>{(m.notaTotal || 0).toFixed(2)} pts</span>
+                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>P: {(m.notaPeao || 0).toFixed(2)} | A: {(m.notaAnimal || 0).toFixed(2)}</p>
                 </div>
               </div>
             ))}

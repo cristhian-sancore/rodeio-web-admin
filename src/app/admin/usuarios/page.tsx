@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
@@ -27,7 +28,7 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
         orderBy: { username: 'asc' }
       }),
       prisma.juiz.findMany({
-        where: { user: { is: null } as any }, // Só juízes que ainda não tem conta
+        where: { user: null }, // Só juízes que ainda não tem conta
         orderBy: { nome: 'asc' }
       })
     ]);

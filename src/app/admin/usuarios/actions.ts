@@ -28,7 +28,9 @@ export async function createUser(formData: FormData) {
       }
     }
 
-    const juizId = (role === 'JUIZ' && formData.get('juizId')) ? parseInt(formData.get('juizId') as string) : null;
+    const juizIdRaw = formData.get('juizId') as string;
+    const juizId = (role === 'JUIZ' && juizIdRaw && juizIdRaw !== "") ? parseInt(juizIdRaw) : null;
+    
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await prisma.user.create({
@@ -44,9 +46,13 @@ export async function createUser(formData: FormData) {
     await logSystemAction(creator.name || username, 'USER_CREATE', { role, target: username });
 
     revalidatePath('/admin/usuarios');
+    return { success: true };
   } catch (err: any) {
     console.error("ERRO AO CRIAR USUÁRIO:", err);
-    throw new Error(err.message || "Erro ao criar usuário. Verifique se o login já existe.");
+    return { 
+      success: false, 
+      error: err.message || "Erro ao criar usuário. Verifique se o login já existe." 
+    };
   }
 }
 

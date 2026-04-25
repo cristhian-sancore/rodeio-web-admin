@@ -141,6 +141,37 @@ export async function POST(req: Request) {
       })
     ]);
 
+    // 4. DISPARO VMIX (Opcional - Se todos os juízes tiverem enviado)
+    if (config?.vmixUrl) {
+      try {
+        const logs = await prisma.logNota.findMany({ where: { montariaId } });
+        const juizesQueEnviaram = new Set(logs.map(l => l.juizNumero));
+        juizesQueEnviaram.add(parseInt(juizNumero));
+
+        if (juizesQueEnviaram.size >= nJ) {
+           const { sendToVMix } = await import("@/lib/vmix");
+           const { getRanking } = await import("@/lib/ranking");
+           
+           // Buscar ranking atual para o overlay
+           const { peoes } = await getRanking({ etapaId: montaria.round.etapaId });
+           const myPos = peoes.find(p => p.id === montaria.competidorId);
+
+           await sendToVMix(config as any, {
+              competidor: montaria.competidorId ? (await prisma.competidor.findUnique({ where: { id: montaria.competidorId } }))?.nome || '---' : '---',
+              animal: (await prisma.animal.findUnique({ where: { id: montaria.animalId } }))?.nome || '---',
+              j1: tempNotas.j1p + tempNotas.j1a,
+              j2: tempNotas.j2p + tempNotas.j2a,
+              j3: tempNotas.j3p + tempNotas.j3a,
+              j4: tempNotas.j4p + tempNotas.j4a,
+              total: notaTotal,
+              etapaRank: myPos ? myPos.rank.toString() : '---'
+           });
+        }
+      } catch (vmixErr) {
+        console.error("Falha silenciosa no vMix:", vmixErr);
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Erro crítico ao salvar nota:", error);
