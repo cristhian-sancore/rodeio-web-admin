@@ -81,13 +81,15 @@ export default async function Home() {
     }
   ];
 
-  // Layout dinâmico do Page Builder
-  const layout = (config?.homeLayout as any[]) || [
-    { id: 'hero', type: 'HERO', visible: true },
-    { id: 'highlights', type: 'HIGHLIGHTS', visible: true },
-    { id: 'rankings', type: 'RANKINGS', visible: true },
-    { id: 'features', type: 'FEATURES', visible: true }
-  ];
+  // Layout dinâmico do Page Builder - Garantia de fallback se estiver vazio ou inválido
+  const layout = (Array.isArray(config?.homeLayout) && (config.homeLayout as any[]).length > 0) 
+    ? (config.homeLayout as any[]) 
+    : [
+        { id: 'hero', type: 'HERO', visible: true },
+        { id: 'highlights', type: 'HIGHLIGHTS', visible: true },
+        { id: 'rankings', type: 'RANKINGS', visible: true },
+        { id: 'features', type: 'FEATURES', visible: true }
+      ];
 
   return (
     <div className="landing-body">
