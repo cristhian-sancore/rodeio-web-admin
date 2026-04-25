@@ -15,6 +15,7 @@ import {
   importRidersFromPreviousRound
 } from "../../../../actions";
 import SearchableSelect from "../../../../../components/SearchableSelect";
+import ExcelRoundActions from "./ExcelRoundActions";
 
 export default async function MontagemRoundPage({ params }: { params: { id: string, roundId: string } }) {
   const { id, roundId } = await params;
@@ -67,6 +68,9 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
           </Link>
           <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Montar Sorteio: <span style={{ color: 'var(--primary)' }}>Round {round.numero}</span></h1>
           <p style={{ color: 'var(--text-muted)', margin: '4px 0 0' }}>{round.etapa.nome} • Defina os confrontos entre atletas e animais.</p>
+        </div>
+        <div style={{ minWidth: '350px' }}>
+           <ExcelRoundActions roundId={rId} etapaId={eId} data={montarias} />
         </div>
       </div>
 

@@ -1108,3 +1108,86 @@ export async function createEtapaAction(formData: FormData) {
   revalidatePath('/admin/etapas');
   revalidatePath('/admin');
 }
+
+export async function importRoundMontariasAction(roundId: number, etapaId: number, data: any[]) {
+  const session = await getServerSession(authOptions);
+  if (!session) throw new Error("Não autorizado");
+
+  console.log('📦 IMPORTANDO MONTAGEM ROUND:', roundId, 'ETAPA:', etapaId);
+
+  let successCount = 0;
+  let errors: string[] = [];
+
+  for (const row of data) {
+    try {
+      const nomeCompetidor = String(row.Competidor || row.competidor || '').trim();
+      const nomeAnimal = String(row.Animal || row.animal || '').trim();
+
+      if (!nomeCompetidor) continue;
+
+      // Buscar competidor
+      const competidor = await p.competidor.findFirst({
+        where: { nome: { equals: nomeCompetidor, mode: 'insensitive' } }
+      });
+
+      if (!competidor) {
+        errors.push(`Atleta não encontrado: ${nomeCompetidor}`);
+        continue;
+      }
+
+      let animalId = null;
+      if (nomeAnimal && nomeAnimal.toUpperCase() !== 'A DEFINIR') {
+        const animal = await p.animal.findFirst({
+          where: { nome: { equals: nomeAnimal, mode: 'insensitive' } }
+        });
+        if (animal) {
+          animalId = animal.id;
+        } else {
+           errors.push(`Animal não encontrado: ${nomeAnimal} (Atleta ${nomeCompetidor} importado sem animal)`);
+        }
+      }
+
+      if (!animalId) {
+        const aDefinir = await p.animal.findFirst({ where: { nome: 'A DEFINIR' } });
+        animalId = aDefinir?.id || 1;
+      }
+
+      const exists = await p.montaria.findFirst({
+        where: { roundId, competidorId: competidor.id, removida: false }
+      });
+
+      if (exists) continue;
+
+      await p.montaria.create({
+        data: {
+          roundId,
+          competidorId: competidor.id,
+          animalId: animalId,
+          notaJ1A: 0, notaJ1P: 0, notaJ2A: 0, notaJ2P: 0,
+          notaJ3A: 0, notaJ3P: 0, notaJ4A: 0, notaJ4P: 0,
+          notaTotal: 0, tempo: 0
+        }
+      });
+
+      successCount++;
+    } catch (err) {
+      console.error('Erro na linha de importação:', err);
+    }
+  }
+
+  await logSystemAction(session?.user?.name || 'Sistema', 'IMPORT_ROUND_EXCEL', {
+    roundId,
+    etapaId,
+    count: successCount
+  });
+
+  revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+  
+  return { 
+    success: true, 
+    count: successCount, 
+    errors: errors.length > 0 ? errors.slice(0, 5) : null,
+    totalErrors: errors.length
+  };
+}
+
