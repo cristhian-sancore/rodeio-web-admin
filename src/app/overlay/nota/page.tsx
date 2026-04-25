@@ -44,6 +44,7 @@ interface OverlayData {
 
 export default function OverlayNotaPage() {
   const [data, setData] = useState<OverlayData | null>(null);
+  const [config, setConfig] = useState<any>(null);
   const [visible, setVisible] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [timerVisible, setTimerVisible] = useState(false);
@@ -63,6 +64,30 @@ export default function OverlayNotaPage() {
       (d as any).j4P > 0 || (d as any).j4A > 0 || (d as any).j4Total > 0
   );
   const shouldHideLowerThird = timerVisible || (rideStarted && !hasAnyScore);
+
+  // Carregar Configurações do Construtor
+  useEffect(() => {
+    fetch('/api/public/config').then(res => res.json()).then(setConfig);
+  }, []);
+
+  // Mapear Estilo do Construtor para o Overlay
+  const overlayStyle = (() => {
+     if (!config?.siteLayouts?.OVERLAYS) return { accent: '#D4AF37', background: '#000000', labelRank: 'RANK ETAPA', labelDiff: 'DIFF LÍDER', labelScore: 'NOTA FINAL' };
+     const mode = data?.mode || 'ID';
+     let blockType = 'LOWER_THIRD';
+     if (mode === 'RANKING') blockType = 'FULL_RANKING';
+     if (mode === 'CHAMADA') blockType = 'CHAMADA';
+     
+     const block = config.siteLayouts.OVERLAYS.find((b: any) => b.type === blockType);
+     return {
+        accent: block?.style?.accent || config.primaryColor || '#D4AF37',
+        background: block?.style?.background || '#000000',
+        labelRank: block?.style?.labelText || 'RANK ETAPA',
+        labelDiff: 'DIFF LÍDER',
+        labelScore: 'NOTA FINAL',
+        font: config.fontFamily || 'Inter'
+     };
+  })();
 
   // Escuta visibilidade do Lower Third e força a saída da tela após 60 segundos (60s)
   useEffect(() => {
@@ -246,9 +271,15 @@ export default function OverlayNotaPage() {
   return (
     <div className={`overlay-master ${visible ? 'show' : 'hide'} mode-${mode}`}>
       <style jsx global>{`
-        html, body { background: transparent !important; margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+        html, body { background: transparent !important; margin: 0; overflow: hidden; font-family: '${overlayStyle.font}', sans-serif; }
         .overlay-master { position: fixed; inset: 0; transition: opacity 0.5s ease; opacity: 0; }
         .overlay-master.show { opacity: 1; }
+
+        /* --- VARIÁVEIS DO CONSTRUTOR --- */
+        :root {
+          --accent: ${overlayStyle.accent};
+          --bg-overlay: ${overlayStyle.background};
+        }
 
         /* --- MODO ID (DESIGN ORIGINAL RESTAURADO) --- */
         .mode-ID .nota-container {
@@ -259,27 +290,27 @@ export default function OverlayNotaPage() {
         }
         .mode-ID .nota-container.hidden { opacity: 0; pointer-events: none; }
         .mode-ID .info-card {
-          background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, rgba(5, 5, 5, 1) 100%);
-          border-left: 12px solid #D4AF37; padding: 30px 60px 30px 50px;
+          background: linear-gradient(135deg, rgba(15, 15, 15, 0.98) 0%, var(--bg-overlay) 100%);
+          border-left: 12px solid var(--accent); padding: 30px 60px 30px 50px;
           clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 350px;
           max-width: 900px; overflow: visible; display: flex; flex-direction: column; justify-content: center;
         }
         .mode-ID .competidor-name { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; white-space: nowrap; transform-origin: left center; }
-        .mode-ID .animal-name { color: #D4AF37; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; border-top: 1px solid rgba(212,175,55,0.3); padding-top: 5px; width: 100%; }
+        .mode-ID .animal-name { color: var(--accent); font-size: 1.8rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; border-top: 1px solid rgba(212,175,55,0.3); padding-top: 5px; width: 100%; }
         
         .mode-ID .judges-section {
           background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -40px;
           padding: 20px 40px 20px 80px; display: flex; gap: 40px;
           clip-path: polygon(40px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%);
         }
-        .mode-ID .judge-box { border-left: 5px solid #D4AF37; padding-left: 20px; min-width: 250px; display: flex; flex-direction: column; justify-content: space-between; }
-        .mode-ID .judge-title { font-size: 1.6rem; color: #D4AF37; font-weight: 950; text-transform: uppercase; margin-bottom: 10px; display: block; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 4px; width: fit-content; letter-spacing: 1px; }
-        .mode-ID .judge-score-label { font-size: 1.3rem; color: #D4AF37; font-weight: 900; text-transform: uppercase; opacity: 0.9; margin-right: 5px; }
+        .mode-ID .judge-box { border-left: 5px solid var(--accent); padding-left: 20px; min-width: 250px; display: flex; flex-direction: column; justify-content: space-between; }
+        .mode-ID .judge-title { font-size: 1.6rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 10px; display: block; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 4px; width: fit-content; letter-spacing: 1px; }
+        .mode-ID .judge-score-label { font-size: 1.3rem; color: var(--accent); font-weight: 900; text-transform: uppercase; opacity: 0.9; margin-right: 5px; }
         .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2.8rem; line-height: 1; }
         .mode-ID .subtotal { font-size: 4rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 2px solid rgba(212, 175, 55, 0.4); padding-top: 10px; line-height: 1; text-align: center; }
         
         .mode-ID .final-score-card {
-          min-width: 250px; background: linear-gradient(180deg, #F9D976 0%, #D4AF37 100%);
+          min-width: 250px; background: linear-gradient(180deg, #F9D976 0%, var(--accent) 100%);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
           padding: 20px 40px 20px 60px; clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
           margin-left: -40px;
@@ -288,22 +319,22 @@ export default function OverlayNotaPage() {
         
         .mode-ID .header-badges { position: absolute; top: -45px; left: 0; display: flex; gap: 10px; }
         .mode-ID .badge { 
-          background: #000; color: #D4AF37; padding: 5px 25px; font-weight: 900; font-size: 1.3rem; 
-          border: 2px solid #D4AF37; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+          background: #000; color: var(--accent); padding: 5px 25px; font-weight: 900; font-size: 1.3rem; 
+          border: 2px solid var(--accent); clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
         }
-        .mode-ID .badge-pos { background: #D4AF37; color: #000; }
+        .mode-ID .badge-pos { background: var(--accent); color: #000; }
 
         /* --- CRONÔMETRO INDEPENDENTE TOP-RIGHT --- */
         .timer-top-right {
           position: fixed; top: 40px; right: 40px;
-          background: #000; border: 3px solid #D4AF37; border-right: 15px solid #D4AF37;
+          background: #000; border: 3px solid var(--accent); border-right: 15px solid var(--accent);
           color: #fff; display: flex; flex-direction: column; padding: 15px 30px;
           border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
           opacity: 1; transition: opacity 0.5s ease;
           clip-path: polygon(5% 0, 100% 0, 100% 100%, 0% 100%);
         }
         .timer-top-right.hidden { opacity: 0; pointer-events: none; }
-        .timer-label { color: #D4AF37; font-size: 1.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: -5px; }
+        .timer-label { color: var(--accent); font-size: 1.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: -5px; }
         .timer-value { font-size: 4.5rem; font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1; }
 
         /* --- MODO CHAMADA --- */
@@ -313,7 +344,7 @@ export default function OverlayNotaPage() {
           display: flex; align-items: center; justify-content: center;
         }
         .chamada-grid { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 1800px; height: 100%; position: relative; }
-        .side-photo { width: 500px; height: 750px; position: relative; clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%); border: 8px solid #D4AF37; overflow: hidden; box-shadow: 0 0 80px rgba(212,175,55,0.3); }
+        .side-photo { width: 500px; height: 750px; position: relative; clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%); border: 8px solid var(--accent); overflow: hidden; box-shadow: 0 0 80px rgba(212,175,55,0.3); }
         .side-photo img { width: 100%; height: 100%; object-fit: cover; animation: kenBurns 10s infinite alternate; }
         .name-rider-full { font-size: 7rem; font-weight: 950; text-transform: uppercase; line-height: 0.85; margin: 20px 0 0; color: #fff; }
 
@@ -325,7 +356,7 @@ export default function OverlayNotaPage() {
         }
         .mode-RANKING .ranking-full {
           width: 100%; max-width: 1840px; height: 100%; max-height: 1000px; display: flex; flex-direction: column; 
-          background: rgba(10, 10, 10, 0.98); padding: 50px 60px; border-radius: 24px; border: 4px solid #D4AF37;
+          background: rgba(10, 10, 10, 0.98); padding: 50px 60px; border-radius: 24px; border: 4px solid var(--accent);
           box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
           animation: popCenter 0.5s ease-out;
         }
@@ -347,24 +378,24 @@ export default function OverlayNotaPage() {
           <div className="ranking-full">
               <div className="ranking-header">
                 <h1 style={{ fontSize: '3.8rem', color: '#fff', margin: 0 }}>{displayRanking.title}</h1>
-                <div style={{ color: '#D4AF37', fontSize: '1.5rem', fontWeight: 900 }}>Classificação Oficial</div>
+                <div style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: 900 }}>Classificação Oficial</div>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
                 <thead>
-                    <tr style={{ borderBottom: '3px solid #D4AF37' }}>
-                        <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>POS</th>
-                        <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>NOME / INFO</th>
-                        <th style={{ color: '#D4AF37', fontSize: '1.2rem', padding: '15px', textAlign: 'right' }}>NOTA</th>
+                    <tr style={{ borderBottom: '3px solid var(--accent)' }}>
+                        <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>POS</th>
+                        <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>NOME / INFO</th>
+                        <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'right' }}>NOTA</th>
                     </tr>
                 </thead>
                 <tbody>
                     {displayRanking.list.map((r) => (
                         <tr key={r.pos} style={{ borderBottom: '1px solid rgba(212,175,55,0.2)', height: '70px' }}>
-                            <td style={{ color: '#D4AF37', fontSize: '2.5rem', fontWeight: 900 }}>#{r.pos}</td>
+                            <td style={{ color: 'var(--accent)', fontSize: '2.5rem', fontWeight: 900 }}>#{r.pos}</td>
                             <td style={{ color: '#fff', fontSize: '2rem', fontWeight: 700 }}>
                                 {r.nome} <span style={{ fontSize: '1.2rem', color: '#888', fontWeight: 400 }}>{r.info}</span>
                             </td>
-                            <td style={{ color: '#D4AF37', fontSize: '2.8rem', fontWeight: 900, textAlign: 'right' }}>{r.nota}</td>
+                            <td style={{ color: 'var(--accent)', fontSize: '2.8rem', fontWeight: 900, textAlign: 'right' }}>{r.nota}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -378,10 +409,10 @@ export default function OverlayNotaPage() {
         <div className={`nota-container ${(shouldHideLowerThird || lowerThirdForcedHide) ? 'hidden' : ''}`}>
           {/* HEADER BADGES (RANK E DIFF) */}
           <div className="header-badges">
-            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">RANK ETAPA: #{d.etapaRank}</div>}
-            {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">DIFF LÍDER: {d.etapaDiff}</div>}
+            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">{overlayStyle.labelRank}: #{d.etapaRank}</div>}
+            {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">{overlayStyle.labelDiff}: {d.etapaDiff}</div>}
             {!data?.rankingCongelado && d?.etapaNotaAcumulada && (d.roundNumero || 0) > 1 && parseFloat(d.etapaNotaAcumulada) > 0 && (
-              <div className="badge badge-acumulada" style={{ background: '#D4AF37', color: '#000' }}>SOMA ETAPA: {d.etapaNotaAcumulada}</div>
+              <div className="badge badge-acumulada" style={{ background: 'var(--accent)', color: '#000' }}>SOMA ETAPA: {d.etapaNotaAcumulada}</div>
             )}
           </div>
 
@@ -409,7 +440,7 @@ export default function OverlayNotaPage() {
              ))}
           </div>
           <div className="final-score-card">
-              <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>NOTA FINAL</span>
+              <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>{overlayStyle.labelScore}</span>
               <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
           </div>
         </div>
@@ -419,18 +450,18 @@ export default function OverlayNotaPage() {
       {mode === 'CHAMADA' && d && (
         <div className="chamada-fullscreen">
           <div className="chamada-grid">
-            <div className="side-photo photo-rider"><img src={d.competidorFoto} alt="P" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: '#D4AF37', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.competidorCidade}</div></div>
+            <div className="side-photo photo-rider"><img src={d.competidorFoto} alt="P" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: 'var(--accent)', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.competidorCidade}</div></div>
             <div className="center-info">
-              <div style={{ fontSize: '6rem', fontWeight: 950, color: '#000', WebkitTextStroke: '2px #D4AF37', textShadow: '0 0 20px #D4AF37', fontStyle: 'italic', letterSpacing: '-5px' }}>CONFRONTO</div>
+              <div style={{ fontSize: '6rem', fontWeight: 950, color: '#000', WebkitTextStroke: '2px var(--accent)', textShadow: '0 0 20px var(--accent)', fontStyle: 'italic', letterSpacing: '-5px' }}>CONFRONTO</div>
               <h1 style={{ fontSize: '7rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 0.85, margin: '20px 0 0', color: '#fff' }}>{d.competidor}</h1>
-              <div style={{ fontSize: '4rem', color: '#D4AF37', fontWeight: 800, margin: '10px 0', textTransform: 'uppercase' }}>{d.animal}</div>
+              <div style={{ fontSize: '4rem', color: 'var(--accent)', fontWeight: 800, margin: '10px 0', textTransform: 'uppercase' }}>{d.animal}</div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '50px' }}>
-                <div style={{ border: '2px solid #D4AF37', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: '#D4AF37', fontWeight: 900 }}>RANKING</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>#{d.competidorRankChamp || '---'}</span></div>
-                <div style={{ border: '2px solid #D4AF37', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: '#D4AF37', fontWeight: 900 }}>PARADAS</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorParadas || '0%'}</span></div>
-                <div style={{ border: '2px solid #D4AF37', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: '#D4AF37', fontWeight: 900 }}>MÉDIA BOI</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.animalMedia || '0'}</span></div>
+                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>RANKING</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>#{d.competidorRankChamp || '---'}</span></div>
+                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>PARADAS</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorParadas || '0%'}</span></div>
+                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>MÉDIA BOI</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.animalMedia || '0'}</span></div>
               </div>
             </div>
-            <div className="side-photo photo-bull"><img src={d.animalFoto} alt="T" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: '#D4AF37', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.animalCompanhia}</div></div>
+            <div className="side-photo photo-bull"><img src={d.animalFoto} alt="T" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: 'var(--accent)', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.animalCompanhia}</div></div>
           </div>
         </div>
       )}

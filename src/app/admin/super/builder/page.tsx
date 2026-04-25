@@ -358,29 +358,54 @@ export default function SiteBuilderPage() {
                          <textarea value={editingBlock.subtitle} onChange={e => updateBlock(editingBlock.id, { subtitle: e.target.value })} style={{ ...styleInput, height: '80px', resize: 'none' }} />
                       </div>
                       <div style={{ borderTop: '1px solid #222', paddingTop: '1.5rem' }}>
-                         <h5 style={{ fontSize: '0.7rem', color: brand.primaryColor, marginBottom: '1rem' }}>ESTILO PERSONALIZADO</h5>
+                         <h5 style={{ fontSize: '0.7rem', color: brand.primaryColor, marginBottom: '1rem' }}>ESTILO DO COMPONENTE</h5>
                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            <div>
-                               <label style={styleLabel}>COR DE FUNDO</label>
-                               <div style={{ display: 'flex', gap: '8px' }}>
-                                  <input type="color" value={editingBlock.style?.background || '#111'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, background: e.target.value } })} style={{ width: '30px' }} />
-                                  <input value={editingBlock.style?.background || '#111'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, background: e.target.value } })} style={styleInput} />
-                               </div>
-                            </div>
-                            <div>
-                               <label style={styleLabel}>ALINHAMENTO</label>
-                               <div style={{ display: 'flex', background: '#111', borderRadius: '8px', padding: '4px' }}>
-                                  {['left', 'center', 'right'].map(a => (
-                                    <button 
-                                      key={a}
-                                      onClick={() => updateBlock(editingBlock.id, { style: { ...editingBlock.style, align: a } })}
-                                      style={{ flex: 1, padding: '5px', border: 'none', background: editingBlock.style?.align === a ? '#222' : 'transparent', color: '#fff', fontSize: '0.6rem', borderRadius: '4px', cursor: 'pointer' }}
-                                    >
-                                      {a.toUpperCase()}
-                                    </button>
-                                  ))}
-                               </div>
-                            </div>
+                            {editingBlock.type.includes('OVERLAY') || ['LOWER_THIRD', 'SCORE_BOARD', 'FULL_RANKING'].includes(editingBlock.type) ? (
+                              <>
+                                <div>
+                                   <label style={styleLabel}>COR DE DESTAQUE (BARRAS)</label>
+                                   <div style={{ display: 'flex', gap: '8px' }}>
+                                      <input type="color" value={editingBlock.style?.accent || brand.primaryColor} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, accent: e.target.value } })} style={{ width: '30px' }} />
+                                      <input value={editingBlock.style?.accent || brand.primaryColor} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, accent: e.target.value } })} style={styleInput} />
+                                   </div>
+                                </div>
+                                <div>
+                                   <label style={styleLabel}>COR DO FUNDO</label>
+                                   <div style={{ display: 'flex', gap: '8px' }}>
+                                      <input type="color" value={editingBlock.style?.background || '#000000'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, background: e.target.value } })} style={{ width: '30px' }} />
+                                      <input value={editingBlock.style?.background || '#000000'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, background: e.target.value } })} style={styleInput} />
+                                   </div>
+                                </div>
+                                <div>
+                                   <label style={styleLabel}>RÓTULO PERSONALIZADO (EX: RANK ETAPA)</label>
+                                   <input value={editingBlock.style?.labelText || 'RANK ETAPA'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, labelText: e.target.value } })} style={styleInput} placeholder="Texto que aparece na barra menor" />
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div>
+                                   <label style={styleLabel}>COR DE FUNDO</label>
+                                   <div style={{ display: 'flex', gap: '8px' }}>
+                                      <input type="color" value={editingBlock.style?.background || '#111'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, background: e.target.value } })} style={{ width: '30px' }} />
+                                      <input value={editingBlock.style?.background || '#111'} onChange={e => updateBlock(editingBlock.id, { style: { ...editingBlock.style, background: e.target.value } })} style={styleInput} />
+                                   </div>
+                                </div>
+                                <div>
+                                   <label style={styleLabel}>ALINHAMENTO</label>
+                                   <div style={{ display: 'flex', background: '#111', borderRadius: '8px', padding: '4px' }}>
+                                      {['left', 'center', 'right'].map(a => (
+                                        <button 
+                                          key={a}
+                                          onClick={() => updateBlock(editingBlock.id, { style: { ...editingBlock.style, align: a } })}
+                                          style={{ flex: 1, padding: '5px', border: 'none', background: editingBlock.style?.align === a ? '#222' : 'transparent', color: '#fff', fontSize: '0.6rem', borderRadius: '4px', cursor: 'pointer' }}
+                                        >
+                                          {a.toUpperCase()}
+                                        </button>
+                                      ))}
+                                   </div>
+                                </div>
+                              </>
+                            )}
                          </div>
                       </div>
                       
