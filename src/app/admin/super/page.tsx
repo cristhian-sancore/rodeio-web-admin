@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { Shield, Users, Database, Activity, Terminal, AlertCircle, Trash2, RefreshCcw } from "lucide-react";
+import { Shield, Users, Database, Activity, Terminal, AlertCircle, Trash2, RefreshCcw, Layout } from "lucide-react";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -46,8 +46,13 @@ export default async function SuperAdminPage() {
           </h1>
           <p style={{ color: '#888' }}>Gestão avançada do sistema, usuários e auditoria global.</p>
         </div>
-        <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold' }}>
-          MODO ROOT ATIVO
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Link href="/admin/super/builder" className="btn-primary" style={{ background: 'var(--primary)', color: '#000', padding: '0.6rem 1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', borderRadius: '8px', fontWeight: '900', fontSize: '0.85rem' }}>
+             <Layout size={18} /> CONSTRUTOR DE SITE
+          </Link>
+          <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.85rem' }}>
+            MODO ROOT ATIVO
+          </div>
         </div>
       </div>
 
