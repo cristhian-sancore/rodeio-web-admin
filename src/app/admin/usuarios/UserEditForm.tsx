@@ -1,3 +1,4 @@
+'use client';
 import { useState, useActionState } from 'react';
 import { Save, Shield, AlertCircle } from "lucide-react";
 import { updateUser } from './actions';
