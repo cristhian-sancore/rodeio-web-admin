@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import DbManager from "./DbManager";
 import CmsManager from "./CmsManager";
+import PageBuilder from "./PageBuilder";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -96,6 +97,10 @@ export default async function SuperAdminPage() {
 
       <div style={{ marginBottom: '3rem' }}>
           <CmsManager config={config} />
+      </div>
+
+      <div style={{ marginBottom: '3rem' }}>
+          <PageBuilder config={config} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>

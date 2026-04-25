@@ -77,8 +77,12 @@ export default async function Home() {
       nota: highlights?.campeonatoAnimal?.nota || '0.00',
       pos: 'RANKING GERAL',
       video: highlights?.campeonatoAnimal ? findVideo('', highlights.campeonatoAnimal.nome) : null,
-      link: highlights?.campeonatoAnimal ? `/animais/${highlights.campeonatoAnimal.animalId}` : '#'
-    }
+      link: highlights?.campeonatoAnimal ? `/animais/${highlights.campeonatoAnimal.animalId  // Layout dinâmico do Page Builder
+  const layout = (config?.homeLayout as any[]) || [
+    { id: 'hero', type: 'HERO', visible: true },
+    { id: 'highlights', type: 'HIGHLIGHTS', visible: true },
+    { id: 'rankings', type: 'RANKINGS', visible: true },
+    { id: 'features', type: 'FEATURES', visible: true }
   ];
 
   return (
@@ -105,166 +109,204 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="hero">
-        <div className="hero-bg" style={{ 
-          backgroundImage: config?.homeHeroImage ? `url(${config.homeHeroImage})` : "url('/hero-rodeo.png')" 
-        }}></div>
-        <div className="hero-content">
-          <h1 className="hero-title">{config?.homeHeroTitle || "Rodeio Pro"}</h1>
-          <p className="hero-subtitle">
-            {config?.homeHeroSubtitle || "A plataforma definitiva para gestão de eventos, pontuações em tempo real e integração total com transmissões vMix."}
-          </p>
-          <div className="cta-group">
-            <Link href="/live" className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>
-              <TrendingUp size={20} /> ARENA AO VIVO
-            </Link>
-            <Link href="/ranking" className="btn-primary">
-              <Trophy size={20} /> VER RANKINGS
-            </Link>
-            <Link href="/admin" className="btn-secondary">
-              Acessar Painel Admin
-            </Link>
-          </div>
-        </div>
-      </section>
+      {layout.filter(block => block.visible).map((block) => {
+        switch (block.type) {
+          case 'HERO':
+            return (
+              <section key={block.id} className="hero">
+                <div className="hero-bg" style={{ 
+                  backgroundImage: config?.homeHeroImage ? `url(${config.homeHeroImage})` : "url('/hero-rodeo.png')" 
+                }}></div>
+                <div className="hero-content">
+                  <h1 className="hero-title">{config?.homeHeroTitle || "Rodeio Pro"}</h1>
+                  <p className="hero-subtitle">
+                    {config?.homeHeroSubtitle || "A plataforma definitiva para gestão de eventos, pontuações em tempo real e integração total com transmissões vMix."}
+                  </p>
+                  <div className="cta-group">
+                    <Link href="/live" className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}>
+                      <TrendingUp size={20} /> ARENA AO VIVO
+                    </Link>
+                    <Link href="/ranking" className="btn-primary">
+                      <Trophy size={20} /> VER RANKINGS
+                    </Link>
+                    <Link href="/admin" className="btn-secondary">
+                      Acessar Painel Admin
+                    </Link>
+                  </div>
+                </div>
+              </section>
+            );
 
-      {/* Highlights Section */}
-      {highlights && (
-        <section className="highlights-section">
-          <div className="section-header">
-            <h2>Destaques da Arena</h2>
-          </div>
-          <div className="highlights-grid">
-            {highlightItems.map((item, idx) => (
-              <div key={idx} className="highlight-card">
-                <div className="card-video-wrapper">
-                  {item.video?.id ? (
-                    <VideoPlayer 
-                      videoId={item.video.id} 
-                      thumbnail={item.video.thumb}
-                    />
-                  ) : (
-                    <div className="video-placeholder">
-                      <Play size={48} />
-                      <p style={{ marginTop: '10px', fontSize: '0.8rem' }}>Vídeo em processamento...</p>
+          case 'HIGHLIGHTS':
+            return highlights && (
+              <section key={block.id} className="highlights-section">
+                <div className="section-header">
+                  <h2>Destaques da Arena</h2>
+                </div>
+                <div className="highlights-grid">
+                  {highlightItems.map((item, idx) => (
+                    <div key={idx} className="highlight-card">
+                      <div className="card-video-wrapper">
+                        {item.video?.id ? (
+                          <VideoPlayer 
+                            videoId={item.video.id} 
+                            thumbnail={item.video.thumb}
+                          />
+                        ) : (
+                          <div className="video-placeholder">
+                            <Play size={48} />
+                            <p style={{ marginTop: '10px', fontSize: '0.8rem' }}>Vídeo em processamento...</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="card-content">
+                        <div className="card-badge">{item.label}</div>
+                        <div className="card-subtitle">{item.subtitle}</div>
+                        <h3 className="card-title">{item.title}</h3>
+                        <div className="card-stats">
+                          <div className="stat-item">
+                            <span className="stat-value">{item.nota}</span>
+                            <span className="stat-label">Pontuação</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-value" style={{ color: 'var(--primary)' }}>{item.pos}</span>
+                            <span className="stat-label">Posição</span>
+                          </div>
+                        </div>
+                        <Link href={item.link} className="btn-secondary" style={{ marginTop: '20px', display: 'inline-flex', padding: '10px 20px', fontSize: '0.9rem', width: 'auto' }}>
+                          Ver Perfil Completo
+                        </Link>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </section>
+            );
+
+          case 'RANKINGS':
+            return (
+              <section key={block.id} className="highlights-section" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '60px', padding: '60px 40px' }}>
+                <div className="section-header" style={{ textAlign: 'left', marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                  <div>
+                    <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Ranking Oficial</h2>
+                    <p style={{ color: '#666' }}>{(config as any)?.rankingCongelado ? 'As notas recentes estão em processo de auditoria.' : 'Acompanhe os líderes em tempo real'}</p>
+                  </div>
+                  {!((config as any)?.rankingCongelado) && (
+                    <Link href="/ranking" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      Ver Ranking Completo <ChevronRight size={16} />
+                    </Link>
                   )}
                 </div>
-                <div className="card-content">
-                  <div className="card-badge">{item.label}</div>
-                  <div className="card-subtitle">{item.subtitle}</div>
-                  <h3 className="card-title">{item.title}</h3>
-                  <div className="card-stats">
-                    <div className="stat-item">
-                      <span className="stat-value">{item.nota}</span>
-                      <span className="stat-label">Pontuação</span>
+
+                {((config as any)?.rankingCongelado) ? (
+                    <div style={{ textAlign: 'center', padding: '50px 20px', background: 'rgba(255,200,0,0.05)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: '15px' }}>
+                      <Trophy size={48} color="rgba(255,200,0,0.5)" style={{ marginBottom: '20px' }} />
+                      <h3 style={{ color: '#D4AF37', fontSize: '1.5rem', marginBottom: '10px' }}>APURAÇÃO EM ANDAMENTO</h3>
+                      <p style={{ color: '#aaa' }}>As posições do ranking estão temporariamente ocultas até o fechamento da correção de notas.<br/>Retorne em instantes para ver a tabela oficial atualizada.</p>
                     </div>
-                    <div className="stat-item">
-                      <span className="stat-value" style={{ color: 'var(--primary)' }}>{item.pos}</span>
-                      <span className="stat-label">Posição</span>
-                    </div>
+                ) : (
+                <div className="highlights-grid">
+                  <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a' }}>
+                      <div style={{ padding: '0 10px 15px', borderBottom: '1px solid #222', marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <Zap size={20} color="var(--primary)" />
+                        <h3 style={{ textTransform: 'uppercase', fontSize: '1.2rem' }}>Top 5 Etapa</h3>
+                      </div>
+                      <div className="table-responsive-wrapper">
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <tbody>
+                            {rankingEtapa?.list?.slice(0, 5).map((r: any) => (
+                              <tr key={r.pos} style={{ borderBottom: '1px solid #111' }}>
+                                <td style={{ padding: '12px 10px', color: r.pos <= 3 ? 'var(--primary)' : '#666', fontWeight: 'bold' }}>#{r.pos}</td>
+                                <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.nome}</td>
+                                <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: '900', color: 'var(--primary)' }}>{r.nota}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                   </div>
-                  <Link href={item.link} className="btn-secondary" style={{ marginTop: '20px', display: 'inline-flex', padding: '10px 20px', fontSize: '0.9rem', width: 'auto' }}>
-                    Ver Perfil Completo
-                  </Link>
+
+                  <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a' }}>
+                      <div style={{ padding: '0 10px 15px', borderBottom: '1px solid #222', marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <Trophy size={20} color="var(--primary)" />
+                        <h3 style={{ textTransform: 'uppercase', fontSize: '1.2rem' }}>Top 5 Campeonato</h3>
+                      </div>
+                      <div className="table-responsive-wrapper">
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <tbody>
+                            {rankingChamp?.list?.slice(0, 5).map((r: any) => (
+                              <tr key={r.pos} style={{ borderBottom: '1px solid #111' }}>
+                                <td style={{ padding: '12px 10px', color: r.pos <= 3 ? 'var(--primary)' : '#666', fontWeight: 'bold' }}>#{r.pos}</td>
+                                <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.nome}</td>
+                                <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: '900', color: 'var(--primary)' }}>{r.nota}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+                )}
+              </section>
+            );
 
-      {/* Rankings Section (Nova) */}
-      <section className="highlights-section" style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '60px', padding: '60px 40px' }}>
-        <div className="section-header" style={{ textAlign: 'left', marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>Ranking Oficial</h2>
-            <p style={{ color: '#666' }}>{(config as any)?.rankingCongelado ? 'As notas recentes estão em processo de auditoria.' : 'Acompanhe os líderes em tempo real'}</p>
-          </div>
-          {!((config as any)?.rankingCongelado) && (
-             <Link href="/ranking" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               Ver Ranking Completo <ChevronRight size={16} />
-             </Link>
-          )}
-        </div>
+          case 'FEATURES':
+            return (
+              <section key={block.id} className="features">
+                <div className="feature-card">
+                  <div className="feature-icon">📺</div>
+                  <h3>Transmissão HD</h3>
+                  <p>Acompanhe cada segundo das montarias com a melhor tecnologia de replay e informações em tempo real.</p>
+                </div>
 
-        {((config as any)?.rankingCongelado) ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', background: 'rgba(255,200,0,0.05)', border: '1px solid rgba(255,200,0,0.2)', borderRadius: '15px' }}>
-               <Trophy size={48} color="rgba(255,200,0,0.5)" style={{ marginBottom: '20px' }} />
-               <h3 style={{ color: '#D4AF37', fontSize: '1.5rem', marginBottom: '10px' }}>APURAÇÃO EM ANDAMENTO</h3>
-               <p style={{ color: '#aaa' }}>As posições do ranking estão temporariamente ocultas até o fechamento da correção de notas.<br/>Retorne em instantes para ver a tabela oficial atualizada.</p>
-            </div>
-        ) : (
-        <div className="highlights-grid">
-           {/* Ranking Etapa */}
-           <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a' }}>
-              <div style={{ padding: '0 10px 15px', borderBottom: '1px solid #222', marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <Zap size={20} color="var(--primary)" />
-                <h3 style={{ textTransform: 'uppercase', fontSize: '1.2rem' }}>Top 5 Etapa</h3>
-              </div>
-              <div className="table-responsive-wrapper">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    {rankingEtapa?.list?.slice(0, 5).map((r: any) => (
-                      <tr key={r.pos} style={{ borderBottom: '1px solid #111' }}>
-                        <td style={{ padding: '12px 10px', color: r.pos <= 3 ? 'var(--primary)' : '#666', fontWeight: 'bold' }}>#{r.pos}</td>
-                        <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.nome}</td>
-                        <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: '900', color: 'var(--primary)' }}>{r.nota}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-           </div>
+                <div className="feature-card">
+                  <div className="feature-icon">🤠</div>
+                  <h3>Elite da Arena</h3>
+                  <p>Conheça os competidores e animais que desafiam a gravidade em busca do título de campeão.</p>
+                </div>
 
-           {/* Ranking Campeonato */}
-           <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a' }}>
-              <div style={{ padding: '0 10px 15px', borderBottom: '1px solid #222', marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <Trophy size={20} color="var(--primary)" />
-                <h3 style={{ textTransform: 'uppercase', fontSize: '1.2rem' }}>Top 5 Campeonato</h3>
-              </div>
-              <div className="table-responsive-wrapper">
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <tbody>
-                    {rankingChamp?.list?.slice(0, 5).map((r: any) => (
-                      <tr key={r.pos} style={{ borderBottom: '1px solid #111' }}>
-                        <td style={{ padding: '12px 10px', color: r.pos <= 3 ? 'var(--primary)' : '#666', fontWeight: 'bold' }}>#{r.pos}</td>
-                        <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{r.nome}</td>
-                        <td style={{ padding: '12px 10px', textAlign: 'right', fontWeight: '900', color: 'var(--primary)' }}>{r.nota}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-           </div>
-        </div>
-        )}
-      </section>
+                <div className="feature-card">
+                  <div className="feature-icon">🏆</div>
+                  <h3>Resultados Oficiais</h3>
+                  <p>Ranking atualizado instantaneamente para você saber quem lidera a arena a cada saída de brete.</p>
+                </div>
+              </section>
+            );
+          
+          case 'INFO':
+            return (
+              <section key={block.id} className="highlights-section" style={{ textAlign: 'center' }}>
+                 <h2 style={{ fontSize: '3rem', marginBottom: '20px' }}>Sobre o Evento</h2>
+                 <p style={{ color: '#888', maxWidth: '800px', margin: '0 auto', fontSize: '1.2rem', lineHeight: '1.8' }}>
+                    O {config?.homeHeroTitle || "Rodeio Pro"} é uma das maiores competições de rodeio do país, 
+                    reunindo os melhores atletas e as boiadas mais temidas em uma arena de alta tecnologia.
+                 </p>
+              </section>
+            );
 
-      {/* Features Section */}
-      <section className="features">
-        <div className="feature-card">
-          <div className="feature-icon">📺</div>
-          <h3>Transmissão HD</h3>
-          <p>Acompanhe cada segundo das montarias com a melhor tecnologia de replay e informações em tempo real.</p>
-        </div>
+          case 'SPONSORS':
+             return (
+               <section key={block.id} className="highlights-section" style={{ background: '#000', padding: '40px' }}>
+                  <div className="section-header">
+                     <h2 style={{ fontSize: '1.5rem', opacity: 0.5 }}>Patrocinadores Oficiais</h2>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', flexWrap: 'wrap', opacity: 0.3 }}>
+                     {/* Placeholders para patrocinadores */}
+                     <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>SPONSOR A</div>
+                     <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>SPONSOR B</div>
+                     <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>SPONSOR C</div>
+                     <div style={{ fontSize: '1.5rem', fontWeight: '900' }}>SPONSOR D</div>
+                  </div>
+               </section>
+             );
 
-        <div className="feature-card">
-          <div className="feature-icon">🤠</div>
-          <h3>Elite da Arena</h3>
-          <p>Conheça os competidores e animais que desafiam a gravidade em busca do título de campeão.</p>
-        </div>
-
-        <div className="feature-card">
-          <div className="feature-icon">🏆</div>
-          <h3>Resultados Oficiais</h3>
-          <p>Ranking atualizado instantaneamente para você saber quem lidera a arena a cada saída de brete.</p>
-        </div>
-      </section>
+          default:
+            return null;
+        }
+      })}
 
       <footer>
-        <p>&copy; 2026 Rodeio Pro - A Emoção da Arena em Tempo Real.</p>
+        <p>&copy; 2026 {config?.homeHeroTitle || "Rodeio Pro"} - A Emoção da Arena em Tempo Real.</p>
       </footer>
     </div>
   )

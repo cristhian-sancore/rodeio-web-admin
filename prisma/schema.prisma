@@ -172,6 +172,7 @@ model Configuracao {
   homeHeroTitle       String?   @default("RODEIO PRO")
   homeHeroSubtitle    String?   @default("A plataforma definitiva para gestão de eventos, pontuações em tempo real e integração total com transmissões vMix.")
   homeHeroImage       String?   @default("https://images.unsplash.com/photo-1530103043960-ef38714abb15?q=80&w=2070&auto=format&fit=crop")
+  homeLayout          Json?     @default("[]")
 }
 
 model RoundReserva {
