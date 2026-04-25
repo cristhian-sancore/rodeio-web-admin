@@ -106,9 +106,8 @@ export default async function PublicRankingPage({ searchParams }: PageProps) {
                       </Link>
                       <div style={{ fontSize: '0.7rem', color: '#666' }}>{item.info}</div>
                     </td>
-                    <td style={{ textAlign: 'center', color: '#888' }}>
-                      {currentScope === 'campeonato' && currentEntity === 'peao' ? item.extra : 
-                       idx === 0 ? '-' : item.extra}
+                    <td style={{ textAlign: 'center', color: '#ff4444', fontWeight: 'bold' }}>
+                      {idx === 0 ? 'LÍDER' : `-${item.diff}`}
                     </td>
                     <td style={{ textAlign: 'right', paddingRight: '1.25rem', fontWeight: '900', color: 'var(--primary)', fontSize: '1.2rem' }}>
                       {item.nota}

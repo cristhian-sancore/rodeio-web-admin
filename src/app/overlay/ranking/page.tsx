@@ -80,14 +80,20 @@ export default function RankingOverlay() {
                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{p.nome}</div>
                    <div style={{ fontSize: '1rem', color: '#888' }}>{p.origem}</div>
                 </div>
-                <div style={{ textAlign: 'center', width: '150px' }}>
-                   <div style={{ fontSize: '0.8rem', color: '#666' }}>PARADAS</div>
-                   <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{p.paradas}</div>
-                </div>
-                <div style={{ textAlign: 'right', width: '200px' }}>
-                   <div style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>PONTOS LIGA</div>
-                   <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary)', lineHeight: 1 }}>{p.pontosLiga.toFixed(1)}</div>
-                </div>
+                 <div style={{ textAlign: 'center', width: '120px' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>PARADAS</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{p.paradas}</div>
+                 </div>
+                 <div style={{ textAlign: 'center', width: '150px' }}>
+                    <div style={{ fontSize: '0.8rem', color: '#ff4444' }}>DIFERENÇA</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: idx === 0 ? 'var(--primary)' : '#ff4444' }}>
+                      {idx === 0 ? 'LÍDER' : p.diff || '0.0'}
+                    </div>
+                 </div>
+                 <div style={{ textAlign: 'right', width: '180px' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>PONTOS</div>
+                    <div style={{ fontSize: '2.5rem', fontWeight: '900', color: 'var(--primary)', lineHeight: 1 }}>{p.pontosLiga.toFixed(1)}</div>
+                 </div>
              </div>
            ))}
         </div>

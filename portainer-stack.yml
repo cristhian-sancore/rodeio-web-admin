@@ -25,14 +25,21 @@ services:
       AUTH_TRUST_HOST: "true"
       PRISMA_CLIENT_ENGINE_TYPE: library
       NEXTAUTH_URL_INTERNAL: http://localhost:3000
+    volumes:
+      - rodeio_uploads:/app/public/uploads
+      - rodeio_prisma:/app/prisma
+    networks:
+      - rodeio-net
     depends_on:
       - db
     restart: always
-    networks:
-      - rodeio-net
 
 volumes:
   rodeio_pgdata:
+    driver: local
+  rodeio_uploads:
+    driver: local
+  rodeio_prisma:
     driver: local
 
 networks:

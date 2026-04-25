@@ -35,10 +35,11 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     ms.forEach(m => {
       // Stats Peão
       if (!statsPeoes[m.competidorId]) {
-        statsPeoes[m.competidorId] = { id: m.competidorId, nome: m.competidor.nome, origem: `${m.competidor.cidade || ''}-${m.competidor.uf || ''}`, notaAcumulada: 0, pontosLiga: 0, tempoTotal: 0 };
+        statsPeoes[m.competidorId] = { id: m.competidorId, nome: m.competidor.nome, origem: `${m.competidor.cidade || ''}-${m.competidor.uf || ''}`, notaAcumulada: 0, pontosLiga: 0, tempoTotal: 0, paradas: 0, fotoUrl: m.competidor.fotoUrl };
       }
       statsPeoes[m.competidorId].notaAcumulada += m.notaTotal;
       statsPeoes[m.competidorId].tempoTotal += m.tempo;
+      if (m.tempo >= 8) statsPeoes[m.competidorId].paradas += 1;
 
       // Classificação interna da etapa para distribuir pontos de liga
       if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
@@ -91,17 +92,22 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     });
   });
 
-  const peoes = Object.values(statsPeoes).sort((a: any, b: any) => {
+  const sortedPeoes = Object.values(statsPeoes).sort((a: any, b: any) => {
     if (etapaId) {
-      // Se for ranking de ETAPA, ordena por nota acumulada
       if (b.notaAcumulada !== a.notaAcumulada) return b.notaAcumulada - a.notaAcumulada;
       return b.tempoTotal - a.tempoTotal;
     } else {
-      // Se for ranking de CAMPEONATO, ordena por pontos de liga
       if (b.pontosLiga !== a.pontosLiga) return b.pontosLiga - a.pontosLiga;
       return b.notaAcumulada - a.notaAcumulada;
     }
   });
+
+  const leaderNota = sortedPeoes[0] ? (etapaId ? sortedPeoes[0].notaAcumulada : sortedPeoes[0].pontosLiga) : 0;
+
+  const peoes = sortedPeoes.map((p: any) => ({
+    ...p,
+    diff: (leaderNota - (etapaId ? p.notaAcumulada : p.pontosLiga)).toFixed(1)
+  }));
 
   const touros = Object.values(statsAnimais).map((a: any) => ({ ...a, media: a.somaNotas / (a.qtd || 1) })).sort((a: any, b: any) => b.media - a.media);
 
@@ -172,15 +178,21 @@ export async function getOverlayRankingData(mode: string, roundId?: number, etap
      };
   }
   
+  const leaderNota = peoes[0] ? (isCampeonato ? peoes[0].pontosLiga : peoes[0].notaAcumulada) : 0;
+  
   return { 
     title,
-    list: peoes.map((p, idx) => ({ 
-      pos: idx + 1, 
-      nome: p.nome, 
-      info: p.origem, 
-      nota: (isCampeonato ? p.pontosLiga : p.notaAcumulada).toFixed(1), 
-      competidorId: p.id 
-    })) 
+    list: peoes.map((p, idx) => {
+      const currentNota = isCampeonato ? p.pontosLiga : p.notaAcumulada;
+      return { 
+        pos: idx + 1, 
+        nome: p.nome, 
+        info: p.origem, 
+        nota: currentNota.toFixed(1), 
+        diff: (leaderNota - currentNota).toFixed(1),
+        competidorId: p.id 
+      };
+    }) 
   };
 }
 
