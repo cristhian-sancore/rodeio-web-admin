@@ -57,6 +57,25 @@ export async function getRanking(params: { etapaId?: number; temporadaId?: numbe
       }
     });
 
+    // Ranking por Round para distribuir bônus de melhor nota da noite
+    const roundsGroups: Record<number, any[]> = {};
+    ms.forEach(m => {
+      if (!roundsGroups[m.roundId]) roundsGroups[m.roundId] = [];
+      roundsGroups[m.roundId].push(m);
+    });
+
+    Object.values(roundsGroups).forEach(rms => {
+      const bestNote = Math.max(...rms.map(m => m.notaTotal));
+      if (bestNote > 0) {
+        rms.forEach(m => {
+          if (m.notaTotal === bestNote) {
+            if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
+            classificacaoEtapa[m.competidorId].cpts += (temp.bonusMelhorNotaNoite || 0);
+          }
+        });
+      }
+    });
+
     // Ranking da Etapa para distribuir pontos de campeonato
     const rankingSorted = Object.values(classificacaoEtapa).sort((a: any, b: any) => {
       if (b.pontos !== a.pontos) return b.pontos - a.pontos;
