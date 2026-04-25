@@ -1,11 +1,9 @@
 export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/db";
-import { revalidatePath } from "next/cache";
-import bcrypt from "bcryptjs";
-import { User as UserIcon, UserPlus, Trash2, Key, Shield, Gavel, Edit, Search, Mic } from "lucide-react";
+import { Shield, Edit, Search, Mic, Gavel } from "lucide-react";
 import Link from "next/link";
-import { createUser, deleteUser } from "./actions";
 import UserForm from "./UserForm";
+import DeleteUserButton from "./DeleteUserButton";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -82,12 +80,7 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
                     </Link>
                   )}
                   {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
-                    <form action={deleteUser}>
-                      <input type="hidden" name="id" value={u.id} />
-                      <button type="submit" onClick={(e) => {if(!confirm('Deseja realmente remover este usuário?')) e.preventDefault();}} style={{ padding: '6px', background: 'rgba(255,68,68,0.1)', borderRadius: '4px', color: '#ff4444', cursor: 'pointer', border: '1px solid currentColor' }}>
-                        <Trash2 size={16} />
-                      </button>
-                    </form>
+                    <DeleteUserButton id={u.id} />
                   )}
                 </div>
               </div>
