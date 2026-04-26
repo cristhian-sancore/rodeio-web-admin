@@ -13,56 +13,71 @@ import { authOptions } from '@/lib/auth';
 export default async function Home() {
   const session = await getServerSession(authOptions);
   const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER' || session?.user?.role === 'SUPER_ADMIN';
-  
-  const highlights = await getTopHighlights();
-  
-  const temporada = await prisma.temporada.findFirst({ where: { ativa: true } });
-  const etapaAtiva = await prisma.etapa.findFirst({ where: { ativa: true }, orderBy: { id: 'desc' } });
-  
+
+  // --- Busca de dados com proteção total contra falhas ---
+  let highlights: any = null;
+  try { highlights = await getTopHighlights(); } catch (e) { console.error('[Home] highlights error:', e); }
+
+  let temporada: any = null;
+  let etapaAtiva: any = null;
+  try {
+    temporada = await prisma.temporada.findFirst({ where: { ativa: true } });
+    etapaAtiva = await prisma.etapa.findFirst({ where: { ativa: true }, orderBy: { id: 'desc' } });
+  } catch (e) { console.error('[Home] etapa/temporada error:', e); }
+
   let config: any = null;
   try {
     config = await prisma.configuracao.findUnique({ where: { id: 1 } });
-  } catch (err) {
-    console.error("Erro ao carregar config na Home:", err);
-  }
+    if (!config) config = await prisma.configuracao.findFirst();
+  } catch (err) { console.error('[Home] config error:', err); }
+
   const folderId = config?.googleDriveFolderId || null;
-  
   let replayMap: Record<string, { id: string, thumb: string | null }> = {};
   if (folderId) {
-    replayMap = await getReplayFileMap(folderId);
+    try { replayMap = await getReplayFileMap(folderId); } catch (e) { console.error('[Home] gdrive error:', e); }
   }
 
-  const rankingEtapa = etapaAtiva ? await getCompetidorRanking('ETAPA_COMPETIDOR', 0, etapaAtiva.id, temporada?.id || 0) : null;
-  const rankingChamp = temporada ? await getChampionshipRanking(temporada.id) : null;
+  let rankingEtapa: any = null;
+  let rankingChamp: any = null;
+  try {
+    if (etapaAtiva) rankingEtapa = await getCompetidorRanking('ETAPA_COMPETIDOR', 0, etapaAtiva.id, temporada?.id || 0);
+    if (temporada) rankingChamp = await getChampionshipRanking(temporada.id);
+  } catch (e) { console.error('[Home] ranking error:', e); }
 
   const findVideo = (compName: string, animalName: string) => {
-    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-    const searchComp = compName ? normalize(compName) : null;
-    const searchAnimal = animalName ? normalize(animalName) : null;
-    
-    const checkMatch = (searchStr: string | null, targetStr: string) => {
-      if (!searchStr) return true;
-      const words = searchStr.split(' ').filter(w => w.length > 2);
-      if (words.length >= 2) {
-         return targetStr.includes(words[0]) && targetStr.includes(words[1]);
-      }
-      return targetStr.includes(searchStr);
-    };
-
-    const entry = Object.entries(replayMap).find(([name]) => {
-      const upName = normalize(name);
-      const matchedComp = checkMatch(searchComp, upName);
-      const matchedAnimal = checkMatch(searchAnimal, upName);
-      return (searchComp || searchAnimal) && matchedComp && matchedAnimal;
-    });
-    return entry ? entry[1] : null;
+    try {
+      const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+      const searchComp = compName ? normalize(compName) : null;
+      const searchAnimal = animalName ? normalize(animalName) : null;
+      const checkMatch = (searchStr: string | null, targetStr: string) => {
+        if (!searchStr) return true;
+        const words = searchStr.split(' ').filter(w => w.length > 2);
+        if (words.length >= 2) return targetStr.includes(words[0]) && targetStr.includes(words[1]);
+        return targetStr.includes(searchStr);
+      };
+      const entry = Object.entries(replayMap).find(([name]) => {
+        const upName = normalize(name);
+        return (searchComp || searchAnimal) && checkMatch(searchComp, upName) && checkMatch(searchAnimal, upName);
+      });
+      return entry ? entry[1] : null;
+    } catch { return null; }
   };
 
-  const roundAtivo = etapaAtiva ? await prisma.round.findFirst({ where: { etapaId: etapaAtiva.id, aberto: true } }) : null;
-  const rankingNoite = roundAtivo ? await getCompetidorRanking('NOITE_COMPETIDOR', roundAtivo.id, etapaAtiva?.id, temporada?.id) : null;
-  const rankingNoiteAnimal = roundAtivo ? await getAnimalRanking('NOITE_ANIMAL', roundAtivo.id, etapaAtiva?.id, temporada?.id) : null;
-  const melhorNoiteComp = rankingNoite?.list?.[0];
-  const melhorNoiteAni = rankingNoiteAnimal?.list?.[0];
+  let roundAtivo: any = null;
+  let rankingNoite: any = null;
+  let rankingNoiteAnimal: any = null;
+  try {
+    if (etapaAtiva) {
+      roundAtivo = await prisma.round.findFirst({ where: { etapaId: etapaAtiva.id, aberto: true } });
+      if (roundAtivo) {
+        rankingNoite = await getCompetidorRanking('NOITE_COMPETIDOR', roundAtivo.id, etapaAtiva.id, temporada?.id || 0);
+        rankingNoiteAnimal = await getAnimalRanking('NOITE_ANIMAL', roundAtivo.id, etapaAtiva.id, temporada?.id || 0);
+      }
+    }
+  } catch (e) { console.error('[Home] noite ranking error:', e); }
+
+  const melhorNoiteComp = rankingNoite?.list?.[0] || null;
+  const melhorNoiteAni = rankingNoiteAnimal?.list?.[0] || null;
 
   const highlightItemsMap: Record<string, any> = {
     'LIDER_ETAPA': { 
@@ -121,7 +136,7 @@ export default async function Home() {
     <div className="landing-body" style={{ fontFamily: config?.fontFamily || 'Inter' }}>
       <NavbarPublic />
 
-      {layout.filter(block => block.visible).map((block) => {
+      {layout.filter(block => block.visible !== false).map((block) => {
         const bStyle = block.style || {};
         const elements = block.elements || [];
 
