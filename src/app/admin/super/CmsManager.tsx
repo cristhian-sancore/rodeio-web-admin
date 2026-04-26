@@ -28,7 +28,14 @@ export default function CmsManager({ config }: CmsManagerProps) {
     if (config) {
       Object.keys(config).forEach(key => {
         if (!formData.has(key)) {
-          formData.append(key, String(config[key]));
+          const val = config[key];
+          if (val !== null && val !== undefined) {
+             if (typeof val === 'object') {
+                formData.append(key, JSON.stringify(val));
+             } else {
+                formData.append(key, String(val));
+             }
+          }
         }
       });
     }

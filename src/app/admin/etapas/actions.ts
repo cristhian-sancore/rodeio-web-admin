@@ -491,6 +491,17 @@ export async function saveConfig(formData: FormData) {
   console.log('titulo:', titulo);
 
   try {
+  const safeParse = (val: any, fallback: any) => {
+    if (!val || typeof val !== 'string' || val === '[object Object]') return fallback;
+    try {
+      return JSON.parse(val);
+    } catch (e) {
+      console.error('SafeParse Error:', e);
+      return fallback;
+    }
+  };
+
+  try {
     await prisma.configuracao.upsert({
       where: { id: 1 },
       update: { 
@@ -508,8 +519,8 @@ export async function saveConfig(formData: FormData) {
         homeHeroTitle: formData.get('homeHeroTitle') as string,
         homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
         homeHeroImage: formData.get('homeHeroImage') as string,
-        homeLayout: formData.get('homeLayout') ? JSON.parse(formData.get('homeLayout') as string) : undefined,
-        siteLayouts: formData.get('siteLayouts') ? JSON.parse(formData.get('siteLayouts') as string) : undefined,
+        homeLayout: safeParse(formData.get('homeLayout'), undefined),
+        siteLayouts: safeParse(formData.get('siteLayouts'), undefined),
         primaryColor: formData.get('primaryColor') as string,
         secondaryColor: formData.get('secondaryColor') as string,
         fontFamily: formData.get('fontFamily') as string,
@@ -531,8 +542,8 @@ export async function saveConfig(formData: FormData) {
         homeHeroTitle: formData.get('homeHeroTitle') as string,
         homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
         homeHeroImage: formData.get('homeHeroImage') as string,
-        homeLayout: formData.get('homeLayout') ? JSON.parse(formData.get('homeLayout') as string) : [],
-        siteLayouts: formData.get('siteLayouts') ? JSON.parse(formData.get('siteLayouts') as string) : {},
+        homeLayout: safeParse(formData.get('homeLayout'), []),
+        siteLayouts: safeParse(formData.get('siteLayouts'), {}),
         primaryColor: formData.get('primaryColor') as string,
         secondaryColor: formData.get('secondaryColor') as string,
         fontFamily: formData.get('fontFamily') as string,
