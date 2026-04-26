@@ -15,7 +15,7 @@ import { removeBackgroundAction } from './actions';
 const ELEMENT_TYPES = [
   { type: 'TEXT', label: 'Texto', icon: Type, defaultContent: 'CLIQUE PARA EDITAR' },
   { type: 'BUTTON', label: 'Botão', icon: MousePointer2, defaultContent: 'SAIBA MAIS' },
-  { type: 'VIDEO', label: 'Vídeo / Player', icon: Play, defaultContent: 'dQw4w9WgXcQ' },
+  { type: 'VIDEO', label: 'Vídeo / Player', icon: Play, defaultContent: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
   { type: 'SHAPE_RECT', label: 'Retângulo', icon: Square, defaultContent: '' },
   { type: 'SHAPE_CIRCLE', label: 'Círculo', icon: Circle, defaultContent: '' },
   { type: 'IMAGE', label: 'Imagem/Logo', icon: ImageIcon, defaultContent: '/hero-rodeo.png' },
@@ -221,13 +221,32 @@ export default function EliteVisualBuilder() {
               {element.content}
             </button>
           );
-        case 'VIDEO':
+        case 'VIDEO': {
+          const isYouTube = element.content?.includes('youtube.com') || element.content?.includes('youtu.be');
+          const isDrive = element.content?.includes('drive.google.com');
+          const isDirectMp4 = element.content?.endsWith('.mp4');
+
+          let srcUrl = element.content;
+          if (isYouTube) {
+            const videoId = element.content.includes('v=') ? element.content.split('v=')[1].split('&')[0] : element.content.split('/').pop();
+            srcUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}`;
+          } else if (isDrive) {
+            srcUrl = element.content.replace('/view', '/preview').split('?')[0];
+            if (!srcUrl.endsWith('/preview')) srcUrl += '/preview';
+          }
+
           return (
-            <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: element.style?.borderRadius }}>
-              <Play size={48} color={element.style?.color || '#fff'} opacity={0.5} />
-              <span style={{ position: 'absolute', bottom: 10, fontSize: '10px', color: '#fff' }}>VÍDEO: {element.content}</span>
+            <div style={{ width: '100%', height: '100%', background: '#111', borderRadius: element.style?.borderRadius, overflow: 'hidden', position: 'relative' }}>
+              {isDirectMp4 ? (
+                <video src={srcUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+              ) : (
+                <iframe width="100%" height="100%" src={srcUrl} title="Video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ pointerEvents: 'none' }}></iframe>
+              )}
+              {/* O overlay transparente evita que cliques no iframe interfiram com o arrastar e soltar do Builder */}
+              <div style={{ position: 'absolute', inset: 0, zIndex: 10 }}></div>
             </div>
           );
+        }
         case 'SHAPE_RECT':
         case 'SHAPE_CIRCLE':
           return <div style={{ width: '100%', height: '100%', background: element.style?.background, borderRadius: element.style?.borderRadius }} />;
@@ -404,7 +423,7 @@ export default function EliteVisualBuilder() {
                   </div>
                 )}
                 {selectedElement.type === 'VIDEO' && (
-                  <div><label style={styleLabel}>ID DO VÍDEO (YOUTUBE)</label><input value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput} placeholder="Ex: dQw4w9WgXcQ" /></div>
+                  <div><label style={styleLabel}>URL DO VÍDEO (Drive, MP4 ou YouTube)</label><input value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput} placeholder="https://drive.google.com/..." /></div>
                 )}
                 {selectedElement.type === 'BUTTON' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>

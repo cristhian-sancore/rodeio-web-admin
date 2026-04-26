@@ -165,19 +165,30 @@ export default async function Home() {
                         {el.content}
                       </Link>
                     );
-                  case 'VIDEO':
+                  case 'VIDEO': {
+                    const isYouTube = el.content?.includes('youtube.com') || el.content?.includes('youtu.be');
+                    const isDrive = el.content?.includes('drive.google.com');
+                    const isDirectMp4 = el.content?.endsWith('.mp4');
+
+                    let srcUrl = el.content;
+                    if (isYouTube) {
+                      const videoId = el.content.includes('v=') ? el.content.split('v=')[1].split('&')[0] : el.content.split('/').pop();
+                      srcUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}`;
+                    } else if (isDrive) {
+                      srcUrl = el.content.replace('/view', '/preview').split('?')[0];
+                      if (!srcUrl.endsWith('/preview')) srcUrl += '/preview';
+                    }
+
                     return (
                       <div key={el.id} style={{ ...elStyle, background: '#000', borderRadius: el.style?.borderRadius, overflow: 'hidden' }}>
-                        <iframe 
-                          width="100%" height="100%" 
-                          src={`https://www.youtube.com/embed/${el.content}?autoplay=1&mute=1&loop=1&playlist=${el.content}`} 
-                          title="Video player" frameBorder="0" 
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                          allowFullScreen
-                          style={{ pointerEvents: 'none' }}
-                        ></iframe>
+                        {isDirectMp4 ? (
+                          <video src={srcUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                        ) : (
+                          <iframe width="100%" height="100%" src={srcUrl} title="Video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ pointerEvents: 'none' }}></iframe>
+                        )}
                       </div>
                     );
+                  }
                   case 'SHAPE_RECT':
                   case 'SHAPE_CIRCLE':
                     return (
