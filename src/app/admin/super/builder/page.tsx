@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { 
@@ -269,10 +269,13 @@ export default function EliteVisualBuilder() {
       <div onMouseDown={onMouseDown} style={elementStyle}>
         {renderContent()}
         {isSelected && (
-          <div style={{ position: 'absolute', top: -35, left: 0, background: '#111', padding: '6px 12px', borderRadius: '8px', display: 'flex', gap: '10px', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', zIndex: 1000 }}>
-             <button onClick={(e) => { e.stopPropagation(); updateElement(blockId, element.id, { zIndex: (element.zIndex || 1) + 1 }); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><Layers size={14}/></button>
-             <button onClick={(e) => { e.stopPropagation(); const el = { ...element, id: Math.random().toString(36).substr(2,9), x: element.x+20, y: element.y+20 }; setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:[...b.elements,el]}:b)); addToHistory(blocks); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><Copy size={14}/></button>
-             <button onClick={(e) => { e.stopPropagation(); setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:b.elements.filter((el:any)=>el.id!==element.id)}:b)); addToHistory(blocks); setSelectedElementId(null); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={14}/></button>
+          <div style={{ position: 'absolute', top: -42, left: 0, background: '#1a1a1a', padding: '6px 10px', borderRadius: '10px', display: 'flex', gap: '4px', boxShadow: '0 5px 20px rgba(0,0,0,0.7)', zIndex: 9999, border: '1px solid #333', whiteSpace: 'nowrap' }}>
+            <button title="Subir camada" onClick={(e) => { e.stopPropagation(); updateElement(blockId, element.id, { zIndex: (element.zIndex || 1) + 1 }); }} style={{ background: 'none', border: 'none', color: config?.primaryColor || '#d4af37', cursor: 'pointer', padding: '4px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '3px' }}>▲ FRENTE</button>
+            <button title="Descer camada" onClick={(e) => { e.stopPropagation(); updateElement(blockId, element.id, { zIndex: Math.max(1, (element.zIndex || 1) - 1) }); }} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: '4px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '3px' }}>▼ ATRÁS</button>
+            <div style={{ width: '1px', background: '#333', margin: '0 4px' }} />
+            <button title="Duplicar" onClick={(e) => { e.stopPropagation(); const el = { ...element, id: Math.random().toString(36).substr(2,9), x: element.x+20, y: element.y+20 }; setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:[...b.elements,el]}:b)); addToHistory(blocks); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px' }}><Copy size={14}/></button>
+            <button title="Excluir" onClick={(e) => { e.stopPropagation(); setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:b.elements.filter((el:any)=>el.id!==element.id)}:b)); addToHistory(blocks); setSelectedElementId(null); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px' }}><Trash2 size={14}/></button>
+            <div style={{ fontSize: '0.6rem', color: '#444', padding: '4px', alignSelf: 'center' }}>Z:{element.zIndex || 1}</div>
           </div>
         )}
       </div>
@@ -504,7 +507,23 @@ export default function EliteVisualBuilder() {
                   <label style={styleLabel}>FUNDO DA SEÇÃO</label>
                   <input type="color" value={selectedBlock.style?.background || '#050505'} onChange={e => { const nb = blocks.map(b=>b.id===selectedBlock.id?{...b,style:{...b.style,background:e.target.value}}:b); setBlocks(nb); addToHistory(nb); }} style={{ width: '100%', height: '60px', background: 'none', border: 'none', cursor: 'pointer' }} />
                 </div>
-                <p style={{ fontSize: '0.7rem', color: '#444' }}>Dica: Se a seção não tiver elementos visuais, este título e subtítulo serão usados no layout padrão responsivo.</p>
+                                {(selectedBlock.elements?.length || 0) > 0 && (
+                  <div>
+                    <label style={styleLabel}>CAMADAS ({selectedBlock.elements.length})</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {[...selectedBlock.elements].sort((a: any, b: any) => (b.zIndex || 1) - (a.zIndex || 1)).map((el: any) => (
+                        <div key={el.id} onClick={() => { setSelectedElementId(el.id); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '8px', background: selectedElementId === el.id ? `${config?.primaryColor || '#d4af37'}22` : '#111', border: `1px solid ${selectedElementId === el.id ? (config?.primaryColor || '#d4af37') : '#222'}`, padding: '9px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s' }}>
+                          <span style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, minWidth: '22px' }}>Z{el.zIndex || 1}</span>
+                          <span style={{ fontSize: '0.72rem', color: '#fff', fontWeight: 700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{el.type}{el.content ? ` — ${String(el.content).substring(0,16)}` : ''}</span>
+                          <button onClick={(e) => { e.stopPropagation(); updateElement(selectedBlock.id, el.id, { zIndex: (el.zIndex || 1) + 1 }); }} style={{ background: 'none', border: 'none', color: config?.primaryColor || '#d4af37', cursor: 'pointer', fontWeight: 900, fontSize: '0.8rem', padding: '2px 5px' }}>&#x25B2;</button>
+                          <button onClick={(e) => { e.stopPropagation(); updateElement(selectedBlock.id, el.id, { zIndex: Math.max(1, (el.zIndex || 1) - 1) }); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontWeight: 900, fontSize: '0.8rem', padding: '2px 5px' }}>&#x25BC;</button>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ fontSize: '0.65rem', color: '#444', marginTop: '8px' }}>Clique para selecionar qualquer elemento, mesmo que esteja atras de outro.</p>
+                  </div>
+                )}<p style={{ fontSize: '0.7rem', color: '#444' }}>Dica: Se a seção não tiver elementos visuais, este título e subtítulo serão usados no layout padrão responsivo.</p>
              </div>
            ) : (
              <div style={{ textAlign: 'center', color: '#1a1a1a', marginTop: '10rem' }}>
@@ -531,3 +550,4 @@ const iconBtnStyle = (active: boolean) => ({
 
 const styleLabel = { fontSize: '0.65rem', color: '#444', fontWeight: '950', display: 'block', marginBottom: '10px', textTransform: 'uppercase' as const, letterSpacing: '1.5px' };
 const styleInput = { width: '100%', background: '#111', border: '1px solid #222', color: '#fff', padding: '15px', borderRadius: '12px', fontSize: '0.9rem', outline: 'none', transition: 'border 0.2s' };
+
