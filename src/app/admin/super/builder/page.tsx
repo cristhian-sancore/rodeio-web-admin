@@ -16,6 +16,7 @@ const ELEMENT_TYPES = [
   { type: 'TEXT', label: 'Texto', icon: Type, defaultContent: 'CLIQUE PARA EDITAR' },
   { type: 'BUTTON', label: 'Botão', icon: MousePointer2, defaultContent: 'SAIBA MAIS' },
   { type: 'VIDEO', label: 'Vídeo / Player', icon: Play, defaultContent: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+  { type: 'DYNAMIC_CARD', label: 'Destaque (Cárd)', icon: Trophy, defaultContent: 'LIDER_ETAPA' },
   { type: 'SHAPE_RECT', label: 'Retângulo', icon: Square, defaultContent: '' },
   { type: 'SHAPE_CIRCLE', label: 'Círculo', icon: Circle, defaultContent: '' },
   { type: 'IMAGE', label: 'Imagem/Logo', icon: ImageIcon, defaultContent: '/hero-rodeo.png' },
@@ -220,6 +221,14 @@ export default function EliteVisualBuilder() {
             }}>
               {element.content}
             </button>
+          );
+        case 'DYNAMIC_CARD':
+          return (
+            <div style={{ width: '100%', height: '100%', background: '#111', borderRadius: '15px', border: '1px solid #333', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', color: '#fff' }}>
+               <Trophy size={32} color={config?.primaryColor || '#d4af37'} style={{ marginBottom: '10px' }} />
+               <div style={{ fontSize: '0.8rem', fontWeight: 900, color: config?.primaryColor || '#d4af37' }}>CARTÃO DINÂMICO</div>
+               <div style={{ fontSize: '0.65rem', opacity: 0.5, marginTop: '5px' }}>{element.content}</div>
+            </div>
           );
         case 'VIDEO': {
           const isYouTube = element.content?.includes('youtube.com') || element.content?.includes('youtu.be');
@@ -432,10 +441,29 @@ export default function EliteVisualBuilder() {
                     <div><label style={styleLabel}>TAMANHO DA FONTE ({selectedElement.style?.fontSize || 16}px)</label><input type="range" min="10" max="100" value={selectedElement.style?.fontSize || 16} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, fontSize: parseInt(e.target.value) } })} style={{ width: '100%' }} /></div>
                   </div>
                 )}
-                {selectedElement.type !== 'TEXT' && (
+                {selectedElement.type === 'DYNAMIC_CARD' && (
+                  <div>
+                    <label style={styleLabel}>DADO DO DESTAQUE</label>
+                    <select value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput}>
+                      <option value="LIDER_ETAPA">Líder da Etapa (Competidor)</option>
+                      <option value="ANIMAL_ETAPA">Melhor Animal (Etapa)</option>
+                      <option value="MELHOR_NOITE_COMP">Melhor da Noite (Competidor)</option>
+                      <option value="MELHOR_NOITE_ANIMAL">Melhor da Noite (Animal)</option>
+                      <option value="CAMPEAO_TEMP">Líder do Campeonato (Competidor)</option>
+                      <option value="ANIMAL_TEMP">Líder do Campeonato (Animal)</option>
+                    </select>
+                  </div>
+                )}
+                {selectedElement.type !== 'TEXT' && selectedElement.type !== 'DYNAMIC_CARD' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div><label style={styleLabel}>LARGURA ({selectedElement.w}px)</label><input type="range" min="10" max="1200" value={selectedElement.w || 100} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { w: parseInt(e.target.value) })} style={{ width: '100%' }} /></div>
                     <div><label style={styleLabel}>ALTURA ({selectedElement.h}px)</label><input type="range" min="10" max="1200" value={selectedElement.h || 100} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { h: parseInt(e.target.value) })} style={{ width: '100%' }} /></div>
+                  </div>
+                )}
+                {selectedElement.type === 'DYNAMIC_CARD' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div><label style={styleLabel}>LARGURA ({selectedElement.w}px)</label><input type="range" min="150" max="800" value={selectedElement.w || 300} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { w: parseInt(e.target.value) })} style={{ width: '100%' }} /></div>
+                    <div><label style={styleLabel}>ALTURA ({selectedElement.h}px)</label><input type="range" min="150" max="800" value={selectedElement.h || 350} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { h: parseInt(e.target.value) })} style={{ width: '100%' }} /></div>
                   </div>
                 )}
 

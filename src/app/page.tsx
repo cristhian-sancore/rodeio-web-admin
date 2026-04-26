@@ -58,44 +58,52 @@ export default async function Home() {
     return entry ? entry[1] : null;
   };
 
-  const highlightItems = [
-    { 
-      label: 'LÍDER DA ETAPA', 
-      title: highlights?.etapaCompetidor?.nome || 'Nenhum competidor', 
-      subtitle: highlights?.etapaNome,
-      nota: highlights?.etapaCompetidor?.nota || '0.00',
-      pos: '1º LUGAR',
+  const roundAtivo = etapaAtiva ? await prisma.round.findFirst({ where: { etapaId: etapaAtiva.id, aberto: true } }) : null;
+  const rankingNoite = roundAtivo ? await getCompetidorRanking('NOITE_COMPETIDOR', roundAtivo.id, etapaAtiva?.id, temporada?.id) : null;
+  const rankingNoiteAnimal = roundAtivo ? await getAnimalRanking('NOITE_ANIMAL', roundAtivo.id, etapaAtiva?.id, temporada?.id) : null;
+  const melhorNoiteComp = rankingNoite?.list?.[0];
+  const melhorNoiteAni = rankingNoiteAnimal?.list?.[0];
+
+  const highlightItemsMap: Record<string, any> = {
+    'LIDER_ETAPA': { 
+      label: 'LÍDER DA ETAPA', title: highlights?.etapaCompetidor?.nome || 'Nenhum competidor', 
+      subtitle: highlights?.etapaNome, nota: highlights?.etapaCompetidor?.nota || '0.00', pos: '1º LUGAR',
       video: highlights?.etapaCompetidor ? findVideo(highlights.etapaCompetidor.nome, '') : null, 
       link: highlights?.etapaCompetidor ? `/competidores/${highlights.etapaCompetidor.competidorId}` : '#' 
     },
-    { 
-      label: 'MELHOR ANIMAL (ETAPA)', 
-      title: highlights?.etapaAnimal?.nome || 'Aguardando 2ª Saída', 
-      subtitle: highlights?.etapaAnimal?.info || 'Média min. 2 pulos',
-      nota: highlights?.etapaAnimal?.nota || '0.00',
-      pos: 'MELHOR MÉDIA',
+    'ANIMAL_ETAPA': { 
+      label: 'MELHOR ANIMAL (ETAPA)', title: highlights?.etapaAnimal?.nome || 'Aguardando', 
+      subtitle: highlights?.etapaAnimal?.info || 'Média min. 2 pulos', nota: highlights?.etapaAnimal?.nota || '0.00', pos: 'MELHOR MÉDIA',
       video: highlights?.etapaAnimal ? findVideo('', highlights.etapaAnimal.nome) : null,
       link: highlights?.etapaAnimal ? `/animais/${highlights.etapaAnimal.animalId}` : '#'
     },
-    { 
-      label: 'LÍDER DO CAMPEONATO', 
-      title: highlights?.campeonatoCompetidor?.nome || 'Nenhum competidor', 
-      subtitle: highlights?.campeonatoNome,
-      nota: highlights?.campeonatoCompetidor?.nota || '0.00',
-      pos: '1º LUGAR GERAL',
+    'CAMPEAO_TEMP': { 
+      label: 'LÍDER DO CAMPEONATO', title: highlights?.campeonatoCompetidor?.nome || 'Nenhum competidor', 
+      subtitle: highlights?.campeonatoNome, nota: highlights?.campeonatoCompetidor?.nota || '0.00', pos: '1º LUGAR GERAL',
       video: highlights?.campeonatoCompetidor ? findVideo(highlights.campeonatoCompetidor.nome, '') : null,
       link: highlights?.campeonatoCompetidor ? `/competidores/${highlights.campeonatoCompetidor.competidorId}` : '#'
     },
-    { 
-      label: 'MELHOR ANIMAL (TEMPORADA)', 
-      title: highlights?.campeonatoAnimal?.nome || 'Aguardando 2ª Saída', 
-      subtitle: highlights?.campeonatoAnimal?.info || 'Média min. 2 pulos',
-      nota: highlights?.campeonatoAnimal?.nota || '0.00',
-      pos: 'RANKING GERAL',
+    'ANIMAL_TEMP': { 
+      label: 'MELHOR ANIMAL (TEMPORADA)', title: highlights?.campeonatoAnimal?.nome || 'Aguardando', 
+      subtitle: highlights?.campeonatoAnimal?.info || 'Média min. 2 pulos', nota: highlights?.campeonatoAnimal?.nota || '0.00', pos: 'RANKING GERAL',
       video: highlights?.campeonatoAnimal ? findVideo('', highlights.campeonatoAnimal.nome) : null,
       link: highlights?.campeonatoAnimal ? `/animais/${highlights.campeonatoAnimal.animalId}` : '#'
+    },
+    'MELHOR_NOITE_COMP': {
+      label: 'MELHOR DA NOITE', title: melhorNoiteComp?.nome || 'Nenhum competidor', 
+      subtitle: roundAtivo?.nome || 'Round Atual', nota: melhorNoiteComp?.nota || '0.00', pos: '1º LUGAR (NOITE)',
+      video: melhorNoiteComp ? findVideo(melhorNoiteComp.nome, '') : null,
+      link: melhorNoiteComp ? `/competidores/${melhorNoiteComp.competidorId}` : '#'
+    },
+    'MELHOR_NOITE_ANIMAL': {
+      label: 'MELHOR TOURO DA NOITE', title: melhorNoiteAni?.nome || 'Aguardando', 
+      subtitle: roundAtivo?.nome || 'Round Atual', nota: melhorNoiteAni?.nota || '0.00', pos: 'MELHOR MÉDIA (NOITE)',
+      video: melhorNoiteAni ? findVideo('', melhorNoiteAni.nome) : null,
+      link: melhorNoiteAni ? `/animais/${melhorNoiteAni.animalId}` : '#'
     }
-  ];
+  };
+
+  const highlightItems = [highlightItemsMap['LIDER_ETAPA'], highlightItemsMap['ANIMAL_ETAPA'], highlightItemsMap['CAMPEAO_TEMP'], highlightItemsMap['ANIMAL_TEMP']];
 
   const siteLayouts = config?.siteLayouts as any;
   const homeLayoutFromSite = (siteLayouts && Array.isArray(siteLayouts.HOME)) ? siteLayouts.HOME : null;
@@ -165,6 +173,32 @@ export default async function Home() {
                         {el.content}
                       </Link>
                     );
+                  case 'DYNAMIC_CARD': {
+                    const cardData = highlightItemsMap[el.content || 'LIDER_ETAPA'];
+                    if (!cardData) return null;
+                    return (
+                      <div key={el.id} style={{ ...elStyle, display: 'flex', flexDirection: 'column' }}>
+                        <Link href={cardData.link} style={{ display: 'block', textDecoration: 'none', background: '#111', borderRadius: '15px', overflow: 'hidden', height: '100%', border: '1px solid #222', transition: 'all 0.3s' }}>
+                          <div style={{ height: '70%', background: '#050505', position: 'relative' }}>
+                             {cardData.video ? (
+                                <video src={`/api/replays/local/${cardData.video.id}.mp4`} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
+                             ) : (
+                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1 }}><Play size={48} color="#fff" /></div>
+                             )}
+                             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to top, #111, transparent)' }} />
+                          </div>
+                          <div style={{ padding: '20px', height: '30%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', zIndex: 10, position: 'relative', marginTop: '-40px' }}>
+                            <div style={{ display: 'inline-block', background: primaryColor, color: '#000', padding: '5px 15px', borderRadius: '20px', fontSize: '0.65rem', fontWeight: 900, marginBottom: '10px', alignSelf: 'flex-start' }}>{cardData.label}</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#fff', textTransform: 'uppercase', lineHeight: 1.1 }}>{cardData.title}</div>
+                            <div style={{ color: primaryColor, fontSize: '0.85rem', fontWeight: 800, marginTop: '8px', display: 'flex', gap: '10px' }}>
+                               <span>{cardData.nota}</span>
+                               <span style={{ color: '#666' }}>{cardData.pos}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    );
+                  }
                   case 'VIDEO': {
                     const isYouTube = el.content?.includes('youtube.com') || el.content?.includes('youtu.be');
                     const isDrive = el.content?.includes('drive.google.com');
