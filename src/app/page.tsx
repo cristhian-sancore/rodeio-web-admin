@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import Link from 'next/link'
-import { Trophy, TrendingUp, Play, Star, Award, Zap, ChevronRight, Users, PawPrint, ImageIcon, Settings } from 'lucide-react'
+import { Trophy, TrendingUp, Play, Star, Award, Zap, ChevronRight, Users, PawPrint, ImageIcon, Layout } from 'lucide-react'
 import './landing.css'
 import { getTopHighlights, getCompetidorRanking, getChampionshipRanking } from '@/lib/ranking'
 import { getReplayFileMap } from '@/lib/gdrive'
@@ -306,7 +306,7 @@ export default async function Home() {
           onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
           onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <Settings size={20} /> EDITAR DESIGN DO SITE
+          <Layout size={20} /> EDITAR DESIGN DO SITE
         </Link>
       )}
     </div>
