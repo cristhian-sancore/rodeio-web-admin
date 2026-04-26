@@ -522,7 +522,7 @@ export async function saveConfig(formData: FormData) {
         siteLayouts: safeParse(formData.get('siteLayouts'), undefined),
         primaryColor: formData.get('primaryColor') as string,
         secondaryColor: formData.get('secondaryColor') as string,
-        fontFamily: formData.get('fontFamily') as string,
+        fontFamily: (() => { const f = formData.get('fontFamily') as string; return (f && f !== 'null') ? f : 'Inter'; })(),
         logoUrl: formData.get('logoUrl') as string
       },
       create: { 
@@ -545,7 +545,7 @@ export async function saveConfig(formData: FormData) {
         siteLayouts: safeParse(formData.get('siteLayouts'), {}),
         primaryColor: formData.get('primaryColor') as string,
         secondaryColor: formData.get('secondaryColor') as string,
-        fontFamily: formData.get('fontFamily') as string,
+        fontFamily: (() => { const f = formData.get('fontFamily') as string; return (f && f !== 'null') ? f : 'Inter'; })(),
         logoUrl: formData.get('logoUrl') as string
       }
     });

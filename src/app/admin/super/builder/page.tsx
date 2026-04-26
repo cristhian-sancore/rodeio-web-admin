@@ -85,7 +85,7 @@ export default function EliteVisualBuilder() {
     formData.append('siteLayouts', JSON.stringify(updatedLayouts));
     formData.append('primaryColor', config.primaryColor);
     formData.append('secondaryColor', config.secondaryColor);
-    formData.append('fontFamily', config.fontFamily);
+    formData.append('fontFamily', config.fontFamily || 'Inter');
     formData.append('titulo', config.titulo);
     formData.append('removeBgApiKey', config.removeBgApiKey || '');
     

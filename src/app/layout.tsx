@@ -28,7 +28,8 @@ export default async function RootLayout({
   }
   const primaryColor = '#d4af37';
   const secondaryColor = '#111111';
-  const fontFamily = (typeof config?.fontFamily === 'string' && config.fontFamily.trim()) ? config.fontFamily.trim() : 'Inter';
+  const rawFont = config?.fontFamily;
+  const fontFamily = (typeof rawFont === 'string' && rawFont.trim() && rawFont.trim() !== 'null') ? rawFont.trim() : 'Inter';
 
   return (
     <html lang="pt-br" className={`${geistSans.variable} ${geistMono.variable}`}>
