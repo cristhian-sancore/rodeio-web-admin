@@ -239,19 +239,80 @@ export default async function Home() {
 
           case 'RANKINGS':
             return (
-              <section key={block.id} className="highlights-section" style={{ ...sectionStyle, background: bStyle.background || 'rgba(255,255,255,0.02)', borderRadius: `${bStyle.borderRadius || 60}px`, padding: '60px 40px' }}>
-                <div className="section-header" style={{ textAlign: bStyle.align || 'left', marginBottom: '40px', display: 'flex', flexDirection: bStyle.align === 'center' ? 'column' : 'row', justifyContent: 'space-between', alignItems: bStyle.align === 'center' ? 'center' : 'flex-end' }}>
-                  <div><h2 style={{ fontSize: '2.5rem' }}>{block.title}</h2><p style={{ color: bStyle.accent || primaryColor }}>{block.subtitle}</p></div>
-                  {!((config as any)?.rankingCongelado) && <Link href="/ranking" className="btn-secondary">Ver Tudo <ChevronRight size={16} /></Link>}
-                </div>
-                <div className="highlights-grid">
-                  <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a', borderRadius: `${(bStyle.borderRadius || 12) / 2}px` }}>
-                      <div style={{ borderBottom: '1px solid #222', marginBottom: '15px', display: 'flex', gap: '10px' }}><Zap size={20} color={primaryColor} /><h3 style={{ textTransform: 'uppercase' }}>Etapa</h3></div>
-                      <table style={{ width: '100%' }}><tbody>{rankingEtapa?.list?.slice(0, 5).map((r: any) => (<tr key={r.pos}><td style={{ color: r.pos <= 3 ? primaryColor : '#666' }}>#{r.pos}</td><td>{r.nome}</td><td style={{ textAlign: 'right', color: primaryColor }}>{r.nota}</td></tr>))}</tbody></table>
+              <section key={block.id} className="highlights-section" style={{ ...sectionStyle, background: bStyle.background || 'rgba(255,255,255,0.01)', borderRadius: `${bStyle.borderRadius || 60}px`, padding: '80px 40px' }}>
+                <div className="section-header" style={{ textAlign: bStyle.align || 'left', marginBottom: '60px', display: 'flex', flexDirection: bStyle.align === 'center' ? 'column' : 'row', justifyContent: 'space-between', alignItems: bStyle.align === 'center' ? 'center' : 'flex-end' }}>
+                  <div>
+                    <h2 style={{ fontSize: '3.5rem', fontWeight: 950, letterSpacing: '-2px', lineHeight: 0.9, marginBottom: '10px' }}>{block.title}</h2>
+                    <p style={{ color: bStyle.accent || primaryColor, fontSize: '1.2rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '3px' }}>{block.subtitle}</p>
                   </div>
-                  <div className="premium-card" style={{ padding: '20px', background: '#0a0a0a', borderRadius: `${(bStyle.borderRadius || 12) / 2}px` }}>
-                      <div style={{ borderBottom: '1px solid #222', marginBottom: '15px', display: 'flex', gap: '10px' }}><Trophy size={20} color={primaryColor} /><h3 style={{ textTransform: 'uppercase' }}>Campeonato</h3></div>
-                      <table style={{ width: '100%' }}><tbody>{rankingChamp?.list?.slice(0, 5).map((r: any) => (<tr key={r.pos}><td style={{ color: r.pos <= 3 ? primaryColor : '#666' }}>#{r.pos}</td><td>{r.nome}</td><td style={{ textAlign: 'right', color: primaryColor }}>{r.nota}</td></tr>))}</tbody></table>
+                  {!((config as any)?.rankingCongelado) && (
+                    <Link href="/ranking" className="btn-secondary" style={{ padding: '15px 35px', borderRadius: '50px', border: `1px solid ${primaryColor}44` }}>
+                      VER CLASSIFICAÇÃO COMPLETA <ChevronRight size={18} />
+                    </Link>
+                  )}
+                </div>
+
+                <div className="highlights-grid" style={{ gap: '30px' }}>
+                  {/* CARD ETAPA */}
+                  <div className="premium-card" style={{ padding: '40px', background: 'linear-gradient(180deg, #0d0d0d 0%, #050505 100%)', borderRadius: '40px', border: '1px solid #1a1a1a', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                      <div style={{ borderBottom: '1px solid #222', paddingBottom: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ background: `${primaryColor}22`, padding: '10px', borderRadius: '12px' }}><Zap size={24} color={primaryColor} /></div>
+                        <h3 style={{ textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>Líderes da Etapa</h3>
+                      </div>
+                      <table style={{ width: '100%', borderSpacing: '0 15px', borderCollapse: 'separate' }}>
+                        <tbody>
+                          {rankingEtapa?.list?.slice(0, 5).map((r: any) => (
+                            <tr key={r.pos} style={{ background: r.pos === 1 ? `${primaryColor}08` : 'transparent', borderRadius: '12px' }}>
+                              <td style={{ padding: '12px 15px', borderRadius: '12px 0 0 12px', width: '50px' }}>
+                                <div style={{ 
+                                  width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  background: r.pos === 1 ? primaryColor : (r.pos <= 3 ? `${primaryColor}33` : '#111'),
+                                  color: r.pos === 1 ? '#000' : (r.pos <= 3 ? primaryColor : '#444'),
+                                  fontWeight: 900, fontSize: '0.8rem'
+                                }}>{r.pos}</div>
+                              </td>
+                              <td style={{ padding: '12px 0', fontWeight: r.pos <= 3 ? 800 : 400, fontSize: r.pos === 1 ? '1.2rem' : '1rem' }}>
+                                {r.nome}
+                                {r.pos === 1 && <span style={{ marginLeft: '10px', fontSize: '0.7rem', color: primaryColor }}>🔥 LÍDER</span>}
+                              </td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right', borderRadius: '0 12px 12px 0' }}>
+                                <span style={{ color: r.pos === 1 ? primaryColor : '#fff', fontWeight: 900, fontSize: r.pos === 1 ? '1.4rem' : '1.1rem' }}>{r.nota}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                  </div>
+
+                  {/* CARD CAMPEONATO */}
+                  <div className="premium-card" style={{ padding: '40px', background: 'linear-gradient(180deg, #0d0d0d 0%, #050505 100%)', borderRadius: '40px', border: '1px solid #1a1a1a', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                      <div style={{ borderBottom: '1px solid #222', paddingBottom: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{ background: `${primaryColor}22`, padding: '10px', borderRadius: '12px' }}><Trophy size={24} color={primaryColor} /></div>
+                        <h3 style={{ textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>Geral Campeonato</h3>
+                      </div>
+                      <table style={{ width: '100%', borderSpacing: '0 15px', borderCollapse: 'separate' }}>
+                        <tbody>
+                          {rankingChamp?.list?.slice(0, 5).map((r: any) => (
+                            <tr key={r.pos} style={{ background: r.pos === 1 ? `${primaryColor}08` : 'transparent', borderRadius: '12px' }}>
+                              <td style={{ padding: '12px 15px', borderRadius: '12px 0 0 12px', width: '50px' }}>
+                                <div style={{ 
+                                  width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  background: r.pos === 1 ? primaryColor : (r.pos <= 3 ? `${primaryColor}33` : '#111'),
+                                  color: r.pos === 1 ? '#000' : (r.pos <= 3 ? primaryColor : '#444'),
+                                  fontWeight: 900, fontSize: '0.8rem'
+                                }}>{r.pos}</div>
+                              </td>
+                              <td style={{ padding: '12px 0', fontWeight: r.pos <= 3 ? 800 : 400, fontSize: r.pos === 1 ? '1.2rem' : '1rem' }}>
+                                {r.nome}
+                                {r.pos === 1 && <span style={{ marginLeft: '10px', fontSize: '0.7rem', color: primaryColor }}>🏆 CAMPEÃO ATUAL</span>}
+                              </td>
+                              <td style={{ padding: '12px 15px', textAlign: 'right', borderRadius: '0 12px 12px 0' }}>
+                                <span style={{ color: r.pos === 1 ? primaryColor : '#fff', fontWeight: 900, fontSize: r.pos === 1 ? '1.4rem' : '1.1rem' }}>{r.nota}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                   </div>
                 </div>
               </section>

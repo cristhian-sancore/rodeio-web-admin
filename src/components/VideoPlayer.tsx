@@ -36,6 +36,26 @@ export function VideoPlayer({ videoId, thumbnail, localFileName, className }: Vi
         alignItems: 'center',
         justifyContent: 'center'
       }}>
+        {/* Prioridade Máxima: Arquivo Local na VPS (Alta performance) */}
+        {localFileName ? (
+            <video
+                src={`/api/replays/local/${encodeURIComponent(localFileName)}`}
+                controls
+                autoPlay
+                style={{ width: '100%', height: '100%' }}
+                onLoadedData={() => setIsLoading(false)}
+            />
+        ) : (
+            /* Fallback Estável: Iframe oficial do Google Drive Preview */
+            <iframe 
+                src={`https://drive.google.com/file/d/${videoId}/preview`} 
+                style={{ width: '100%', height: '100%', border: 'none' }} 
+                allow="autoplay" 
+                allowFullScreen
+                onLoad={() => setIsLoading(false)}
+            />
+        )}
+
         {isLoading && (
           <div style={{ 
             position: 'absolute', 
@@ -43,38 +63,13 @@ export function VideoPlayer({ videoId, thumbnail, localFileName, className }: Vi
             display: 'flex', 
             flexDirection: 'column', 
             alignItems: 'center', 
-            gap: '1rem' 
+            gap: '1rem',
+            pointerEvents: 'none'
           }}>
             <Loader2 className="animate-spin" size={48} color="var(--primary)" />
+            <span style={{ fontSize: '0.8rem', color: '#666' }}>Carregando Replay...</span>
           </div>
         )}
-        
-        {/* Usamos link LOCAL como prioridade máxima, depois link direto do GDrive */}
-        <video
-          key={videoId}
-          src={localFileName ? `/api/replays/local/${encodeURIComponent(localFileName)}` : `https://drive.google.com/uc?export=download&id=${videoId}`}
-          controls
-          autoPlay
-          style={{ width: '100%', height: '100%', opacity: isLoading ? 0.3 : 1, transition: 'opacity 0.3s' }}
-          onLoadedData={() => setIsLoading(false)}
-          onError={(e) => {
-            // Se falhar o link local/direto, voltamos pro iframe (fallback final)
-            const target = e.target as HTMLVideoElement;
-            
-            // Se falhou o local e temos um videoId, tentamos o direto do GDrive antes do iframe
-            if (localFileName && target.src.includes('/api/replays/local/')) {
-                console.log('[VideoPlayer] Falha no local, tentando link direto GDrive...');
-                target.src = `https://drive.google.com/uc?export=download&id=${videoId}`;
-                return;
-            }
-
-            console.warn('[VideoPlayer] Falha geral, voltando para o Iframe...');
-            const parent = target.parentElement;
-            if (parent) {
-                parent.innerHTML = `<iframe src="https://drive.google.com/file/d/${videoId}/preview" style="width:100%;height:100%;border:none;" allow="autoplay" allowfullscreen></iframe>`;
-            }
-          }}
-        />
       </div>
     );
   }
