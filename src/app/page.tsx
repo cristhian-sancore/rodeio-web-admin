@@ -336,7 +336,7 @@ export default async function Home() {
                       </div>
                       <table style={{ width: '100%', borderSpacing: '0 15px', borderCollapse: 'separate' }}>
                         <tbody>
-                          {rankingEtapa?.list?.slice(0, 5).map((r: any) => (
+                          {(rankingEtapa?.list || []).slice(0, 5).map((r: any) => (
                             <tr key={r.pos} style={{ background: r.pos === 1 ? `${primaryColor}08` : 'transparent', borderRadius: '12px' }}>
                               <td style={{ padding: '12px 15px', borderRadius: '12px 0 0 12px', width: '50px' }}>
                                 <div style={{ 
@@ -367,7 +367,7 @@ export default async function Home() {
                       </div>
                       <table style={{ width: '100%', borderSpacing: '0 15px', borderCollapse: 'separate' }}>
                         <tbody>
-                          {rankingChamp?.list?.slice(0, 5).map((r: any) => (
+                          {(rankingChamp?.list || []).slice(0, 5).map((r: any) => (
                             <tr key={r.pos} style={{ background: r.pos === 1 ? `${primaryColor}08` : 'transparent', borderRadius: '12px' }}>
                               <td style={{ padding: '12px 15px', borderRadius: '12px 0 0 12px', width: '50px' }}>
                                 <div style={{ 
