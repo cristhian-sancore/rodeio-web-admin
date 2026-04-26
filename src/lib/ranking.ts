@@ -137,17 +137,20 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
 }
 
 export async function getTopHighlights() {
-  const { peoes, touros } = await getRanking({});
   const temporada = await prisma.temporada.findFirst({ where: { ativa: true } });
   const etapa = await prisma.etapa.findFirst({ where: { ativa: true }, orderBy: { id: 'desc' } });
+
+  // Rankings SEPARADOS: um filtrado pela etapa ativa, outro pela temporada inteira
+  const rankEtapa = etapa ? await getRanking({ etapaId: etapa.id }) : { peoes: [], touros: [] };
+  const rankCamp = temporada ? await getRanking({ temporadaId: temporada.id }) : { peoes: [], touros: [] };
 
   return {
     etapaNome: etapa?.nome || 'Etapa Atual',
     campeonatoNome: temporada?.titulo || 'Campeonato 2026',
-    etapaCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].notaAcumulada.toFixed(2), competidorId: peoes[0].id } : null,
-    etapaAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
-    campeonatoCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].pontosLiga.toFixed(2), competidorId: peoes[0].id } : null,
-    campeonatoAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
+    etapaCompetidor: rankEtapa.peoes[0] ? { nome: rankEtapa.peoes[0].nome, nota: rankEtapa.peoes[0].notaAcumulada.toFixed(2), competidorId: rankEtapa.peoes[0].id } : null,
+    etapaAnimal: rankEtapa.touros[0] ? { nome: rankEtapa.touros[0].nome, nota: rankEtapa.touros[0].media.toFixed(2), animalId: rankEtapa.touros[0].id, info: rankEtapa.touros[0].cia } : null,
+    campeonatoCompetidor: rankCamp.peoes[0] ? { nome: rankCamp.peoes[0].nome, nota: rankCamp.peoes[0].pontosLiga.toFixed(2), competidorId: rankCamp.peoes[0].id } : null,
+    campeonatoAnimal: rankCamp.touros[0] ? { nome: rankCamp.touros[0].nome, nota: rankCamp.touros[0].media.toFixed(2), animalId: rankCamp.touros[0].id, info: rankCamp.touros[0].cia } : null,
   };
 }
 

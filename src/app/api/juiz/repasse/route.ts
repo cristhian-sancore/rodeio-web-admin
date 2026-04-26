@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     if (!session) return NextResponse.json({ success: false, error: 'Não autenticado' }, { status: 401 });
 
     const user = session.user as any;
-    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'SUPER';
     const isJuiz = !!user.juizId;
 
     if (!isAdmin && !isJuiz) {

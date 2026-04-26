@@ -109,6 +109,11 @@ export async function POST(req: Request) {
       notaTotal /= 2; 
       totalPeao /= 2; 
       totalAnimal /= 2;
+    } else if (nJ === 3) {
+      // 3 juízes: Max 150 -> divide por 1.5 (ou multiplica por 2/3)
+      notaTotal = (notaTotal / 3) * 2;
+      totalPeao = (totalPeao / 3) * 2;
+      totalAnimal = (totalAnimal / 3) * 2;
     } else if (nJ === 1) {
       // 1 Juiz: Nota Única * 2
       notaTotal *= 2; 

@@ -212,7 +212,7 @@ export async function updateMontariaNota(formData: FormData) {
   if (!session) throw new Error("Não autorizado");
 
   const user = session.user as any;
-  const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+  const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'SUPER';
 
   const mId = parseInt(formData.get('montariaId') as string);
   const tempo = parseFloat(formData.get('tempo') as string || '0');
@@ -367,7 +367,7 @@ export async function addMontaria(roundId: number, competidorId: number, animalI
 
 export async function deleteMontaria(montariaId: number, roundId: number, etapaId: number) {
   const session = await getServerSession(authOptions);
-  if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'SUPER_ADMIN')) {
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'SUPER'].includes((session.user as any).role)) {
     throw new Error("Não autorizado");
   }
 
@@ -476,7 +476,7 @@ export async function applyRepasse(montariaId: number, roundId: number) {
 
 export async function saveConfig(formData: FormData) {
   const session = await getServerSession(authOptions);
-  if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'SUPER_ADMIN')) {
+  if (!session || !['ADMIN', 'SUPER_ADMIN', 'SUPER'].includes((session.user as any).role)) {
     throw new Error("Não autorizado para alterar configurações globais.");
   }
 
