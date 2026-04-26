@@ -47,7 +47,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
       classificacaoEtapa[m.competidorId].tempo += m.tempo;
       classificacaoEtapa[m.competidorId].cpts += m.notaTotal; // 🏆 NOTA DA ARENA SOMA NO CAMPEONATO (Padrão CNAR)
       
-      if (m.notaTotal >= 90) classificacaoEtapa[m.competidorId].cpts += (temp.bonusNotasAcima90 || 0);
+      if (m.notaTotal >= 90) classificacaoEtapa[m.competidorId].cpts += (temp?.bonusNotasAcima90 || 0);
 
       // Stats Animais
       if (m.round.modalidade === 'Touro') {
@@ -71,7 +71,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
         .filter(m => m.notaTotal > 0)
         .sort((a, b) => b.notaTotal - a.notaTotal);
       
-      const ptsRound = [temp.ptsRound1, temp.ptsRound2, temp.ptsRound3, temp.ptsRound4, temp.ptsRound5];
+      const ptsRound = [temp?.ptsRound1, temp?.ptsRound2, temp?.ptsRound3, temp?.ptsRound4, temp?.ptsRound5];
       
       sortedRound.forEach((m, idx) => {
         if (idx < 5) {
@@ -79,7 +79,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
           classificacaoEtapa[m.competidorId].cpts += (ptsRound[idx] || 0);
           
           // Se for o primeiro, ainda ganha o bônus de melhor nota da noite (se configurado)
-          if (idx === 0) classificacaoEtapa[m.competidorId].cpts += (temp.bonusMelhorNotaNoite || 0);
+          if (idx === 0) classificacaoEtapa[m.competidorId].cpts += (temp?.bonusMelhorNotaNoite || 0);
         }
       });
     });
@@ -90,10 +90,10 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
       return b.tempo - a.tempo;
     });
 
-    const ptsEtapa = [temp.ptsEtapa1, temp.ptsEtapa2, temp.ptsEtapa3, temp.ptsEtapa4, temp.ptsEtapa5, temp.ptsEtapa6, temp.ptsEtapa7, temp.ptsEtapa8, temp.ptsEtapa9, temp.ptsEtapa10];
+    const ptsEtapa = [temp?.ptsEtapa1, temp?.ptsEtapa2, temp?.ptsEtapa3, temp?.ptsEtapa4, temp?.ptsEtapa5, temp?.ptsEtapa6, temp?.ptsEtapa7, temp?.ptsEtapa8, temp?.ptsEtapa9, temp?.ptsEtapa10];
     rankingSorted.forEach((r: any, idx) => {
       if (idx < 10) r.cpts += (ptsEtapa[idx] || 0);
-      if (idx === 0) r.cpts += (temp.bonusMelhorNotaEtapa || 0);
+      if (idx === 0) r.cpts += (temp?.bonusMelhorNotaEtapa || 0);
       if (statsPeoes[r.id]) statsPeoes[r.id].pontosLiga += r.cpts;
     });
   });
