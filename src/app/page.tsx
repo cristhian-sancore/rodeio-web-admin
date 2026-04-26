@@ -39,10 +39,19 @@ export default async function Home() {
     const searchComp = compName ? normalize(compName) : null;
     const searchAnimal = animalName ? normalize(animalName) : null;
     
+    const checkMatch = (searchStr: string | null, targetStr: string) => {
+      if (!searchStr) return true;
+      const words = searchStr.split(' ').filter(w => w.length > 2);
+      if (words.length >= 2) {
+         return targetStr.includes(words[0]) && targetStr.includes(words[1]);
+      }
+      return targetStr.includes(searchStr);
+    };
+
     const entry = Object.entries(replayMap).find(([name]) => {
       const upName = normalize(name);
-      const matchedComp = searchComp ? upName.includes(searchComp) : true;
-      const matchedAnimal = searchAnimal ? upName.includes(searchAnimal) : true;
+      const matchedComp = checkMatch(searchComp, upName);
+      const matchedAnimal = checkMatch(searchAnimal, upName);
       return (searchComp || searchAnimal) && matchedComp && matchedAnimal;
     });
     return entry ? entry[1] : null;

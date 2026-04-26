@@ -123,7 +123,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
   const touros = Object.values(statsAnimais)
     .filter((a: any) => {
       if (roundId) return true; // No ranking da noite, vale a maior nota (1 saída)
-      return a.qtd >= 2; // Para Etapa/Campeonato (médias), exige consistência de 2 saídas
+      return a.qtd >= 1; // Permite touros com apenas 1 saída aparecerem na página inicial
     })
     .sort((a: any, b: any) => b.media - a.media);
 
