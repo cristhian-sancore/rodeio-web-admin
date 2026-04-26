@@ -1065,6 +1065,11 @@ export async function sendManualToOverlay(montariaId: number) {
         total: montaria.notaTotal,
         etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
       });
+
+      // Acionar o Overlay no vMix (Colocar no ar)
+      const { triggerVMixOverlay } = await import('@/lib/vmix');
+      const inputId = config.vmixInputNotaId || config.vmixInputId;
+      await triggerVMixOverlay(config as any, config.vmixOverlayChannel || 1, 'In', inputId as string);
     }
   } catch (err) {
     console.error("ERRO CRÍTICO SEND_MANUAL_OVERLAY:", err);

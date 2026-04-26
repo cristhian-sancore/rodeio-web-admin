@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getSafeConfig } from "@/lib/config-safe";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
 
     const user = session.user as any;
     const juizId = user.juizId;
-    const isAdmin = user.role === 'ADMIN';
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER' || user.role === 'SUPER_ADMIN';
 
     if (!juizId && !isAdmin) {
       return NextResponse.json({ success: false, error: 'Sem permissão' });
@@ -182,6 +183,10 @@ export async function POST(req: Request) {
         console.error("Falha silenciosa no vMix:", vmixErr);
       }
     }
+
+    revalidatePath('/admin/execucao');
+    revalidatePath('/overlay/nota');
+    revalidatePath('/api/overlay/current');
 
     return NextResponse.json({ success: true });
   } catch (error) {
