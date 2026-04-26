@@ -75,8 +75,8 @@ export default function DbManager() {
 
   const clearDatabase = async () => {
     if (!confirm("⚠️ PERIGO: Isso apagará TODOS os dados do rodeio (Etapas, Peões, Notas). Tem certeza absoluta?")) return;
-    const password = prompt("Digite a senha MASTER para confirmar:");
-    if (password !== 'RODEIOWEB_DESTROY') return alert("Senha incorreta");
+    const password = prompt("Digite a SENHA DE SEGURANÇA para confirmar a limpeza TOTAL:");
+    if (password !== 'Massuia') return alert("Senha incorreta");
 
     setLoading(true);
     try {
@@ -91,8 +91,8 @@ export default function DbManager() {
 
   const resetSeasonOnly = async () => {
     if (!confirm("⚠️ Isso apagará TODAS as temporadas, etapas e notas lançadas, mas MANTERÁ os competidores e animais cadastrados. Deseja continuar?")) return;
-    const password = prompt("Digite a senha MASTER para confirmar (RODEIOWEB_RESET):");
-    if (password !== 'RODEIOWEB_RESET') return alert("Senha incorreta");
+    const password = prompt("Digite a SENHA DE SEGURANÇA para confirmar o reset de resultados:");
+    if (password !== 'sancore') return alert("Senha incorreta");
 
     setLoading(true);
     try {
