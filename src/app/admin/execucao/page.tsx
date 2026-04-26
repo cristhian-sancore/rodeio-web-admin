@@ -32,7 +32,7 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
 
   const { roundId, montariaId, error } = await searchParams;
   const user = session.user as any;
-  const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+  const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'SUPER';
 
   if (user.role === 'COMENTARISTA') redirect('/admin');
 

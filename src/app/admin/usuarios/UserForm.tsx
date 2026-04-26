@@ -14,7 +14,7 @@ export default function UserForm({ juizes, currentUserRole }: { juizes: any[], c
       return res;
   }, { success: false, error: null });
 
-  const isAdminOrSuper = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+  const isAdminOrSuper = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER';
 
   return (
     <div className="premium-card">
@@ -50,7 +50,7 @@ export default function UserForm({ juizes, currentUserRole }: { juizes: any[], c
             <option value="JUIZ">Juiz (Acesso ao Lançamento)</option>
             {isAdminOrSuper && <option value="COMENTARISTA">Comentarista (Gestão de Evento)</option>}
             {isAdminOrSuper && <option value="ADMIN">Administrador (Acesso Total)</option>}
-            {currentUserRole === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">Super Admin (Root)</option>}
+            {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER') && <option value="SUPER_ADMIN">Super Admin (Root)</option>}
             {!isAdminOrSuper && <option value="USER">Usuário Comum</option>}
           </select>
         </div>

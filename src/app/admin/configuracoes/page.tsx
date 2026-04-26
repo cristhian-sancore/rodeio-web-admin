@@ -11,7 +11,7 @@ import { redirect } from "next/navigation";
 export default async function ConfigPage({ searchParams }: { searchParams: Promise<{ error?: string, success?: string }> }) {
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
-  if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') redirect('/admin');
+  if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN' && userRole !== 'SUPER') redirect('/admin');
   const { error, success } = await searchParams;
 
   const configData = await prisma.configuracao.findUnique({ where: { id: 1 } });

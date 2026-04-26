@@ -13,7 +13,7 @@ export default function UserEditForm({ usuario, juizes, currentUserRole }: { usu
       return res;
   }, { success: false, error: null });
 
-  const isAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN';
+  const isAdmin = currentUserRole === 'ADMIN' || currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER';
 
   return (
     <div className="premium-card" style={{ maxWidth: '600px' }}>
@@ -54,7 +54,7 @@ export default function UserEditForm({ usuario, juizes, currentUserRole }: { usu
             <option value="JUIZ">Juiz (Acesso ao Lançamento)</option>
             {isAdmin && <option value="COMENTARISTA">Comentarista (Gestão de Evento)</option>}
             {isAdmin && <option value="ADMIN">Administrador (Acesso Total)</option>}
-            {currentUserRole === 'SUPER_ADMIN' && <option value="SUPER_ADMIN">Super Admin (Root)</option>}
+            {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER') && <option value="SUPER_ADMIN">Super Admin (Root)</option>}
             {!isAdmin && (usuario.role === 'ADMIN' || usuario.role === 'COMENTARISTA') && <option value={usuario.role}>{usuario.role}</option>}
             {!isAdmin && <option value="USER">Usuário Comum</option>}
           </select>

@@ -13,8 +13,8 @@ import { Wifi, WifiOff } from 'lucide-react';
 export default function Sidebar({ user, config }: { user: any, config: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'SUPER';
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'SUPER';
   const isComentarista = user?.role === 'COMENTARISTA';
   const hasFullAccess = isAdmin || isSuperAdmin || isComentarista;
   

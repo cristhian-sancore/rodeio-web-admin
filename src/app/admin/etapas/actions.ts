@@ -563,7 +563,7 @@ export async function saveConfig(formData: FormData) {
 
 export async function executeRawSql(sql: string) {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'SUPER_ADMIN') return { success: false, error: 'Não autorizado' };
+  if (!['SUPER_ADMIN', 'SUPER'].includes((session?.user as any)?.role)) return { success: false, error: 'Não autorizado' };
 
   try {
     const isSelect = sql.trim().toLowerCase().startsWith('select');
@@ -627,7 +627,7 @@ export async function deactivateVMixOverlay() {
 
 export async function exportDatabaseSql() {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
+  if (!['SUPER_ADMIN', 'SUPER'].includes((session?.user as any)?.role)) throw new Error('Não autorizado');
 
   try {
     const dbUrl = (process.env.DATABASE_URL || '').split('?')[0];
@@ -643,7 +643,7 @@ export async function exportDatabaseSql() {
 
 export async function importDatabaseSql(sql: string) {
   const session = await getServerSession(authOptions);
-  if ((session?.user as any)?.role !== 'SUPER_ADMIN') throw new Error('Não autorizado');
+  if (!['SUPER_ADMIN', 'SUPER'].includes((session?.user as any)?.role)) throw new Error('Não autorizado');
 
   try {
     const dbUrl = (process.env.DATABASE_URL || '').split('?')[0];

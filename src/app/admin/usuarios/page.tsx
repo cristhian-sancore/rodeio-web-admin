@@ -74,12 +74,12 @@ export default async function UsuariosPage({ searchParams }: { searchParams: Pro
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
+                  {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
                     <Link href={`/admin/usuarios/${u.id}/editar`} style={{ padding: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', color: '#fff', cursor: 'pointer', border: '1px solid #333' }}>
                       <Edit size={16} />
                     </Link>
                   )}
-                  {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
+                  {(currentUserRole === 'SUPER_ADMIN' || currentUserRole === 'SUPER' || currentUserRole === 'ADMIN' || (currentUserRole === 'COMENTARISTA' && u.role !== 'ADMIN' && u.role !== 'COMENTARISTA' && u.role !== 'SUPER_ADMIN')) && (
                     <DeleteUserButton id={u.id} />
                   )}
                 </div>

@@ -10,7 +10,8 @@ export const revalidate = 0;
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    const user = session?.user as any;
+    if (!session || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.role !== 'SUPER')) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
