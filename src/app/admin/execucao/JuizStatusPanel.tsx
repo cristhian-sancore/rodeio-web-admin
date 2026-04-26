@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface JuizStatus {
   numero: number;
@@ -11,8 +12,10 @@ interface JuizStatus {
 }
 
 export default function JuizStatusPanel({ montariaId, numJuizes }: { montariaId: number, numJuizes: number }) {
+  const router = useRouter();
   const [juizes, setJuizes] = useState<JuizStatus[]>([]);
   const [todosEnviaram, setTodosEnviaram] = useState(false);
+  const prevTodosEnviaram = useRef(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchStatus = async () => {
@@ -21,7 +24,14 @@ export default function JuizStatusPanel({ montariaId, numJuizes }: { montariaId:
       const json = await res.json();
       if (json.juizes) {
         setJuizes(json.juizes);
+        
+        // Se mudou de "esperando" para "todos enviaram", atualiza a página para mostrar as notas no form
+        if (json.todosEnviaram && !prevTodosEnviaram.current) {
+           router.refresh();
+        }
+        
         setTodosEnviaram(json.todosEnviaram);
+        prevTodosEnviaram.current = json.todosEnviaram;
       }
     } catch (err) {
       console.error('Erro ao buscar status dos juízes:', err);
