@@ -112,6 +112,62 @@ export default async function Home() {
 
       {layout.filter(block => block.visible).map((block) => {
         const bStyle = block.style || {};
+        const elements = block.elements || [];
+
+        if (elements && elements.length > 0) {
+          return (
+            <section key={block.id} style={{
+              height: '500px',
+              background: bStyle.background || '#111',
+              borderRadius: `${bStyle.borderRadius || 0}px`,
+              position: 'relative',
+              overflow: 'hidden',
+              margin: '2rem 0'
+            }}>
+              {elements.map((el: any) => {
+                const elStyle: React.CSSProperties = {
+                  position: 'absolute',
+                  left: el.x,
+                  top: el.y,
+                  width: el.type === 'TEXT' ? 'auto' : el.w,
+                  height: el.type === 'TEXT' ? 'auto' : el.h,
+                  zIndex: el.zIndex || 1,
+                  opacity: el.style?.opacity || 1
+                };
+
+                switch (el.type) {
+                  case 'TEXT':
+                    return (
+                      <div key={el.id} style={{ 
+                        ...elStyle, 
+                        fontSize: `${el.style?.fontSize || 24}px`, 
+                        fontWeight: el.style?.fontWeight || '900',
+                        color: el.style?.color,
+                        textAlign: el.style?.textAlign as any,
+                        fontFamily: config?.fontFamily
+                      }}>
+                        {el.content}
+                      </div>
+                    );
+                  case 'SHAPE_RECT':
+                  case 'SHAPE_CIRCLE':
+                    return (
+                      <div key={el.id} style={{ 
+                        ...elStyle, 
+                        background: el.style?.background, 
+                        borderRadius: el.style?.borderRadius 
+                      }} />
+                    );
+                  case 'IMAGE':
+                    return <img key={el.id} src={el.content} style={{ ...elStyle, objectFit: 'contain' }} alt="" />;
+                  default:
+                    return null;
+                }
+              })}
+            </section>
+          );
+        }
+
         const sectionStyle: React.CSSProperties = {
           background: bStyle.background || 'transparent',
           textAlign: (bStyle.align || 'center') as any,
