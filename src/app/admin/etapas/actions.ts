@@ -490,7 +490,6 @@ export async function saveConfig(formData: FormData) {
   console.log('PARSED numJuizes:', numJuizes);
   console.log('titulo:', titulo);
 
-  try {
   const safeParse = (val: any, fallback: any) => {
     if (!val || typeof val !== 'string' || val === '[object Object]') return fallback;
     try {
