@@ -26,8 +26,13 @@ export default async function RootLayout({
   } catch (err) {
     // Falha silenciosa durante o build (prerender)
   }
-  const primaryColor = config?.primaryColor || '#d4af37';
-  const secondaryColor = config?.secondaryColor || '#111111';
+  let primaryColor = config?.primaryColor || '#d4af37';
+  let secondaryColor = config?.secondaryColor || '#111111';
+  
+  if (secondaryColor === '#ffffff' || secondaryColor === '#fff') {
+    secondaryColor = '#111111';
+    primaryColor = '#d4af37';
+  }
   const fontFamily = config?.fontFamily || 'Inter';
 
   return (

@@ -191,8 +191,8 @@ export default async function Home() {
                 <div className="hero-content" style={{ 
                   margin: bStyle.align === 'left' ? '0 auto 0 0' : (bStyle.align === 'right' ? '0 0 0 auto' : '0 auto'),
                 }}>
-                  <h1 className="hero-title" style={{ color: '#fff' }}>{block.title}</h1>
-                  <p className="hero-subtitle" style={{ color: bStyle.accent || primaryColor }}>{block.subtitle}</p>
+                  <h1 className="hero-title" style={{ color: '#fff' }}>{config?.homeHeroTitle || block.title || 'RODEIO PRO'}</h1>
+                  <p className="hero-subtitle" style={{ color: bStyle.accent || primaryColor }}>{config?.homeHeroSubtitle || block.subtitle || 'A maior plataforma de rodeios do Brasil'}</p>
                   <div className="cta-group" style={{ justifyContent: bStyle.align === 'left' ? 'flex-start' : (bStyle.align === 'right' ? 'flex-end' : 'center') }}>
                     <Link href="/live" className="btn-primary" style={{ background: '#ff4444', color: '#fff' }}><TrendingUp size={20} /> AO VIVO</Link>
                     <Link href="/ranking" className="btn-primary"><Trophy size={20} /> RANKINGS</Link>
