@@ -46,12 +46,19 @@ export async function callVMix(baseUrl: string, functionName: string, params: Re
   
   try {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 2000);
+    const timeoutMs = functionName.includes('Export') ? 8000 : 3000; // Export precisa mais tempo
+    const id = setTimeout(() => controller.abort(), timeoutMs);
+    
+    console.log(`[vMix] >> ${functionName} -> ${url.substring(0, 120)}...`);
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(id);
+    
+    if (!response.ok) {
+      console.error(`[vMix] !! ${functionName} retornou ${response.status}`);
+    }
     return response.ok;
-  } catch (err) {
-    console.error(`Falha ao chamar função ${functionName} no vMix:`, err);
+  } catch (err: any) {
+    console.error(`[vMix] ❌ Falha ${functionName}:`, err?.message || err);
     return false;
   }
 }

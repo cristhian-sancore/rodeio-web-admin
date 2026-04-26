@@ -163,7 +163,7 @@ export async function POST(req: Request) {
            // Buscar ranking atual para o overlay
            const stageRank = await getCompetidorStageRank(montaria.round.etapaId, montaria.competidorId);
 
-           await sendToVMix(config as any, {
+           const replayFileName = await sendToVMix(config as any, {
               competidor: (await prisma.competidor.findUnique({ where: { id: montaria.competidorId } }))?.nome || '---',
               animal: (await prisma.animal.findUnique({ where: { id: montaria.animalId } }))?.nome || '---',
               etapaNome: (await prisma.etapa.findUnique({ where: { id: montaria.round.etapaId } }))?.nome || '---',
@@ -183,9 +183,18 @@ export async function POST(req: Request) {
               total: notaTotal,
               etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
            });
+
+           // Salvar o nome do replay exportado na montaria
+           if (replayFileName) {
+             await prisma.montaria.update({
+               where: { id: montariaId },
+               data: { replayFileName }
+             });
+             console.log(`[vMix] Replay salvo: ${replayFileName}`);
+           }
         }
       } catch (vmixErr) {
-        console.error("Falha silenciosa no vMix:", vmixErr);
+        console.error("[vMix] Falha no disparo:", vmixErr);
       }
     }
 
