@@ -4,15 +4,16 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Layout, Plus, Trash2, Move, Save, Image as ImageIcon, Type, Palette, Layers, 
   Monitor, Smartphone, Eye, Settings, ChevronDown, ChevronUp, Copy, ArrowLeft, 
-  Search, X, Square, Circle, Triangle, MousePointer2, Maximize2, Wand2, Play, Trophy, Zap
+  Search, X, Square, Circle, Triangle, MousePointer2, Maximize2, Wand2, Play, Trophy, Zap,
+  Undo2, Redo2, AlignCenter, AlignLeft, AlignRight, Sun
 } from 'lucide-react';
 import Link from 'next/link';
 import { saveConfig } from '@/app/admin/etapas/actions';
 import { removeBackgroundAction } from './actions';
 
-// --- TIPOS DE ELEMENTOS ---
+// --- CONFIGURAÇÕES DE ELITE ---
 const ELEMENT_TYPES = [
-  { type: 'TEXT', label: 'Texto', icon: Type, defaultContent: 'Clique para editar o texto' },
+  { type: 'TEXT', label: 'Texto', icon: Type, defaultContent: 'CLIQUE PARA EDITAR' },
   { type: 'SHAPE_RECT', label: 'Retângulo', icon: Square, defaultContent: '' },
   { type: 'SHAPE_CIRCLE', label: 'Círculo', icon: Circle, defaultContent: '' },
   { type: 'IMAGE', label: 'Imagem/Logo', icon: ImageIcon, defaultContent: '/hero-rodeo.png' },
@@ -20,16 +21,19 @@ const ELEMENT_TYPES = [
 
 const FONTS = ['Inter', 'Outfit', 'Montserrat', 'Bebas Neue', 'Oswald', 'Roboto Condensed', 'Black Ops One'];
 
-export default function VisualLiveBuilder() {
+export default function EliteVisualBuilder() {
   const [config, setConfig] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'HOME' | 'OVERLAYS'>('HOME');
   const [blocks, setBlocks] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [guides, setGuides] = useState<{ x?: number, y?: number } | null>(null);
 
   // Carregar dados iniciais
   useEffect(() => {
@@ -38,20 +42,38 @@ export default function VisualLiveBuilder() {
       const data = await res.json();
       setConfig(data);
       const initialBlocks = data?.siteLayouts?.[activeTab] || [];
-      
-      // Se não houver blocos, inicializar com o padrão
-      if (initialBlocks.length === 0 && activeTab === 'HOME') {
-         setBlocks([
-           { id: 'b1', type: 'HERO', elements: [{ id: 'e1', type: 'TEXT', x: 100, y: 150, w: 600, h: 100, content: 'GRANDE RODEIO MASTER', zIndex: 10, style: { color: '#fff', fontSize: 64, fontWeight: '950' } }], style: { background: '#050505' } },
-           { id: 'b2', type: 'RANKINGS', elements: [], style: { background: '#0a0a0a' } }
-         ]);
-      } else {
-         setBlocks(initialBlocks.map((b: any) => ({ ...b, elements: b.elements || [] })));
-      }
+      const normalizedBlocks = initialBlocks.map((b: any) => ({ ...b, elements: b.elements || [] }));
+      setBlocks(normalizedBlocks);
+      addToHistory(normalizedBlocks);
       setLoading(false);
     }
     load();
   }, [activeTab]);
+
+  // --- SISTEMA DE HISTÓRICO (UNDO/REDO) ---
+  const addToHistory = (newBlocks: any[]) => {
+    const newHistory = history.slice(0, historyIndex + 1);
+    newHistory.push(JSON.parse(JSON.stringify(newBlocks)));
+    if (newHistory.length > 50) newHistory.shift(); // Limite de 50 passos
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  const undo = () => {
+    if (historyIndex > 0) {
+      const prev = history[historyIndex - 1];
+      setBlocks(JSON.parse(JSON.stringify(prev)));
+      setHistoryIndex(historyIndex - 1);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < history.length - 1) {
+      const next = history[historyIndex + 1];
+      setBlocks(JSON.parse(JSON.stringify(next)));
+      setHistoryIndex(historyIndex + 1);
+    }
+  };
 
   const saveLayout = async () => {
     setIsSaving(true);
@@ -67,20 +89,20 @@ export default function VisualLiveBuilder() {
     try {
       await saveConfig(formData);
       setIsSaving(false);
-      alert('Design publicado com sucesso! O site agora está em modo de edição visual. 🚀');
+      alert('Design de Elite publicado com sucesso! 🚀💎');
     } catch (err) {
       alert('Erro ao publicar.');
       setIsSaving(false);
     }
   };
 
+  // --- GESTÃO DE ELEMENTOS ---
   const addElementToBlock = (blockId: string, type: string) => {
     const typeInfo = ELEMENT_TYPES.find(t => t.type === type);
     const newElement = {
       id: Math.random().toString(36).substr(2, 9),
       type,
-      x: 100,
-      y: 100,
+      x: 100, y: 100,
       w: type.startsWith('SHAPE') ? 150 : 300,
       h: type.startsWith('SHAPE') ? 100 : 50,
       content: typeInfo?.defaultContent || '',
@@ -89,36 +111,35 @@ export default function VisualLiveBuilder() {
         color: '#ffffff',
         background: type === 'SHAPE_RECT' ? config?.primaryColor || '#D4AF37' : 'transparent',
         fontSize: 24,
-        fontWeight: '900',
+        fontWeight: '950',
         borderRadius: type === 'SHAPE_CIRCLE' ? '100%' : '0px',
         opacity: 1,
-        textAlign: 'center'
+        textAlign: 'center',
+        shadowBlur: 0,
+        shadowColor: 'rgba(0,0,0,0.5)',
+        letterSpacing: 0,
       }
     };
 
-    setBlocks(blocks.map(b => b.id === blockId ? { ...b, elements: [...(b.elements || []), newElement] } : b));
+    const newBlocks = blocks.map(b => b.id === blockId ? { ...b, elements: [...(b.elements || []), newElement] } : b);
+    setBlocks(newBlocks);
+    addToHistory(newBlocks);
     setSelectedElementId(newElement.id);
   };
 
-  const updateElement = (blockId: string, elementId: string, updates: any) => {
-    setBlocks(blocks.map(b => b.id === blockId ? {
+  const updateElement = (blockId: string, elementId: string, updates: any, skipHistory = false) => {
+    const newBlocks = blocks.map(b => b.id === blockId ? {
       ...b,
-      elements: b.elements.map((el: any) => el.id === elementId ? { ...el, ...updates } : el)
-    } : b));
+      elements: b.elements.map((el: any) => el.id === elementId ? { ...el, ...updates, style: { ...el.style, ...updates.style } } : el)
+    } : b);
+    setBlocks(newBlocks);
+    if (!skipHistory) addToHistory(newBlocks);
   };
 
-  const updateBlockStyle = (blockId: string, styleUpdates: any) => {
-    setBlocks(blocks.map(b => b.id === blockId ? { ...b, style: { ...b.style, ...styleUpdates } } : b));
-  };
-
-  const deleteElement = (blockId: string, elementId: string) => {
-    setBlocks(blocks.map(b => b.id === blockId ? { ...b, elements: b.elements.filter((el: any) => el.id !== elementId) } : b));
-    setSelectedElementId(null);
-  };
-
-  // --- RENDERIZADOR DE ELEMENTO ---
+  // --- RENDERIZADOR ELITE COM GUIAS ---
   const VisualElement = ({ blockId, element }: { blockId: string, element: any }) => {
     const isSelected = selectedElementId === element.id;
+    const dragRef = useRef<any>(null);
     
     const onMouseDown = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -130,14 +151,34 @@ export default function VisualLiveBuilder() {
       const startY = e.clientY - element.y;
 
       const onMouseMove = (moveE: MouseEvent) => {
-        updateElement(blockId, element.id, {
-          x: moveE.clientX - startX,
-          y: moveE.clientY - startY
-        });
+        let newX = moveE.clientX - startX;
+        let newY = moveE.clientY - startY;
+
+        // ALINHAMENTO INTELIGENTE (SNAPPING)
+        const snapThreshold = 15;
+        const blockW = 1200; // Aproximado
+        const blockH = 600;
+        
+        let guideX = undefined;
+        let guideY = undefined;
+
+        if (Math.abs(newX + (element.w || 100)/2 - blockW/2) < snapThreshold) {
+           newX = blockW/2 - (element.w || 100)/2;
+           guideX = blockW/2;
+        }
+        if (Math.abs(newY + (element.h || 50)/2 - blockH/2) < snapThreshold) {
+           newY = blockH/2 - (element.h || 50)/2;
+           guideY = blockH/2;
+        }
+
+        setGuides({ x: guideX, y: guideY });
+        updateElement(blockId, element.id, { x: newX, y: newY }, true);
       };
 
       const onMouseUp = () => {
         setIsDragging(false);
+        setGuides(null);
+        addToHistory(blocks);
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
       };
@@ -146,20 +187,30 @@ export default function VisualLiveBuilder() {
       document.addEventListener('mouseup', onMouseUp);
     };
 
+    const elementStyle: React.CSSProperties = {
+      position: 'absolute', left: element.x, top: element.y,
+      width: element.type === 'TEXT' ? 'auto' : element.w,
+      height: element.type === 'TEXT' ? 'auto' : element.h,
+      zIndex: element.zIndex || 1,
+      cursor: isDragging ? 'grabbing' : 'grab',
+      border: isSelected ? `2px solid ${config?.primaryColor || '#D4AF37'}` : '1px solid transparent',
+      padding: element.type === 'TEXT' ? '10px' : '0',
+      opacity: element.style?.opacity || 1,
+      boxShadow: element.type !== 'TEXT' && element.style?.shadowBlur > 0 ? `0 0 ${element.style.shadowBlur}px ${element.style.shadowColor}` : 'none',
+      textShadow: element.type === 'TEXT' && element.style?.shadowBlur > 0 ? `0 0 ${element.style.shadowBlur}px ${element.style.shadowColor}` : 'none',
+    };
+
     const renderContent = () => {
       switch (element.type) {
         case 'TEXT':
           return <div style={{ 
-            fontSize: `${element.style?.fontSize || 24}px`, 
-            fontWeight: element.style?.fontWeight || '900',
-            color: element.style?.color,
-            textAlign: element.style?.textAlign as any,
-            fontFamily: config?.fontFamily,
-            lineHeight: 1.1
+            fontSize: `${element.style?.fontSize || 24}px`, fontWeight: element.style?.fontWeight || '950',
+            color: element.style?.color, textAlign: element.style?.textAlign as any, fontFamily: config?.fontFamily,
+            letterSpacing: `${element.style?.letterSpacing || 0}px`, lineHeight: 1
           }}>{element.content}</div>;
         case 'SHAPE_RECT':
         case 'SHAPE_CIRCLE':
-          return <div style={{ width: '100%', height: '100%', background: element.style?.background, borderRadius: element.style?.borderRadius, opacity: element.style?.opacity }} />;
+          return <div style={{ width: '100%', height: '100%', background: element.style?.background, borderRadius: element.style?.borderRadius }} />;
         case 'IMAGE':
           return <img src={element.content} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="" />;
         default: return null;
@@ -167,31 +218,20 @@ export default function VisualLiveBuilder() {
     };
 
     return (
-      <div 
-        onMouseDown={onMouseDown}
-        style={{ 
-          position: 'absolute', left: element.x, top: element.y, 
-          width: element.type === 'TEXT' ? 'auto' : element.w, 
-          height: element.type === 'TEXT' ? 'auto' : element.h,
-          zIndex: element.zIndex || 1,
-          cursor: isDragging ? 'grabbing' : 'grab',
-          border: isSelected ? `2px solid ${config?.primaryColor || '#D4AF37'}` : '1px solid transparent',
-          padding: element.type === 'TEXT' ? '10px' : '0',
-          transition: isDragging ? 'none' : 'border 0.2s'
-        }}
-      >
+      <div onMouseDown={onMouseDown} style={elementStyle}>
         {renderContent()}
         {isSelected && (
           <div style={{ position: 'absolute', top: -35, left: 0, background: '#111', padding: '6px 12px', borderRadius: '8px', display: 'flex', gap: '10px', boxShadow: '0 5px 15px rgba(0,0,0,0.5)', zIndex: 1000 }}>
-             <button onClick={(e) => { e.stopPropagation(); deleteElement(blockId, element.id); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={14}/></button>
              <button onClick={(e) => { e.stopPropagation(); updateElement(blockId, element.id, { zIndex: (element.zIndex || 1) + 1 }); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><Layers size={14}/></button>
+             <button onClick={(e) => { e.stopPropagation(); const el = { ...element, id: Math.random().toString(36).substr(2,9), x: element.x+20, y: element.y+20 }; setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:[...b.elements,el]}:b)); addToHistory(blocks); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><Copy size={14}/></button>
+             <button onClick={(e) => { e.stopPropagation(); setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:b.elements.filter((el:any)=>el.id!==element.id)}:b)); addToHistory(blocks); setSelectedElementId(null); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer' }}><Trash2 size={14}/></button>
           </div>
         )}
       </div>
     );
   };
 
-  if (loading) return <div style={{ color: '#fff', padding: '2rem', textAlign: 'center' }}>🚀 Abrindo Modo de Edição Visual...</div>;
+  if (loading) return <div style={{ color: '#fff', padding: '2rem', textAlign: 'center' }}>💎 Carregando Estúdio de Elite...</div>;
 
   const selectedElement = blocks.flatMap(b => b.elements).find(el => el.id === selectedElementId);
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
@@ -199,226 +239,153 @@ export default function VisualLiveBuilder() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050505', color: '#fff', overflow: 'hidden' }}>
       
-      {/* 🛠 BARRA SUPERIOR DE DESIGN */}
-      <header style={{ height: '60px', background: '#0a0a0a', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', zIndex: 100 }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <Link href="/admin/super" style={{ color: '#444', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', fontWeight: '900' }}>
-            <ArrowLeft size={16} /> SAIR DO EDITOR
+      {/* 🚀 BARRA DE ELITE (TOP) */}
+      <header style={{ height: '70px', background: '#0a0a0a', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 25px', zIndex: 100 }}>
+        <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
+          <Link href="/admin/super" style={{ color: '#444', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', fontWeight: '900' }}>
+            <ArrowLeft size={16} /> PAINEL
           </Link>
           <div style={{ width: '1px', height: '24px', background: '#222' }} />
           <div style={{ display: 'flex', background: '#111', padding: '4px', borderRadius: '12px' }}>
-            <button onClick={() => setActiveTab('HOME')} style={tabStyle(activeTab === 'HOME')}>SITE AO VIVO</button>
-            <button onClick={() => setActiveTab('OVERLAYS')} style={tabStyle(activeTab === 'OVERLAYS')}>TRANSMISSÃO</button>
+             <button onClick={undo} disabled={historyIndex <= 0} style={iconBtnStyle(false)}><Undo2 size={18} /></button>
+             <button onClick={redo} disabled={historyIndex >= history.length - 1} style={iconBtnStyle(false)}><Redo2 size={18} /></button>
+          </div>
+          <div style={{ display: 'flex', background: '#111', padding: '4px', borderRadius: '12px' }}>
+            <button onClick={() => setActiveTab('HOME')} style={tabStyle(activeTab === 'HOME')}>SITE WEB</button>
+            <button onClick={() => setActiveTab('OVERLAYS')} style={tabStyle(activeTab === 'OVERLAYS')}>vMIX OVERLAY</button>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-           <div style={{ display: 'flex', gap: '8px', background: '#111', padding: '4px', borderRadius: '10px' }}>
-              <button onClick={() => setPreviewMode('desktop')} style={iconBtnStyle(previewMode === 'desktop')}><Monitor size={18} /></button>
-              <button onClick={() => setPreviewMode('mobile')} style={iconBtnStyle(previewMode === 'mobile')}><Smartphone size={18} /></button>
-           </div>
+        <div style={{ display: 'flex', gap: '15px' }}>
            <button onClick={saveLayout} disabled={isSaving} style={{ 
-             background: config?.primaryColor || '#D4AF37', color: '#000', border: 'none', padding: '10px 24px', 
-             borderRadius: '10px', fontWeight: '950', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
+             background: 'linear-gradient(135deg, #d4af37 0%, #aa8b2c 100%)', color: '#000', border: 'none', padding: '12px 30px', 
+             borderRadius: '12px', fontWeight: '950', cursor: 'pointer', boxShadow: '0 8px 25px rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', gap: '10px'
            }}>
-             {isSaving ? 'PUBLICANDO...' : <><Save size={18} /> PUBLICAR DESIGN</>}
+             {isSaving ? 'PUBLICAÇÃO DE ELITE...' : <><Zap size={18} /> PUBLICAR DESIGN</>}
            </button>
         </div>
       </header>
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         
-        {/* 📚 BIBLIOTECA (ESQUERDA) */}
-        <aside style={{ width: '280px', background: '#0a0a0a', borderRight: '1px solid #222', padding: '20px', overflowY: 'auto' }}>
-           <h3 style={{ fontSize: '0.7rem', color: '#444', fontWeight: '900', letterSpacing: '2px', marginBottom: '20px' }}>ADICIONAR AO DESIGN</h3>
-           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        {/* 📚 BIBLIOTECA (LEFT) */}
+        <aside style={{ width: '300px', background: '#0a0a0a', borderRight: '1px solid #222', padding: '25px', overflowY: 'auto' }}>
+           <h3 style={{ fontSize: '0.65rem', color: '#444', fontWeight: '900', letterSpacing: '2px', marginBottom: '25px' }}>BIBLIOTECA ELITE</h3>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               {ELEMENT_TYPES.map(type => (
                 <div 
                   key={type.type} 
-                  onClick={() => {
-                    if (!selectedBlockId) alert('Clique em uma seção no centro para ativá-la!');
-                    else addElementToBlock(selectedBlockId, type.type);
-                  }}
+                  onClick={() => selectedBlockId && addElementToBlock(selectedBlockId, type.type)}
                   style={{ 
-                    background: '#111', padding: '20px', borderRadius: '15px', border: '1px solid #222', 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer', transition: 'all 0.2s'
+                    background: '#111', padding: '25px', borderRadius: '20px', border: '1px solid #222', 
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'all 0.3s'
                   }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = config?.primaryColor}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = '#222'}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = config?.primaryColor; e.currentTarget.style.transform = 'translateY(-5px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#222'; e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
-                  <type.icon size={24} color={config?.primaryColor} />
-                  <span style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{type.label}</span>
+                  <type.icon size={28} color={config?.primaryColor} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: '900' }}>{type.label}</span>
                 </div>
               ))}
            </div>
 
-           <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #1a1a1a' }}>
-              <h3 style={{ fontSize: '0.7rem', color: '#444', fontWeight: '900', marginBottom: '20px' }}>BRANDING GLOBAL</h3>
+           <div style={{ marginTop: '50px', paddingTop: '25px', borderTop: '1px solid #1a1a1a' }}>
+              <h3 style={{ fontSize: '0.65rem', color: '#444', fontWeight: '900', marginBottom: '25px' }}>CONFIGURAÇÕES GLOBAIS</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                 <div>
-                    <label style={styleLabel}>FONTE PRINCIPAL</label>
-                    <select value={config?.fontFamily} onChange={e => setConfig({...config, fontFamily: e.target.value})} style={styleInput}>
-                       {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                 </div>
-                 <div>
-                    <label style={styleLabel}>CHAVE REMOVE.BG</label>
-                    <input type="password" value={config?.removeBgApiKey || ''} onChange={e => setConfig({...config, removeBgApiKey: e.target.value})} style={styleInput} placeholder="API Key para Recorte" />
-                 </div>
+                 <div><label style={styleLabel}>FONTE PRINCIPAL</label><select value={config?.fontFamily} onChange={e => setConfig({...config, fontFamily: e.target.value})} style={styleInput}>{FONTS.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
+                 <div><label style={styleLabel}>ESTILO DE TELA</label><div style={{ display: 'flex', gap: '10px' }}><button onClick={() => setPreviewMode('desktop')} style={iconBtnStyle(previewMode === 'desktop')}><Monitor size={18} /></button><button onClick={() => setPreviewMode('mobile')} style={iconBtnStyle(previewMode === 'mobile')}><Smartphone size={18} /></button></div></div>
               </div>
            </div>
         </aside>
 
-        {/* 🎭 CANVAS / PALCO VIVO (CENTRO) */}
-        <main style={{ flex: 1, background: '#000', overflowY: 'auto', padding: '40px', display: 'flex', justifyContent: 'center' }}>
-           <div style={{ 
-             width: previewMode === 'desktop' ? '100%' : '375px', 
-             minHeight: '100%', 
-             background: config?.secondaryColor || '#050505',
-             transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-             position: 'relative'
-           }}>
+        {/* 🎭 PALCO (CENTER) */}
+        <main style={{ flex: 1, background: '#000', overflowY: 'auto', padding: '50px', position: 'relative' }}>
+           <div style={{ width: previewMode === 'desktop' ? '1200px' : '375px', margin: '0 auto', transition: 'all 0.5s' }}>
               {blocks.map((block) => (
                 <section 
                   key={block.id}
                   onClick={() => setSelectedBlockId(block.id)}
                   style={{ 
-                    height: '600px', 
-                    background: block.style?.background || 'transparent', 
-                    position: 'relative', 
-                    overflow: 'hidden',
-                    border: selectedBlockId === block.id ? `2px solid ${config?.primaryColor}` : '1px solid rgba(255,255,255,0.02)',
-                    marginBottom: '20px',
-                    borderRadius: '20px'
+                    height: '650px', background: block.style?.background || '#050505', position: 'relative', overflow: 'hidden',
+                    border: selectedBlockId === block.id ? `3px solid ${config?.primaryColor}` : '1px solid #111',
+                    marginBottom: '30px', borderRadius: '30px', boxShadow: '0 30px 60px rgba(0,0,0,0.6)'
                   }}
                 >
-                  {/* LABEL DO BLOCO */}
-                  <div style={{ position: 'absolute', top: 15, left: 15, padding: '5px 12px', background: 'rgba(0,0,0,0.8)', borderRadius: '6px', fontSize: '0.6rem', fontWeight: '900', color: '#444', zIndex: 100 }}>
-                     SEÇÃO: {block.type}
-                  </div>
+                  {/* GUIAS DE ALINHAMENTO */}
+                  {guides?.x && <div style={{ position: 'absolute', left: guides.x, top: 0, bottom: 0, width: '1px', background: config?.primaryColor, zIndex: 999 }} />}
+                  {guides?.y && <div style={{ position: 'absolute', top: guides.y, left: 0, right: 0, height: '1px', background: config?.primaryColor, zIndex: 999 }} />}
 
-                  {/* ELEMENTOS REAIS DO CANVAS */}
                   {block.elements.map((el: any) => (
                     <VisualElement key={el.id} blockId={block.id} element={el} />
                   ))}
 
-                  {/* PLACEHOLDER DE CONTEÚDO DINÂMICO (PARA DAR O "FEEL" DE SITE REAL) */}
-                  {block.type === 'RANKINGS' && (
-                    <div style={{ padding: '100px 40px', opacity: 0.3, pointerEvents: 'none' }}>
-                       <h2 style={{ fontSize: '3rem', fontWeight: 900 }}>RANKING OFICIAL</h2>
-                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '40px' }}>
-                          {[1,2,3,4].map(i => <div key={i} style={{ height: '60px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px' }} />)}
-                       </div>
-                    </div>
-                  )}
-
-                  {block.elements.length === 0 && block.type === 'HERO' && (
-                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1, flexDirection: 'column' }}>
-                       <Maximize2 size={64} />
-                       <p>Clique aqui e adicione textos e formas</p>
-                    </div>
-                  )}
+                  {block.elements.length === 0 && <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.05, fontSize: '3rem', fontWeight: 900 }}>{block.type}</div>}
                 </section>
               ))}
            </div>
         </main>
 
-        {/* ⚙️ INSPETOR DE PROPRIEDADES (DIREITA) */}
-        <aside style={{ width: '340px', background: '#0a0a0a', borderLeft: '1px solid #222', padding: '20px', overflowY: 'auto' }}>
+        {/* ⚙️ INSPETOR ELITE (RIGHT) */}
+        <aside style={{ width: '350px', background: '#0a0a0a', borderLeft: '1px solid #222', padding: '25px', overflowY: 'auto' }}>
            {selectedElement ? (
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                   <h3 style={{ fontSize: '0.8rem', fontWeight: '950', color: config?.primaryColor }}>PROPRIEDADES DO ELEMENTO</h3>
-                   <button onClick={() => setSelectedElementId(null)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer' }}><X size={20}/></button>
+                   <h3 style={{ fontSize: '0.85rem', fontWeight: '950', color: config?.primaryColor }}>DESIGN DO ELEMENTO</h3>
+                   <button onClick={() => setSelectedElementId(null)} style={{ background: 'none', border: 'none', color: '#444', cursor: 'pointer' }}><X size={24}/></button>
                 </div>
 
                 {selectedElement.type === 'TEXT' && (
                   <>
-                    <div>
-                       <label style={styleLabel}>TEXTO DO ELEMENTO</label>
-                       <textarea value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={{ ...styleInput, height: '120px' }} />
-                    </div>
-                    <div>
-                       <label style={styleLabel}>TAMANHO DA FONTE ({selectedElement.style?.fontSize}px)</label>
-                       <input type="range" min="10" max="300" value={selectedElement.style?.fontSize} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, fontSize: parseInt(e.target.value) } })} style={{ width: '100%' }} />
-                    </div>
-                    <div>
-                       <label style={styleLabel}>COR DO TEXTO</label>
-                       <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                          <input type="color" value={selectedElement.style?.color} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, color: e.target.value } })} style={{ width: '40px', height: '40px', background: 'none', border: 'none', cursor: 'pointer' }} />
-                          <input value={selectedElement.style?.color} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, color: e.target.value } })} style={styleInput} />
-                       </div>
-                    </div>
+                    <div><label style={styleLabel}>CONTEÚDO</label><textarea value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={{ ...styleInput, height: '100px' }} /></div>
+                    <div><label style={styleLabel}>TAMANHO ({selectedElement.style?.fontSize}px)</label><input type="range" min="10" max="400" value={selectedElement.style?.fontSize} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, fontSize: parseInt(e.target.value) } })} style={{ width: '100%' }} /></div>
+                    <div><label style={styleLabel}>ESPAÇAMENTO LETRAS ({selectedElement.style?.letterSpacing}px)</label><input type="range" min="-10" max="50" value={selectedElement.style?.letterSpacing} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, letterSpacing: parseInt(e.target.value) } })} style={{ width: '100%' }} /></div>
                   </>
                 )}
 
                 {selectedElement.type === 'IMAGE' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    <label style={styleLabel}>URL DA IMAGEM</label>
-                    <input value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput} />
-                    <button 
-                      onClick={async () => {
-                        if (!config.removeBgApiKey) return alert('Configure sua API Key na barra esquerda!');
-                        const btn = document.activeElement as HTMLButtonElement;
-                        btn.innerText = 'PROCESSANDO...';
-                        try {
-                           const res = await removeBackgroundAction(selectedElement.content);
-                           updateElement(selectedBlockId!, selectedElement.id, { content: res });
-                        } catch (e: any) { alert(e.message); }
-                        btn.innerText = 'REMOVER FUNDO (AI)';
-                      }}
-                      style={{ background: 'linear-gradient(90deg, #6366f1, #a855f7)', color: '#fff', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}
-                    >
-                      ✨ REMOVER FUNDO (AI)
-                    </button>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                       <div><label style={styleLabel}>LARGURA</label><input type="number" value={selectedElement.w} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { w: parseInt(e.target.value) })} style={styleInput} /></div>
-                       <div><label style={styleLabel}>ALTURA</label><input type="number" value={selectedElement.h} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { h: parseInt(e.target.value) })} style={styleInput} /></div>
-                    </div>
+                    <label style={styleLabel}>URL DA IMAGEM</label><input value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput} />
+                    <button onClick={async () => {
+                       const btn = document.activeElement as HTMLButtonElement; btn.innerText = 'PROCESSANDO...';
+                       try { const res = await removeBackgroundAction(selectedElement.content); updateElement(selectedBlockId!, selectedElement.id, { content: res }); } catch (e: any) { alert(e.message); }
+                       btn.innerText = 'REMOVER FUNDO (AI)';
+                    }} style={{ background: 'linear-gradient(90deg, #6366f1, #a855f7)', color: '#fff', border: 'none', padding: '12px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✨ REMOVER FUNDO (AI)</button>
                   </div>
                 )}
 
-                {(selectedElement.type === 'SHAPE_RECT' || selectedElement.type === 'SHAPE_CIRCLE') && (
-                  <>
-                    <div>
-                       <label style={styleLabel}>COR DE PREENCHIMENTO</label>
-                       <input type="color" value={selectedElement.style?.background} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, background: e.target.value } })} style={{ width: '100%', height: '40px', background: 'none', border: 'none', cursor: 'pointer' }} />
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                       <div><label style={styleLabel}>LARGURA</label><input type="number" value={selectedElement.w} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { w: parseInt(e.target.value) })} style={styleInput} /></div>
-                       <div><label style={styleLabel}>ALTURA</label><input type="number" value={selectedElement.h} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { h: parseInt(e.target.value) })} style={styleInput} /></div>
-                    </div>
-                  </>
-                )}
-
-                <div style={{ borderTop: '1px solid #1a1a1a', paddingTop: '20px' }}>
-                   <label style={styleLabel}>OPACIDADE ({selectedElement.style?.opacity})</label>
-                   <input type="range" min="0" max="1" step="0.1" value={selectedElement.style?.opacity} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, opacity: parseFloat(e.target.value) } })} style={{ width: '100%' }} />
+                {/* 🌈 SOMBRAS (PARA TODOS OS ELEMENTOS) */}
+                <div style={{ background: '#111', padding: '20px', borderRadius: '20px', border: '1px solid #222' }}>
+                   <label style={{ ...styleLabel, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}><Sun size={14} /> SOMBRA PROJETADA (DROP SHADOW)</label>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+                      <div><label style={{ fontSize: '0.6rem', color: '#666' }}>INTENSIDADE (BLUR)</label><input type="range" min="0" max="100" value={selectedElement.style?.shadowBlur} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, shadowBlur: parseInt(e.target.value) } })} style={{ width: '100%' }} /></div>
+                      <div><label style={{ fontSize: '0.6rem', color: '#666' }}>COR DA SOMBRA</label><input type="color" value={selectedElement.style?.shadowColor} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, shadowColor: e.target.value } })} style={{ width: '100%', height: '40px', background: 'none', border: 'none', cursor: 'pointer' }} /></div>
+                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
-                   <button onClick={() => deleteElement(selectedBlockId!, selectedElement.id)} style={{ flex: 1, background: '#1a1a1a', color: '#ff4444', border: '1px solid #222', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>EXCLUIR</button>
+                <div>
+                   <label style={styleLabel}>COR PRINCIPAL</label>
+                   <input type="color" value={selectedElement.type === 'TEXT' ? selectedElement.style?.color : selectedElement.style?.background} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, [selectedElement.type === 'TEXT' ? 'color' : 'background']: e.target.value } })} style={{ width: '100%', height: '50px', background: 'none', border: 'none', cursor: 'pointer' }} />
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                   <button onClick={() => deleteElement(selectedBlockId!, selectedElement.id)} style={{ flex: 1, background: '#1a1a1a', color: '#ff4444', border: '1px solid #222', padding: '15px', borderRadius: '15px', cursor: 'pointer', fontWeight: 'bold' }}>EXCLUIR</button>
                    <button onClick={() => {
                      const el = { ...selectedElement, id: Math.random().toString(36).substr(2, 9), x: selectedElement.x + 20, y: selectedElement.y + 20 };
-                     setBlocks(blocks.map(b => b.id === selectedBlockId ? { ...b, elements: [...b.elements, el] } : b));
-                     setSelectedElementId(el.id);
-                   }} style={{ flex: 1, background: '#1a1a1a', color: '#fff', border: '1px solid #222', padding: '12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>DUPLICAR</button>
+                     setBlocks(blocks.map(b => b.id === selectedBlockId ? { ...b, elements: [...b.elements, el] } : b)); addToHistory(blocks); setSelectedElementId(el.id);
+                   }} style={{ flex: 1, background: '#1a1a1a', color: '#fff', border: '1px solid #222', padding: '15px', borderRadius: '15px', cursor: 'pointer', fontWeight: 'bold' }}>COPIAR</button>
                 </div>
              </div>
            ) : selectedBlock ? (
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <h3 style={{ fontSize: '0.8rem', fontWeight: '950', color: config?.primaryColor }}>CONFIGURAÇÃO DA SEÇÃO</h3>
-                <div>
-                   <label style={styleLabel}>COR DE FUNDO DA SEÇÃO</label>
-                   <input type="color" value={selectedBlock.style?.background || '#050505'} onChange={e => updateBlockStyle(selectedBlock.id, { background: e.target.value })} style={{ width: '100%', height: '50px', background: 'none', border: 'none', cursor: 'pointer' }} />
-                </div>
-                <p style={{ fontSize: '0.7rem', color: '#444' }}>Dica: Clique em um elemento individual (texto ou forma) para editá-lo separadamente.</p>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: '950', color: config?.primaryColor }}>FUNDO DA SEÇÃO</h3>
+                <input type="color" value={selectedBlock.style?.background || '#050505'} onChange={e => { const nb = blocks.map(b=>b.id===selectedBlock.id?{...b,style:{...b.style,background:e.target.value}}:b); setBlocks(nb); addToHistory(nb); }} style={{ width: '100%', height: '60px', background: 'none', border: 'none', cursor: 'pointer' }} />
+                <p style={{ fontSize: '0.7rem', color: '#444' }}>Clique em um elemento para editar o design avançado.</p>
              </div>
            ) : (
-             <div style={{ textAlign: 'center', color: '#222', marginTop: '6rem' }}>
-                <MousePointer2 size={64} style={{ marginBottom: '20px', opacity: 0.2 }} />
-                <p style={{ fontWeight: 'bold' }}>Nada selecionado</p>
-                <p style={{ fontSize: '0.75rem', marginTop: '5px' }}>Clique em qualquer parte do site ao lado para começar a editar os elementos.</p>
+             <div style={{ textAlign: 'center', color: '#1a1a1a', marginTop: '10rem' }}>
+                <MousePointer2 size={80} style={{ marginBottom: '30px', opacity: 0.1 }} />
+                <p style={{ fontSize: '0.8rem', fontWeight: '900', color: '#333' }}>ESTÚDIO DE ELITE</p>
+                <p style={{ fontSize: '0.7rem' }}>Selecione um elemento para começar.</p>
              </div>
            )}
         </aside>
@@ -429,12 +396,12 @@ export default function VisualLiveBuilder() {
 }
 
 const tabStyle = (active: boolean) => ({
-  padding: '8px 20px', border: 'none', background: active ? '#222' : 'transparent', color: active ? '#fff' : '#444', borderRadius: '10px', fontSize: '0.7rem', fontWeight: '950', cursor: 'pointer', transition: 'all 0.2s'
+  padding: '10px 25px', border: 'none', background: active ? '#222' : 'transparent', color: active ? '#fff' : '#444', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '950', cursor: 'pointer', transition: 'all 0.3s'
 });
 
 const iconBtnStyle = (active: boolean) => ({
-  width: '36px', height: '36px', border: 'none', background: active ? 'rgba(255,255,255,0.05)' : 'transparent', color: active ? '#fff' : '#333', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+  width: '40px', height: '40px', border: 'none', background: active ? 'rgba(255,255,255,0.08)' : 'transparent', color: active ? '#fff' : '#444', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s'
 });
 
-const styleLabel = { fontSize: '0.65rem', color: '#444', fontWeight: '900', display: 'block', marginBottom: '8px', textTransform: 'uppercase' as const, letterSpacing: '1px' };
-const styleInput = { width: '100%', background: '#111', border: '1px solid #222', color: '#fff', padding: '12px', borderRadius: '10px', fontSize: '0.85rem', outline: 'none' };
+const styleLabel = { fontSize: '0.65rem', color: '#444', fontWeight: '950', display: 'block', marginBottom: '10px', textTransform: 'uppercase' as const, letterSpacing: '1.5px' };
+const styleInput = { width: '100%', background: '#111', border: '1px solid #222', color: '#fff', padding: '15px', borderRadius: '12px', fontSize: '0.9rem', outline: 'none', transition: 'border 0.2s' };
