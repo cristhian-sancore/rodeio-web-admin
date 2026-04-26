@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import Link from 'next/link'
 import { Trophy, TrendingUp, Play, Star, Award, Zap, ChevronRight, Users, PawPrint, ImageIcon, Layout } from 'lucide-react'
 import './landing.css'
-import { getTopHighlights, getCompetidorRanking, getChampionshipRanking } from '@/lib/ranking'
+import { getTopHighlights, getCompetidorRanking, getChampionshipRanking, getAnimalRanking } from '@/lib/ranking'
 import { getReplayFileMap } from '@/lib/gdrive'
 import { prisma } from '@/lib/db'
 import { VideoPlayer } from '@/components/VideoPlayer'
@@ -155,7 +155,7 @@ export default async function Home() {
                         fontWeight: el.style?.fontWeight || '900',
                         color: el.style?.color,
                         textAlign: el.style?.textAlign as any,
-                        fontFamily: config?.fontFamily
+                        fontFamily: config?.fontFamily || 'Inter'
                       }}>
                         {el.content}
                       </div>
