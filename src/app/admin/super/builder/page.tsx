@@ -237,8 +237,13 @@ export default function EliteVisualBuilder() {
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050505', color: '#fff', overflow: 'hidden' }}>
-      
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        .sidebar { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; max-width: 100vw !important; min-height: 100vh !important; }
+        header.mobile-header { display: none !important; }
+      `}} />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#050505', color: '#fff', overflow: 'hidden' }}>
       {/* 🚀 BARRA DE ELITE (TOP) */}
       <header style={{ height: '70px', background: '#0a0a0a', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 25px', zIndex: 100 }}>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
@@ -257,6 +262,22 @@ export default function EliteVisualBuilder() {
         </div>
 
         <div style={{ display: 'flex', gap: '15px' }}>
+           <button onClick={() => {
+             if(!confirm('Migrar apagará o design visual atual e ativará o modo de blocos padrão. Continuar?')) return;
+             const standardBlocks = [
+               { id: 'hero', type: 'HERO', visible: true, title: config?.homeHeroTitle || 'NOME DO EVENTO', subtitle: config?.homeHeroSubtitle || 'Subtítulo do evento', style: { background: '#0a0a0a', align: 'center' }, elements: [] },
+               { id: 'highlights', type: 'HIGHLIGHTS', visible: true, title: 'DESTAQUES DA ETAPA', subtitle: 'Os melhores resultados', style: { background: '#111', align: 'left', borderRadius: 12 }, elements: [] },
+               { id: 'rankings', type: 'RANKINGS', visible: true, title: 'RANKING GERAL', subtitle: 'Classificação oficial', style: { background: '#0a0a0a', align: 'left', borderRadius: 60 }, elements: [] }
+             ];
+             setBlocks(standardBlocks);
+             addToHistory(standardBlocks);
+           }} style={{
+             background: '#111', color: '#fff', border: '1px solid #222', padding: '12px 20px', 
+             borderRadius: '12px', fontWeight: '900', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px'
+           }}>
+             <Wand2 size={18} /> MIGRAR PADRÃO
+           </button>
+
            <button onClick={saveLayout} disabled={isSaving} style={{ 
              background: 'linear-gradient(135deg, #d4af37 0%, #aa8b2c 100%)', color: '#000', border: 'none', padding: '12px 30px', 
              borderRadius: '12px', fontWeight: '950', cursor: 'pointer', boxShadow: '0 8px 25px rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', gap: '10px'
@@ -377,9 +398,20 @@ export default function EliteVisualBuilder() {
              </div>
            ) : selectedBlock ? (
              <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                <h3 style={{ fontSize: '0.9rem', fontWeight: '950', color: config?.primaryColor }}>FUNDO DA SEÇÃO</h3>
-                <input type="color" value={selectedBlock.style?.background || '#050505'} onChange={e => { const nb = blocks.map(b=>b.id===selectedBlock.id?{...b,style:{...b.style,background:e.target.value}}:b); setBlocks(nb); addToHistory(nb); }} style={{ width: '100%', height: '60px', background: 'none', border: 'none', cursor: 'pointer' }} />
-                <p style={{ fontSize: '0.7rem', color: '#444' }}>Clique em um elemento para editar o design avançado.</p>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: '950', color: config?.primaryColor }}>CONFIGURAÇÕES DA SEÇÃO</h3>
+                <div>
+                  <label style={styleLabel}>TÍTULO DA SEÇÃO</label>
+                  <input value={selectedBlock.title || ''} onChange={e => { const nb = blocks.map(b=>b.id===selectedBlock.id?{...b,title:e.target.value}:b); setBlocks(nb); addToHistory(nb); }} style={styleInput} placeholder="Ex: NOME DO EVENTO" />
+                </div>
+                <div>
+                  <label style={styleLabel}>SUBTÍTULO</label>
+                  <input value={selectedBlock.subtitle || ''} onChange={e => { const nb = blocks.map(b=>b.id===selectedBlock.id?{...b,subtitle:e.target.value}:b); setBlocks(nb); addToHistory(nb); }} style={styleInput} placeholder="Ex: A maior plataforma" />
+                </div>
+                <div>
+                  <label style={styleLabel}>FUNDO DA SEÇÃO</label>
+                  <input type="color" value={selectedBlock.style?.background || '#050505'} onChange={e => { const nb = blocks.map(b=>b.id===selectedBlock.id?{...b,style:{...b.style,background:e.target.value}}:b); setBlocks(nb); addToHistory(nb); }} style={{ width: '100%', height: '60px', background: 'none', border: 'none', cursor: 'pointer' }} />
+                </div>
+                <p style={{ fontSize: '0.7rem', color: '#444' }}>Dica: Se a seção não tiver elementos visuais, este título e subtítulo serão usados no layout padrão responsivo.</p>
              </div>
            ) : (
              <div style={{ textAlign: 'center', color: '#1a1a1a', marginTop: '10rem' }}>
