@@ -12,7 +12,7 @@ import { authOptions } from '@/lib/auth';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER';
+  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER' || session?.user?.role === 'SUPER_ADMIN';
   
   const highlights = await getTopHighlights();
   
