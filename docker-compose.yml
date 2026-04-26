@@ -23,7 +23,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://rodeio_admin:rodeio_secure_pass_2026@db:5432/rodeio_db?schema=public
-      NEXTAUTH_URL: http://192.168.18.55:3000
+      NEXTAUTH_URL: https://rodeio.cristhiansancore.com.br
       NEXTAUTH_SECRET: rodeio-super-secret-key-2026
       AUTH_TRUST_HOST: "true"
       PRISMA_CLIENT_ENGINE_TYPE: library
