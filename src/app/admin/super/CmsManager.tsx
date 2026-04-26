@@ -19,22 +19,23 @@ export default function CmsManager({ config }: CmsManagerProps) {
 
     const formData = new FormData(e.currentTarget);
     
-    // Manter as outras configs enviando campos ocultos se necessário, 
-    // ou apenas garantir que saveConfig trate o que vier.
-    // Como saveConfig usa formData.get(), se o campo não existir, ele virá nulo.
-    // Para não perder as outras configs, vamos anexá-las se possível.
-    
-    // Adicionar campos existentes da config que não estão no form
+    // Lista de campos básicos que devem ser preservados da config atual
+    // para evitar que o saveConfig zere campos obrigatórios do banco.
+    const keysToPreserve = [
+      'numJuizes', 'titulo', 'vmixUrl', 'vmixInputNotaId', 'vmixInputChamadaId', 
+      'vmixInputRankingId', 'vmixReplayInputId', 'replayExportPath', 'vmixOverlayChannel',
+      'googleDriveFolderId', 'googleDriveApiKey', 'primaryColor', 'secondaryColor',
+      'fontFamily', 'logoUrl', 'homeLayout', 'siteLayouts'
+    ];
+
     if (config) {
-      Object.keys(config).forEach(key => {
-        if (!formData.has(key)) {
+      keysToPreserve.forEach(key => {
+        if (!formData.has(key) && config[key] !== undefined && config[key] !== null) {
           const val = config[key];
-          if (val !== null && val !== undefined) {
-             if (typeof val === 'object') {
-                formData.append(key, JSON.stringify(val));
-             } else {
-                formData.append(key, String(val));
-             }
+          if (typeof val === 'object') {
+            formData.append(key, JSON.stringify(val));
+          } else {
+            formData.append(key, String(val));
           }
         }
       });
