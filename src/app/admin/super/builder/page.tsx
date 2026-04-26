@@ -321,7 +321,17 @@ export default function EliteVisualBuilder() {
 
         {/* 🎭 PALCO (CENTER) */}
         <main style={{ flex: 1, background: '#000', overflowY: 'auto', padding: '50px', position: 'relative' }}>
-           <div style={{ width: previewMode === 'desktop' ? '1200px' : '375px', margin: '0 auto', transition: 'all 0.5s' }}>
+           <div style={{ width: previewMode === 'desktop' ? '1200px' : '375px', margin: '0 auto', transition: 'all 0.5s', fontFamily: config?.fontFamily || 'Inter' }}>
+              
+              {/* Navbar Fake para dar contexto de site */}
+              {activeTab === 'HOME' && (
+                <div style={{ height: '70px', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', marginBottom: '20px', opacity: 0.6 }}>
+                   <div style={{ color: config?.primaryColor || '#d4af37', fontWeight: 900, fontSize: '1.2rem' }}>{config?.titulo || 'RODEIO PRO'}</div>
+                   <div style={{ display: 'flex', gap: '20px', fontSize: '0.8rem', fontWeight: 700 }}>
+                      <span>AO VIVO</span><span>RANKINGS</span><span>COMPETIDORES</span>
+                   </div>
+                </div>
+              )}
               {blocks.map((block) => (
                 <section 
                   key={block.id}
@@ -371,6 +381,12 @@ export default function EliteVisualBuilder() {
                        try { const res = await removeBackgroundAction(selectedElement.content); updateElement(selectedBlockId!, selectedElement.id, { content: res }); } catch (e: any) { alert(e.message); }
                        btn.innerText = 'REMOVER FUNDO (AI)';
                     }} style={{ background: 'linear-gradient(90deg, #6366f1, #a855f7)', color: '#fff', border: 'none', padding: '12px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✨ REMOVER FUNDO (AI)</button>
+                  </div>
+                )}
+                {selectedElement.type !== 'TEXT' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div><label style={styleLabel}>LARGURA ({selectedElement.w}px)</label><input type="range" min="10" max="1200" value={selectedElement.w || 100} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { w: parseInt(e.target.value) })} style={{ width: '100%' }} /></div>
+                    <div><label style={styleLabel}>ALTURA ({selectedElement.h}px)</label><input type="range" min="10" max="1200" value={selectedElement.h || 100} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { h: parseInt(e.target.value) })} style={{ width: '100%' }} /></div>
                   </div>
                 )}
 
