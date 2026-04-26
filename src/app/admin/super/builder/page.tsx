@@ -423,7 +423,8 @@ export default function EliteVisualBuilder() {
         </aside>
 
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
