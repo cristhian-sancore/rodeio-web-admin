@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Layout, Plus, Trash2, Move, Save, Image as ImageIcon, Type, Palette, Layers, 
   Monitor, Smartphone, Eye, Settings, ChevronDown, ChevronUp, Copy, ArrowLeft, 
-  Search, X, Square, Circle, Triangle, MousePointer2, Maximize2
+  Search, X, Square, Circle, Triangle, MousePointer2, Maximize2, Wand2
 } from 'lucide-react';
 import Link from 'next/link';
 import { saveConfig } from '@/app/admin/etapas/actions';
+import { removeBackgroundAction } from './actions';
 
 // --- TIPOS DE ELEMENTOS (CANVA STYLE) ---
 const ELEMENT_TYPES = [
@@ -255,9 +256,25 @@ export default function CanvaBuilder() {
           </div>
           <div style={{ padding: '1rem', borderTop: '1px solid #1a1a1a' }}>
              <h3 style={{ fontSize: '0.7rem', color: '#444', fontWeight: '900', marginBottom: '1rem' }}>ESTILO GLOBAL</h3>
-             <select value={config?.fontFamily} onChange={e => setConfig({...config, fontFamily: e.target.value})} style={styleInput}>
-                {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
-             </select>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div>
+                   <label style={styleLabel}>FONTE PRINCIPAL</label>
+                   <select value={config?.fontFamily} onChange={e => setConfig({...config, fontFamily: e.target.value})} style={styleInput}>
+                      {FONTS.map(f => <option key={f} value={f}>{f}</option>)}
+                   </select>
+                </div>
+                <div>
+                   <label style={styleLabel}>CHAVE API REMOVE.BG</label>
+                   <input 
+                      type="password" 
+                      placeholder="Insira sua API Key" 
+                      value={config?.removeBgApiKey || ''} 
+                      onChange={e => setConfig({...config, removeBgApiKey: e.target.value})} 
+                      style={styleInput} 
+                   />
+                   <a href="https://www.remove.bg/api" target="_blank" style={{ fontSize: '0.55rem', color: '#6366f1', textDecoration: 'none', marginTop: '5px', display: 'block' }}>Pegar chave grátis aqui ↗</a>
+                </div>
+             </div>
           </div>
         </aside>
 
@@ -336,6 +353,50 @@ export default function CanvaBuilder() {
                       <input type="color" value={selectedElement.style?.background} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, background: e.target.value } })} style={{ width: '100%', height: '40px', border: 'none', background: 'none' }} />
                     </div>
                   </>
+                )}
+
+                {selectedElement.type === 'IMAGE' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <label style={styleLabel}>URL DA IMAGEM</label>
+                    <input 
+                      value={selectedElement.content} 
+                      onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })}
+                      style={styleInput}
+                    />
+                    <button 
+                      onClick={async () => {
+                        if (!config.removeBgApiKey) return alert('Por favor, configure a sua API KEY do Remove.bg na barra lateral esquerda.');
+                        
+                        try {
+                           const btn = document.activeElement as HTMLButtonElement;
+                           const originalText = btn.innerText;
+                           btn.innerText = '✨ PROCESSANDO IA...';
+                           btn.disabled = true;
+
+                           const transparentImage = await removeBackgroundAction(selectedElement.content);
+                           updateElement(selectedBlockId!, selectedElement.id, { content: transparentImage });
+                           
+                           btn.innerText = originalText;
+                           btn.disabled = false;
+                           alert('Mágica concluída! Fundo removido.');
+                        } catch (err: any) {
+                           alert('Erro na IA: ' + err.message);
+                           const btn = document.activeElement as HTMLButtonElement;
+                           btn.innerText = '✨ REMOVER FUNDO (AI)';
+                           btn.disabled = false;
+                        }
+                      }}
+                      style={{ 
+                        width: '100%', padding: '12px', borderRadius: '10px', 
+                        background: 'linear-gradient(90deg, #6366f1, #a855f7)', 
+                        color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                      }}
+                    >
+                      <Wand2 size={16} /> REMOVER FUNDO (AI)
+                    </button>
+                    <p style={{ fontSize: '0.6rem', color: '#444', textAlign: 'center' }}>Use imagens com fundo sólido para melhores resultados no modo automático.</p>
+                  </div>
                 )}
 
                 <div>

@@ -178,6 +178,7 @@ model Configuracao {
   secondaryColor      String?   @default("#111111")
   fontFamily          String?   @default("Inter")
   logoUrl             String?   @default("")
+  removeBgApiKey      String?   @default("")
 }
 
 model RoundReserva {
