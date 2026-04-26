@@ -455,6 +455,23 @@ export default function OverlayNotaPage() {
               <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>{overlayStyle.labelScore}</span>
               <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
           </div>
+
+          {/* ELEMENTOS CUSTOMIZADOS (CANVA STYLE) NO OVERLAY */}
+          {(config?.siteLayouts?.OVERLAYS?.find((b: any) => b.type === 'LOWER_THIRD')?.elements || []).map((el: any) => {
+             const elStyle: React.CSSProperties = {
+                position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, zIndex: el.zIndex || 1, opacity: el.style?.opacity || 1
+             };
+             if (el.type === 'SHAPE_RECT' || el.type === 'SHAPE_CIRCLE') {
+                return <div key={el.id} style={{ ...elStyle, background: el.style?.background, borderRadius: el.style?.borderRadius }} />;
+             }
+             if (el.type === 'IMAGE') {
+                return <img key={el.id} src={el.content} style={{ ...elStyle, objectFit: 'contain' }} alt="" />;
+             }
+             if (el.type === 'TEXT') {
+                return <div key={el.id} style={{ ...elStyle, fontSize: `${el.style?.fontSize || 24}px`, fontWeight: '900', color: el.style?.color, fontFamily: config?.fontFamily }}>{el.content}</div>;
+             }
+             return null;
+          })}
         </div>
       )}
 
