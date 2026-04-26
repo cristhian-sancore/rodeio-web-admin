@@ -79,16 +79,26 @@ export default async function CompetidorProfilePage({ params }: { params: Promis
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {competidor.montarias.map((m) => {
-          // Busca inteligente: procura qualquer arquivo que contenha o nome do competidor e do animal
-          const searchKeyComp = competidor.nome.toUpperCase();
-          const searchKeyAnimal = m.animal.nome.toUpperCase();
+          // Busca inteligente: procura qualquer arquivo que contenha o nome do competidor E do animal
+          const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+          const compNorm = normalize(competidor.nome);
+          const animalNorm = normalize(m.animal.nome);
+          
+          const checkMatch = (searchStr: string, targetStr: string) => {
+            const words = searchStr.split(' ').filter(w => w.length > 2);
+            if (words.length >= 2) {
+              return targetStr.includes(words[0]) && targetStr.includes(words[1]);
+            }
+            return targetStr.includes(searchStr);
+          };
           
           const replayFileEntry = Object.entries(replayMap).find(([name]) => {
-            const upName = name.toUpperCase();
-            // Removemos acentos e símbolos para uma busca mais robusta
-            const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return normalize(upName).includes(normalize(searchKeyComp)) && 
-                   normalize(upName).includes(normalize(searchKeyAnimal));
+            const upName = normalize(name);
+            return checkMatch(compNorm, upName) && checkMatch(animalNorm, upName);
+          }) || Object.entries(replayMap).find(([name]) => {
+            // Fallback: busca só pelo competidor se não achar com animal
+            const upName = normalize(name);
+            return checkMatch(compNorm, upName);
           });
           
           const replayFile = replayFileEntry ? replayFileEntry[1] : null;
