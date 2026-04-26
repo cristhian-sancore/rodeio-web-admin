@@ -6,6 +6,7 @@ import { getTopHighlights, getCompetidorRanking, getChampionshipRanking } from '
 import { getReplayFileMap } from '@/lib/gdrive'
 import { prisma } from '@/lib/db'
 import { VideoPlayer } from '@/components/VideoPlayer'
+import { NavbarPublic } from '@/components/NavbarPublic'
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -110,19 +111,7 @@ export default async function Home() {
 
   return (
     <div className="landing-body" style={{ fontFamily: config?.fontFamily || 'Inter' }}>
-      <nav className="landing-nav">
-        <div className="nav-container">
-          <Link href="/" className="nav-logo" style={{ color: primaryColor }}>
-            {config?.titulo || "Rodeio Pro"}
-          </Link>
-          <div className="nav-links">
-            <Link href="/live"><TrendingUp size={18} /> AO VIVO</Link>
-            <Link href="/ranking"><Trophy size={18} /> RANKINGS</Link>
-            <Link href="/competidores"><Users size={18} /> COMPETIDORES</Link>
-            <Link href="/animais"><PawPrint size={18} /> BOIADA</Link>
-          </div>
-        </div>
-      </nav>
+      <NavbarPublic />
 
       {layout.filter(block => block.visible).map((block) => {
         const bStyle = block.style || {};

@@ -40,7 +40,18 @@ export function NavbarPublic() {
           </div>
 
           <div className="nav-actions-desktop">
-            <Link href="/admin" className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>ACESSO ADMIN</Link>
+            <Link href="/admin" className="btn-primary" style={{ 
+              padding: '0.6rem 1.5rem', 
+              fontSize: '0.75rem', 
+              borderRadius: '50px',
+              fontWeight: 900,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 0 20px rgba(212, 175, 55, 0.3)'
+            }}>
+              <Users size={14} /> ACESSO RESTRITO
+            </Link>
           </div>
 
           {/* Mobile Toggle */}
@@ -51,11 +62,12 @@ export function NavbarPublic() {
 
         {/* Mobile Menu Overlay */}
         <div className={`nav-links-mobile ${isOpen ? 'active' : ''}`}>
+          <Link href="/" onClick={closeMenu} className="mobile-link"><Home size={24} /> INÍCIO</Link>
           <Link href="/live" onClick={closeMenu} className="mobile-link"><TrendingUp size={24} /> AO VIVO</Link>
           <Link href="/ranking" onClick={closeMenu} className="mobile-link"><Trophy size={24} /> RANKINGS</Link>
           <Link href="/competidores" onClick={closeMenu} className="mobile-link"><Users size={24} /> COMPETIDORES</Link>
           <Link href="/animais" onClick={closeMenu} className="mobile-link"><Cat size={24} /> BOIADA</Link>
-          <Link href="/admin" onClick={closeMenu} className="mobile-link admin-link">ACESSO ADMIN</Link>
+          <Link href="/admin" onClick={closeMenu} className="mobile-link admin-link" style={{ background: 'var(--primary)', color: '#000' }}>ACESSO RESTRITO</Link>
         </div>
       </nav>
 
