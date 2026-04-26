@@ -2,7 +2,9 @@
   "name": "Rodeio Digital - Painel do Juiz",
   "short_name": "Juiz RD",
   "description": "Painel profissional para lançamento de notas de rodeio.",
+  "id": "/juiz/dashboard",
   "start_url": "/juiz/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#d4af37",
@@ -11,14 +13,13 @@
       "src": "/hero-rodeo.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/hero-rodeo.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
-  ],
-  "orientation": "portrait",
-  "scope": "/"
+  ]
 }

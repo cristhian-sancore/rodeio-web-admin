@@ -53,8 +53,19 @@ export default async function RootLayout({
           }
         `}} />
       </head>
-      <body>
+      <body className="antialiased">
         <Providers>{children}</Providers>
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('SW registrado com sucesso: ', registration.scope);
+              }, function(err) {
+                console.log('Falha no registro do SW: ', err);
+              });
+            });
+          }
+        `}} />
       </body>
     </html>
   );
