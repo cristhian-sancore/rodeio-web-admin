@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, AlertTriangle, Lock, Monitor } from 'lucide-react';
 import { updateMontariaNota, applyRepasse, sendManualToOverlay } from '@/app/admin/etapas/actions';
+import RideTriangle from './RideTimer';
 import RideTimer from './RideTimer';
+import { VideoPlayer } from '@/components/VideoPlayer';
 
 interface ScoringFormProps {
   montaria: any;
@@ -13,6 +15,8 @@ interface ScoringFormProps {
   currentRankText: string;
   isAdmin: boolean;
   user: any;
+  replayMap?: Record<string, { id: string, thumb: string | null }>;
+  hasGDriveConfig?: boolean;
 }
 
 export default function ScoringForm({ 
@@ -22,7 +26,9 @@ export default function ScoringForm({
   notaMaxima, 
   currentRankText,
   isAdmin,
-  user
+  user,
+  replayMap = {},
+  hasGDriveConfig = false
 }: ScoringFormProps) {
   const [jStatus, setJStatus] = useState<any[]>([]);
   const [tempo, setTempo] = useState(montaria.tempo || 0);
@@ -106,6 +112,19 @@ export default function ScoringForm({
     }
   };
 
+  const searchKeyComp = montaria.competidor.nome.toUpperCase();
+  const searchKeyAnimal = montaria.animal.nome.toUpperCase();
+  
+  const replayFileEntry = Object.entries(replayMap).find(([name]) => {
+    const upName = name.toUpperCase();
+    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return normalize(upName).includes(normalize(searchKeyComp)) && 
+           normalize(upName).includes(normalize(searchKeyAnimal));
+  });
+  
+  const replayFile = replayFileEntry ? replayFileEntry[1] : null;
+  const localName = replayFileEntry ? replayFileEntry[0] : null;
+
   return (
     <form action={updateMontariaNota} onSubmit={handleSubmit}>
       <input type="hidden" name="montariaId" value={montaria.id} />
@@ -173,7 +192,7 @@ export default function ScoringForm({
                     name={`j${num}Peao`} 
                     type="number" 
                     step="0.25" 
-                    value={notas[pKey] || ''} 
+                    defaultValue={(notas[pKey] || 0).toFixed(2)}
                     onChange={e => setNotas({...notas, [pKey]: parseFloat(e.target.value) || 0})}
                     readOnly={!canEdit} 
                     style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
@@ -185,7 +204,7 @@ export default function ScoringForm({
                     name={`j${num}Animal`} 
                     type="number" 
                     step="0.25" 
-                    value={notas[aKey] || ''} 
+                    defaultValue={(notas[aKey] || 0).toFixed(2)}
                     onChange={e => setNotas({...notas, [aKey]: parseFloat(e.target.value) || 0})}
                     readOnly={!canEdit} 
                     style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 

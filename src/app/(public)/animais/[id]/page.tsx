@@ -128,6 +128,7 @@ export default async function AnimalProfilePage({ params }: { params: Promise<{ 
                   <VideoPlayer 
                     videoId={replayFile.id} 
                     thumbnail={replayFile.thumb}
+                    localFileName={replayFileEntry[0]}
                   />
                 </div>
               )}

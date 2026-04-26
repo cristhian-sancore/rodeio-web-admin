@@ -57,7 +57,8 @@ export async function getOverlayDataPayload() {
     }
 
     // --- CÁLCULO DE ESTATÍSTICAS PARA A CHAMADA ---
-    const champRank = await getChampionshipRanking(montaria.round.etapaId);
+    const etapaFull = await prisma.etapa.findUnique({ where: { id: montaria.etapaId }, select: { temporadaId: true } });
+    const champRank = await getChampionshipRanking(etapaFull?.temporadaId || 1);
     const myChampPos = (champRank?.list as any[])?.find(r => r.competidorId === montaria.competidorId);
     
     const paradas = montaria.competidor.montarias.filter(m => m.notaTotal > 8).length; // Consideramos parada nota > 8
@@ -92,29 +93,29 @@ export async function getOverlayDataPayload() {
 
         etapaRank: (stageRankData.rank || 0) > 0 ? `${stageRankData.rank}º` : '---',
         etapaDiff: (stageRankData.rank || 0) > 1 ? `-${(stageRankData.diff || 0).toFixed(2)}` : (stageRankData.rank === 1 ? 'LÍDER' : ''),
-        etapaNotaAcumulada: (stageRankData.notaAcumulada || 0).toFixed(1),
+        etapaNotaAcumulada: (stageRankData.notaAcumulada || 0).toFixed(2),
         roundNumero: montaria.round.numero,
         
         // --- NOTAS INDIVIDUAIS E NOMES DOS JUIZES ---
         j1Nome: montaria.round.juiz1?.nome || 'J1',
         j1P: montaria.j1Peao,
         j1A: montaria.j1Animal,
-        j1Total: (montaria.j1Peao + montaria.j1Animal).toFixed(1),
+        j1Total: (montaria.j1Peao + montaria.j1Animal).toFixed(2),
 
         j2Nome: montaria.round.juiz2?.nome || 'J2',
         j2P: montaria.j2Peao,
         j2A: montaria.j2Animal,
-        j2Total: (montaria.j2Peao + montaria.j2Animal).toFixed(1),
+        j2Total: (montaria.j2Peao + montaria.j2Animal).toFixed(2),
 
         j3Nome: montaria.round.juiz3?.nome || 'J3',
         j3P: montaria.j3Peao,
         j3A: montaria.j3Animal,
-        j3Total: (montaria.j3Peao + montaria.j3Animal).toFixed(1),
+        j3Total: (montaria.j3Peao + montaria.j3Animal).toFixed(2),
 
         j4Nome: montaria.round.juiz4?.nome || 'J4',
         j4P: montaria.j4Peao,
         j4A: montaria.j4Animal,
-        j4Total: (montaria.j4Peao + montaria.j4Animal).toFixed(1),
+        j4Total: (montaria.j4Peao + montaria.j4Animal).toFixed(2),
 
         total: montaria.notaTotal.toFixed(2),
         tempo: montaria.tempo.toFixed(2),

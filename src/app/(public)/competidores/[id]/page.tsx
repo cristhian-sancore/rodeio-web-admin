@@ -135,6 +135,7 @@ export default async function CompetidorProfilePage({ params }: { params: Promis
                   <VideoPlayer 
                     videoId={replayFile.id} 
                     thumbnail={replayFile.thumb}
+                    localFileName={replayFileEntry[0]}
                   />
                 </div>
               )}

@@ -135,16 +135,16 @@ export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<st
 
     // 4. Exportar Replay (Se configurado)
     if (config.replayExportPath) {
-      // IMPORTANTE: No vMix, o Value do ReplayExportLastEvent é a PASTA de destino.
-      // Se enviarmos um caminho com nome de arquivo, ele cria uma pasta com esse nome.
-      // Portanto, enviamos apenas o diretório base. O vMix usará o 'Description' tagueado acima como nome do arquivo.
+      // O vMix usará o 'Description' tagueado acima como nome do arquivo.
+      replayFileName = `${description}.mp4`;
+
       const vmixSafePath = config.replayExportPath.replace(/\//g, '\\');
 
       await callVMix(baseUrl, 'ReplayExportLastEvent', { 
          Input: config.vmixReplayInputId,
          Value: vmixSafePath
       });
-      console.log(`[vMix] Comando de exportação enviado para a pasta: ${vmixSafePath}`);
+      console.log(`[vMix] Comando de exportação enviado: ${replayFileName}`);
     }
   }
 

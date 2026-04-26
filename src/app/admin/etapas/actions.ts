@@ -15,6 +15,133 @@ import { getSafeConfig } from "@/lib/config-safe";
 import pdf from "pdf-parse";
 import { Buffer } from "buffer";
 
+export async function importPdfAction(formData: FormData) {
+  const file = formData.get('file') as File;
+  const roundId = parseInt(formData.get('roundId') as string);
+  const etapaId = parseInt(formData.get('etapaId') as string);
+
+  if (!file || !roundId || !etapaId) return { success: false, error: 'Dados incompletos' };
+
+  try {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // --- MOTOR DE EXTRAÇÃO SMART PIPE (SENSÍVEL) ---
+    const data = await pdf(buffer, {
+      pagerender: (pageData: any) => {
+        return pageData.getTextContent().then((textContent: any) => {
+          let lastY: number | undefined;
+          let lastX: number | undefined;
+          let text = '';
+          for (let item of textContent.items) {
+            const x = item.transform[4];
+            const y = item.transform[5];
+            
+            if (lastY !== undefined && Math.abs(lastY - y) > 5) {
+              text += '\n';
+            } else if (lastX !== undefined && (x - lastX) > 12) { // 12 unidades de gap (mais sensível)
+              text += ' | '; 
+            } else if (lastX !== undefined && (x - lastX) > 1) {
+              text += ' ';
+            }
+            
+            text += item.str;
+            lastY = y;
+            lastX = x + (item.width || (item.str.length * 4)); 
+          }
+          return text;
+        });
+      }
+    });
+
+    const rawText = data.text;
+    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 5); // Ignora linhas muito curtas
+    let importedCount = 0;
+
+    console.log(`--- DEBUG PDF RAW (PRIMEIRAS 5 LINHAS) ---`);
+    lines.slice(0, 10).forEach(l => console.log(`[RAW]: ${l}`));
+
+    for (const line of lines) {
+      const parts = line.split('|').map(p => p.trim()).filter(p => p.length > 0);
+      if (parts.length === 0) continue;
+
+      let num = "";
+      let nomeCompetidor = "";
+      let nomeAnimal = "";
+      let ciaDetectada = "NÃO INFORMADA";
+
+      // Tentar extrair número da primeira parte (pode estar colado: "1 CARLOS")
+      const firstPart = parts[0];
+      const matchNum = firstPart.match(/^(\d+)\s*(.*)$/);
+      
+      if (matchNum) {
+         num = matchNum[1];
+         const remainder = matchNum[2].trim();
+         
+         if (remainder.length > 0) {
+            // Caso: "1 CARLOS RAFAEL LANA | TOURO | CIA"
+            nomeCompetidor = remainder;
+            nomeAnimal = parts[1] || "A DEFINIR";
+            ciaDetectada = parts[2] || "NÃO INFORMADA";
+         } else if (parts.length >= 3) {
+            // Caso: "1 | CARLOS RAFAEL LANA | TOURO | CIA"
+            nomeCompetidor = parts[1];
+            nomeAnimal = parts[2];
+            ciaDetectada = parts[3] || "NÃO INFORMADA";
+         }
+
+         // Validar se não é cabeçalho
+         if (nomeCompetidor.toUpperCase().includes("NOME") || nomeAnimal.toUpperCase().includes("TOURO")) continue;
+         if (nomeCompetidor.length < 3) continue;
+
+         console.log(`[IMPORT] -> Atleta: ${nomeCompetidor} | Touro: ${nomeAnimal} | Cia: ${ciaDetectada}`);
+
+         // Gravar no Banco
+         let competidor = await p.competidor.findFirst({ where: { nome: { equals: nomeCompetidor, mode: 'insensitive' } } });
+         if (!competidor) competidor = await p.competidor.create({ data: { nome: nomeCompetidor, ranking: 0 } });
+
+         let animal = await p.animal.findFirst({ where: { nome: { equals: nomeAnimal, mode: 'insensitive' } } });
+         if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada } });
+
+         const existing = await p.montaria.findFirst({ where: { competidorId: competidor.id, roundId, removida: false } });
+         if (!existing) {
+           await p.montaria.create({ data: { competidorId: competidor.id, animalId: animal.id, roundId, etapaId } });
+           importedCount++;
+         }
+      }
+
+      // Caso 2: Reservas (R1 | NOME | CIA)
+      if (firstPart.toUpperCase().startsWith('R')) {
+         const matchR = firstPart.match(/R(\d+)\s*(.*)/i);
+         if (matchR) {
+            const ordem = parseInt(matchR[1]);
+            const remainder = matchR[2].trim();
+            let content = remainder || parts[1] || "RESERVA";
+            let ciaRes = remainder ? (parts[1] || "RESERVA") : (parts[2] || "RESERVA");
+
+            if (content.toUpperCase().includes("RESERVA")) continue;
+
+            console.log(`[IMPORT-RES] -> Touro: ${content} | Cia: ${ciaRes}`);
+
+            let animal = await p.animal.findFirst({ where: { nome: { equals: content, mode: 'insensitive' } } });
+            if (!animal) animal = await p.animal.create({ data: { nome: content, companhia: ciaRes } });
+
+            const existingRes = await p.roundReserva.findFirst({ where: { roundId, animalId: animal.id } });
+            if (!existingRes) {
+              await p.roundReserva.create({ data: { roundId, animalId: animal.id, ordem } });
+            }
+         }
+      }
+    }
+
+    revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+    return { success: true, count: importedCount };
+  } catch (err: any) {
+    console.error('Erro no processamento do PDF:', err);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function createRound(etapaId: number, numero: number, juiz1Id?: number, juiz2Id?: number, juiz3Id?: number, juiz4Id?: number, modalidade?: string, dataAgenda?: Date) {
   const cleanId = (id?: any) => {
     const parsed = parseInt(String(id));
@@ -373,6 +500,7 @@ export async function saveConfig(formData: FormData) {
         replayExportPath: formData.get('replayExportPath') as string,
         vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
         googleDriveFolderId: (formData.get('googleDriveFolderId') as string) || null,
+        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null,
         homeHeroTitle: formData.get('homeHeroTitle') as string,
         homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
         homeHeroImage: formData.get('homeHeroImage') as string,
@@ -767,28 +895,7 @@ export async function updateRound(formData: FormData) {
 export async function updateMontariaAtiva(montariaId: number | null) {
   const currentConfig = await prisma.configuracao.findFirst();
   
-  // Se estiver tentando ativar uma NOVA montaria (diferente da atual)
-  if (montariaId && currentConfig?.montariaAtivaId && currentConfig.montariaAtivaId !== montariaId) {
-    const activeMontaria = await prisma.montaria.findUnique({
-      where: { id: currentConfig.montariaAtivaId },
-      include: { round: true }
-    });
-
-    if (activeMontaria && !activeMontaria.desclassificado) {
-      const numJuizes = currentConfig.numJuizes || 2;
-      let pendente = false;
-
-      if (numJuizes >= 1 && activeMontaria.j1Animal === 0) pendente = true;
-      if (numJuizes >= 2 && activeMontaria.j2Animal === 0) pendente = true;
-      if (numJuizes >= 3 && activeMontaria.j3Animal === 0) pendente = true;
-      if (numJuizes >= 4 && activeMontaria.j4Animal === 0) pendente = true;
-
-      if (pendente) {
-        throw new Error("AGUARDANDO_NOTAS_JUIZES");
-      }
-    }
-  }
-
+  // Lógica de ativação simplificada (Permitir troca livre para o Admin)
   await prisma.configuracao.upsert({
     where: { id: currentConfig?.id || 1 },
     update: { montariaAtivaId: montariaId },
@@ -804,13 +911,13 @@ export async function updateMontariaAtiva(montariaId: number | null) {
       const config = await prisma.configuracao.findFirst();
 
       if (montaria && config?.vmixUrl) {
+        const { getCompetidorStageRank } = await import('@/lib/ranking');
         const rankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
         
         await sendToVMix(config as any, {
           competidor: montaria.competidor.nome,
           animal: montaria.animal.nome,
           etapaNome: (montaria as any).etapa?.nome,
-          j1: 0, j2: 0, j3: 0, j4: 0, // Notas iniciais zeradas
           total: 0,
           etapaRank: rankData.rank > 0 ? `${rankData.rank}º` : '---'
         });
@@ -879,15 +986,20 @@ export async function updateRankingMode(mode: string | null) {
   revalidatePath('/api/overlay/current');
 }
 
-export async function updateRankingPage(delta: number) {
+export async function updateRankingPage(delta: number, totalItems: number = 1000) {
   try {
     const config = await getSafeConfig();
     if (!config) return;
 
+    const itemsPerPage = 10;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+
     // Garante que rankingPage seja tratado como número para evitar NaN
     const currentPage = typeof config.rankingPage === 'number' ? config.rankingPage : 0;
     let newPage = currentPage + delta;
+    
     if (newPage < 0) newPage = 0;
+    if (totalPages > 0 && newPage >= totalPages) newPage = totalPages - 1;
 
     // Usamos SQL puro para contornar o cache do Prisma Client no servidor Next.js
     await prisma.$executeRawUnsafe(

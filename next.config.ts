@@ -10,11 +10,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ["rodeio.cristhiansancore.com.br", "localhost:3000"]
+      allowedOrigins: ["rodeio.cristhiansancore.com.br", "localhost:3000", "192.168.18.55:3000"]
     }
   },
   // Ensure development through proxy works
-  allowedDevOrigins: ["rodeio.cristhiansancore.com.br"]
+  allowedDevOrigins: ["rodeio.cristhiansancore.com.br", "192.168.18.55", "192.168.18.55:3000"]
 };
 
 export default nextConfig;

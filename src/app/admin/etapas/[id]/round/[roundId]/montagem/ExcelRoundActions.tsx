@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Upload, Download, CheckCircle2, AlertCircle, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { importRoundMontariasAction, importRoundPdfAction } from '../../../../actions';
+import { importRoundMontariasAction, importPdfAction } from '../../../../actions';
 
 interface ExcelRoundActionsProps {
   roundId: number;
@@ -26,7 +26,7 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
     XLSX.writeFile(wb, `sorteio_round_${roundId}.xlsx`);
   };
 
-  const handlePdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -35,15 +35,19 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('roundId', roundId.toString());
+    formData.append('etapaId', etapaId.toString());
 
     try {
-      const res = await importRoundPdfAction(roundId, etapaId, formData);
-      setResult(res as any);
+      const res = await importPdfAction(formData);
       if (res.success) {
+        setResult({ success: true, count: res.count || 0 });
         setTimeout(() => setResult(null), 10000);
+      } else {
+        setResult({ success: false, count: 0, error: res.error });
       }
     } catch (err) {
-      alert("Erro ao processar PDF.");
+      setResult({ success: false, count: 0, error: "Erro no processamento" });
     } finally {
       setLoading(false);
       e.target.value = '';
@@ -94,24 +98,23 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
           <Download size={16} /> Exportar
         </button>
 
+        {/* BOTÃO PDF OFICIAL */}
         <div style={{ position: 'relative' }}>
           <input 
             type="file" 
             accept=".pdf" 
-            onChange={handlePdfImport}
-            style={{ 
-              position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 
-            }} 
+            onChange={handlePdfUpload}
+            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} 
             disabled={loading}
           />
           <button 
             className="btn-primary" 
             style={{ 
-              background: '#e74c3c', color: '#fff', 
+              background: '#e74c3c', color: '#fff', border: 'none',
               padding: '0.6rem 1rem', fontSize: '0.85rem' 
             }}
           >
-            <FileText size={16} /> {loading ? 'Lendo PDF...' : 'Importar PDF'}
+            <FileText size={16} /> {loading ? 'Lendo...' : 'IMPORTAR PDF'}
           </button>
         </div>
 
@@ -120,9 +123,7 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
             type="file" 
             accept=".xlsx, .xls, .csv" 
             onChange={handleImport}
-            style={{ 
-              position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 
-            }} 
+            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', zIndex: 10 }} 
             disabled={loading}
           />
           <button 
@@ -132,7 +133,7 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
               padding: '0.6rem 1rem', fontSize: '0.85rem' 
             }}
           >
-            <Upload size={16} /> {loading ? '...' : 'Importar Excel'}
+            <Upload size={16} /> {loading ? '...' : 'IMPORTAR EXCEL'}
           </button>
         </div>
       </div>
@@ -148,21 +149,10 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
           {result.error && <div style={{ color: '#ff4444' }}>{result.error}</div>}
           
           {result.success && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', color: result.success ? '#4CAF50' : '#ff4444', marginBottom: '0.5rem' }}>
-             {result.success ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
-             {result.count} montarias importadas com sucesso!
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'bold', color: '#4CAF50' }}>
+             <CheckCircle2 size={18} /> {result.count} montarias importadas!
           </div>
           )}
-          
-          {result.totalErrors && result.totalErrors > 0 ? (
-            <div style={{ color: '#ffbb33', marginTop: '0.5rem' }}>
-               <strong>Atenção ({result.totalErrors} erros):</strong>
-               <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
-                  {result.errors?.map((err, i) => <li key={i}>{err}</li>)}
-                  {result.totalErrors > 5 && <li>... e outros {result.totalErrors - 5} erros.</li>}
-               </ul>
-            </div>
-          ) : null}
         </div>
       )}
 

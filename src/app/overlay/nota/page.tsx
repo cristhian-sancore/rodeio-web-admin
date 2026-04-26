@@ -182,7 +182,7 @@ export default function OverlayNotaPage() {
         nameRef.current.style.transform = 'none';
         
         const nameWidth = nameRef.current.scrollWidth;
-        const maxAllowed = 800; // Pixels máximos até encostar nas notas
+        const maxAllowed = 650; // Pixels máximos até encostar nas notas
         
         if (nameWidth > maxAllowed) {
             setNameScale(maxAllowed / nameWidth);
@@ -251,8 +251,6 @@ export default function OverlayNotaPage() {
     return () => cancelAnimationFrame(animationFrameId);
   }, [data?.timerRunning, data?.timerStartedAt]);
 
-
-
   if (!visible && !data) return null;
 
   const mode = data?.mode || 'ID';
@@ -267,9 +265,9 @@ export default function OverlayNotaPage() {
   } : null;
 
   const formatScore = (val: any) => {
-    if (val === undefined || val === null) return '0';
+    if (val === undefined || val === null) return '0.00';
     const n = parseFloat(String(val));
-    return isNaN(n) ? val : (n % 1 === 0 ? n.toFixed(0) : n.toString());
+    return isNaN(n) ? val : n.toFixed(2);
   };
 
   return (
@@ -397,17 +395,25 @@ export default function OverlayNotaPage() {
                     <tr style={{ borderBottom: '3px solid var(--accent)' }}>
                         <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>POS</th>
                         <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'left' }}>NOME / INFO</th>
+                        <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'center' }}>DIF. LÍDER</th>
                         <th style={{ color: 'var(--accent)', fontSize: '1.2rem', padding: '15px', textAlign: 'right' }}>NOTA</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {displayRanking.list.map((r) => (
-                        <tr key={r.pos} style={{ borderBottom: '1px solid rgba(212,175,55,0.2)', height: '70px' }}>
-                            <td style={{ color: 'var(--accent)', fontSize: '2.5rem', fontWeight: 900 }}>#{r.pos}</td>
+                    {displayRanking.list.map((r: any, idx: number) => (
+                        <tr key={r.pos} style={{ 
+                            background: idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent',
+                            borderBottom: '1px solid rgba(212,175,55,0.1)', 
+                            height: '75px' 
+                        }}>
+                            <td style={{ color: 'var(--accent)', fontSize: '2.5rem', fontWeight: 900, paddingLeft: '20px' }}>{r.pos}°</td>
                             <td style={{ color: '#fff', fontSize: '2rem', fontWeight: 700 }}>
                                 {r.nome} <span style={{ fontSize: '1.2rem', color: '#888', fontWeight: 400 }}>{r.info}</span>
                             </td>
-                            <td style={{ color: 'var(--accent)', fontSize: '2.8rem', fontWeight: 900, textAlign: 'right' }}>{r.nota}</td>
+                            <td style={{ color: r.pos === 1 ? 'var(--primary)' : '#ff4444', fontSize: '2rem', fontWeight: 900, textAlign: 'center' }}>
+                               {r.pos === 1 ? 'LÍDER' : `-${r.diff}`}
+                            </td>
+                            <td style={{ color: 'var(--accent)', fontSize: '2.8rem', fontWeight: 900, textAlign: 'right', paddingRight: '20px' }}>{r.nota}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -421,10 +427,10 @@ export default function OverlayNotaPage() {
         <div className={`nota-container ${(shouldHideLowerThird || lowerThirdForcedHide) ? 'hidden' : ''}`}>
           {/* HEADER BADGES (RANK E DIFF) */}
           <div className="header-badges">
-            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">{overlayStyle.labelRank}: #{d.etapaRank}</div>}
+            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">{overlayStyle.labelRank}: {d.etapaRank}°</div>}
             {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">{overlayStyle.labelDiff}: {d.etapaDiff}</div>}
             {!data?.rankingCongelado && d?.etapaNotaAcumulada && (d.roundNumero || 0) > 1 && parseFloat(d.etapaNotaAcumulada) > 0 && (
-              <div className="badge badge-acumulada" style={{ background: 'var(--accent)', color: '#000' }}>SOMA ETAPA: {d.etapaNotaAcumulada}</div>
+              <div className="badge badge-acumulada" style={{ background: 'var(--accent)', color: '#000' }}>SOMA ETAPA: {parseFloat(d.etapaNotaAcumulada).toFixed(2)}</div>
             )}
           </div>
 
@@ -453,7 +459,7 @@ export default function OverlayNotaPage() {
           </div>
           <div className="final-score-card">
               <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>{overlayStyle.labelScore}</span>
-              <div className="total-value">{d.desclassificado ? '00.0' : formatScore(d.total)}</div>
+              <div className="total-value">{d.desclassificado ? '0.00' : formatScore(d.total)}</div>
           </div>
 
           {/* ELEMENTOS CUSTOMIZADOS (CANVA STYLE) NO OVERLAY */}
@@ -485,7 +491,7 @@ export default function OverlayNotaPage() {
               <h1 style={{ fontSize: '7rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 0.85, margin: '20px 0 0', color: '#fff' }}>{d.competidor}</h1>
               <div style={{ fontSize: '4rem', color: 'var(--accent)', fontWeight: 800, margin: '10px 0', textTransform: 'uppercase' }}>{d.animal}</div>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '50px' }}>
-                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>RANKING</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>#{d.competidorRankChamp || '---'}</span></div>
+                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>RANKING</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorRankChamp || '---'}</span></div>
                 <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>PARADAS</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorParadas || '0%'}</span></div>
                 <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>MÉDIA BOI</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.animalMedia || '0'}</span></div>
               </div>

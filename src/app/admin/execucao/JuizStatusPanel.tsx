@@ -98,12 +98,12 @@ export default function JuizStatusPanel({ montariaId, numJuizes }: { montariaId:
               <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                 <div>
                   <div style={{ fontSize: '0.5rem', color: '#666' }}>PEÃO</div>
-                  <div style={{ fontSize: '1rem', fontWeight: '900', color: '#22c55e' }}>{j.notaPeao.toFixed(1)}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: '900', color: '#22c55e' }}>{j.notaPeao.toFixed(2)}</div>
                 </div>
                 <div style={{ borderLeft: '1px solid #333', margin: '0 0.25rem' }} />
                 <div>
                   <div style={{ fontSize: '0.5rem', color: '#666' }}>TOURO</div>
-                  <div style={{ fontSize: '1rem', fontWeight: '900', color: '#22c55e' }}>{j.notaAnimal.toFixed(1)}</div>
+                  <div style={{ fontSize: '1rem', fontWeight: '900', color: '#22c55e' }}>{j.notaAnimal.toFixed(2)}</div>
                 </div>
               </div>
             ) : (

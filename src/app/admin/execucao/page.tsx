@@ -19,6 +19,7 @@ import {
 import SumulaList from "./SumulaList";
 import { getCompetidorStageRank, getOverlayRankingData } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
+import { getReplayFileMap } from "@/lib/gdrive";
 import RideTimer from "./RideTimer";
 import JuizStatusPanel from "./JuizStatusPanel";
 import ScoringForm from "./ScoringForm";
@@ -158,6 +159,24 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
   if (selectedMontaria) {
     const rankData = await getCompetidorStageRank(round.etapaId, selectedMontaria.competidorId);
     currentRankText = rankData.rank > 0 ? `${rankData.rank}º` : "---";
+  }
+  
+  // Cálculo de Total de Páginas para o Ranking
+  let rankingTotalItems = 0;
+  if (config.rankingMode && config.rankingMode !== 'OFF') {
+     const rd = await getOverlayRankingData(config.rankingMode, rId, round.etapaId, round.etapa.temporadaId);
+     rankingTotalItems = rd?.list?.length || 0;
+  }
+  const totalPages = Math.ceil(rankingTotalItems / 10);
+  const currentPage = (config as any).rankingPage || 0;
+
+  // Busca de Replays do Google Drive
+  let replayMap: Record<string, { id: string, thumb: string | null }> = {};
+  const folderId = (config as any)?.googleDriveFolderId;
+  const apiKey = (config as any)?.googleDriveApiKey;
+  
+  if (folderId && apiKey) {
+    replayMap = await getReplayFileMap(folderId);
   }
 
   // Ação agora importada de "../etapas/actions"
@@ -301,12 +320,30 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'center' }}>
             {/* CONTROLE DE PAGINAÇÃO MANUAL */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#000', padding: '5px 15px', borderRadius: '8px', border: '1px solid #333' }}>
-              <button formAction={updateRankingPage.bind(null, -1)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>◄ Anterior</button>
+              <button 
+                formAction={updateRankingPage.bind(null, -1, rankingTotalItems)} 
+                className="btn-secondary" 
+                style={{ padding: '5px 10px', fontSize: '0.8rem', opacity: currentPage === 0 ? 0.3 : 1 }}
+                disabled={currentPage === 0}
+              >
+                ◄ Anterior
+              </button>
+              
               <div style={{ textAlign: 'center', minWidth: '80px' }}>
                  <div style={{ fontSize: '0.6rem', color: '#666' }}>PÁGINA</div>
-                 <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--primary)' }}>{((config as any).rankingPage || 0) + 1}</div>
+                 <div style={{ fontSize: '1rem', fontWeight: 'bold', color: 'var(--primary)' }}>
+                    {currentPage + 1} <span style={{ fontSize: '0.7rem', color: '#444', fontWeight: 'normal' }}>DE {totalPages || 1}</span>
+                 </div>
               </div>
-              <button formAction={updateRankingPage.bind(null, 1)} className="btn-secondary" style={{ padding: '5px 10px', fontSize: '0.8rem' }}>Próxima ►</button>
+
+              <button 
+                formAction={updateRankingPage.bind(null, 1, rankingTotalItems)} 
+                className="btn-secondary" 
+                style={{ padding: '5px 10px', fontSize: '0.8rem', opacity: (currentPage + 1) >= totalPages ? 0.3 : 1 }}
+                disabled={(currentPage + 1) >= totalPages}
+              >
+                Próxima ►
+              </button>
             </div>
 
             <button formAction={updateRankingMode.bind(null, 'OFF')} className="btn-secondary" style={{ minWidth: '120px', background: '#000', color: '#666', border: '1px dashed #444' }}>
@@ -351,6 +388,8 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
                 currentRankText={currentRankText}
                 isAdmin={isAdmin}
                 user={user}
+                replayMap={replayMap}
+                hasGDriveConfig={!!(folderId && apiKey)}
               />
             </div>
           ) : (

@@ -255,7 +255,7 @@ export default function JuizDashboardPage() {
                 ...styles.totalValue,
                 color: totalJuiz > 0 ? '#d4af37' : '#444'
               }}>
-                {totalJuiz.toFixed(1)}
+                {totalJuiz.toFixed(2)}
               </span>
             </div>
 

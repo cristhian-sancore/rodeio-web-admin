@@ -59,7 +59,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
       }
     });
 
-    // Ranking por Round para distribuir bônus de melhor nota da noite
+    // Ranking por Round para distribuir pontos de round (Top 5 CNAR)
     const roundsGroups: Record<number, any[]> = {};
     ms.forEach(m => {
       if (!roundsGroups[m.roundId]) roundsGroups[m.roundId] = [];
@@ -67,18 +67,24 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     });
 
     Object.values(roundsGroups).forEach(rms => {
-      const bestNote = Math.max(...rms.map(m => m.notaTotal));
-      if (bestNote > 0) {
-        rms.forEach(m => {
-          if (m.notaTotal === bestNote) {
-            if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
-            classificacaoEtapa[m.competidorId].cpts += (temp.bonusMelhorNotaNoite || 0);
-          }
-        });
-      }
+      const sortedRound = rms
+        .filter(m => m.notaTotal > 0)
+        .sort((a, b) => b.notaTotal - a.notaTotal);
+      
+      const ptsRound = [temp.ptsRound1, temp.ptsRound2, temp.ptsRound3, temp.ptsRound4, temp.ptsRound5];
+      
+      sortedRound.forEach((m, idx) => {
+        if (idx < 5) {
+          if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
+          classificacaoEtapa[m.competidorId].cpts += (ptsRound[idx] || 0);
+          
+          // Se for o primeiro, ainda ganha o bônus de melhor nota da noite (se configurado)
+          if (idx === 0) classificacaoEtapa[m.competidorId].cpts += (temp.bonusMelhorNotaNoite || 0);
+        }
+      });
     });
 
-    // Ranking da Etapa para distribuir pontos de campeonato
+    // Ranking da Etapa para distribuir pontos de classificação final da etapa
     const rankingSorted = Object.values(classificacaoEtapa).sort((a: any, b: any) => {
       if (b.pontos !== a.pontos) return b.pontos - a.pontos;
       return b.tempo - a.tempo;
@@ -90,6 +96,11 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
       if (idx === 0) r.cpts += (temp.bonusMelhorNotaEtapa || 0);
       if (statsPeoes[r.id]) statsPeoes[r.id].pontosLiga += r.cpts;
     });
+  });
+
+  // Calcular médias dos animais
+  Object.values(statsAnimais).forEach((a: any) => {
+    a.media = a.qtd > 0 ? a.somaNotas / a.qtd : 0;
   });
 
   const sortedPeoes = Object.values(statsPeoes).sort((a: any, b: any) => {
@@ -106,12 +117,23 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
 
   const peoes = sortedPeoes.map((p: any) => ({
     ...p,
-    diff: (leaderNota - (etapaId ? p.notaAcumulada : p.pontosLiga)).toFixed(1)
+    diff: (leaderNota - (etapaId ? p.notaAcumulada : p.pontosLiga)).toFixed(2)
   }));
 
-  const touros = Object.values(statsAnimais).map((a: any) => ({ ...a, media: a.somaNotas / (a.qtd || 1) })).sort((a: any, b: any) => b.media - a.media);
+  const touros = Object.values(statsAnimais)
+    .filter((a: any) => {
+      if (roundId) return true; // No ranking da noite, vale a maior nota (1 saída)
+      return a.qtd >= 2; // Para Etapa/Campeonato (médias), exige consistência de 2 saídas
+    })
+    .sort((a: any, b: any) => b.media - a.media);
 
-  return { peoes, touros };
+  const leaderTouro = touros[0]?.media || 0;
+  const tourosFormatados = touros.map(t => ({
+     ...t,
+     diff: (leaderTouro - t.media).toFixed(2)
+  }));
+
+  return { peoes, touros: tourosFormatados };
 }
 
 export async function getTopHighlights() {
@@ -122,9 +144,9 @@ export async function getTopHighlights() {
   return {
     etapaNome: etapa?.nome || 'Etapa Atual',
     campeonatoNome: temporada?.titulo || 'Campeonato 2026',
-    etapaCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].notaAcumulada.toFixed(1), competidorId: peoes[0].id } : null,
+    etapaCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].notaAcumulada.toFixed(2), competidorId: peoes[0].id } : null,
     etapaAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
-    campeonatoCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].pontosLiga.toFixed(1), competidorId: peoes[0].id } : null,
+    campeonatoCompetidor: peoes[0] ? { nome: peoes[0].nome, nota: peoes[0].pontosLiga.toFixed(2), competidorId: peoes[0].id } : null,
     campeonatoAnimal: touros[0] ? { nome: touros[0].nome, nota: touros[0].media.toFixed(2), animalId: touros[0].id, info: touros[0].cia } : null,
   };
 }
@@ -174,7 +196,14 @@ export async function getOverlayRankingData(mode: string, roundId?: number, etap
   if (mode.includes('ANIMAL')) {
      return { 
        title,
-       list: touros.map((t, idx) => ({ pos: idx + 1, nome: t.nome, info: t.cia, nota: t.media.toFixed(2), animalId: t.id })) 
+       list: touros.map((t: any, idx) => ({ 
+         pos: idx + 1, 
+         nome: t.nome, 
+         info: t.cia, 
+         nota: (t.media || 0).toFixed(2), 
+         diff: t.diff || "0.00",
+         animalId: t.id 
+       })) 
      };
   }
   
@@ -188,8 +217,8 @@ export async function getOverlayRankingData(mode: string, roundId?: number, etap
         pos: idx + 1, 
         nome: p.nome, 
         info: p.origem, 
-        nota: currentNota.toFixed(1), 
-        diff: (leaderNota - currentNota).toFixed(1),
+        nota: (currentNota || 0).toFixed(2), 
+        diff: (leaderNota - currentNota).toFixed(2),
         competidorId: p.id 
       };
     }) 

@@ -1,21 +1,17 @@
 import { prisma } from "@/lib/db";
-import { Shield, Users, Database, Activity, Terminal, AlertCircle, Trash2, RefreshCcw, Layout } from "lucide-react";
+import { Shield, Users, Database, Activity, Terminal, AlertCircle, Trash2, RefreshCcw, Layout, Monitor, LogOut } from "lucide-react";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import DbManager from "./DbManager";
 import CmsManager from "./CmsManager";
-import PageBuilder from "./PageBuilder";
-import { exec } from "child_process";
-import { promisify } from "util";
 
 export default async function SuperAdminPage() {
   const session = await getServerSession(authOptions);
-  const user = session?.user as any;
 
-  if (user?.role !== 'SUPER_ADMIN') {
-    redirect('/admin');
+  if (!session || (session.user.role !== 'SUPER_ADMIN' && session.user.role !== 'SUPER')) {
+    redirect('/login');
   }
 
   let config = null;
@@ -25,192 +21,67 @@ export default async function SuperAdminPage() {
     console.error("Erro ao carregar config:", e);
   }
 
-  const [usersCount, totalLogs, databaseSize] = await Promise.all([
-    prisma.user.count(),
-    prisma.montaria.count(),
-    // Mock database size for SQLite
-    Promise.resolve("64 KB"),
-  ]);
-
-  const recentActivity = await prisma.montaria.findMany({
-    take: 10,
-    orderBy: { dataHora: 'desc' },
-    include: { competidor: true, animal: true, round: { include: { etapa: true } } }
-  });
-
-  const systemLogs = await (prisma as any).systemLog.findMany({
-    take: 10,
-    orderBy: { dataHora: 'desc' },
-  });
-
   return (
-    <div className="fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+    <div style={{ background: '#000', color: '#fff', minHeight: '100vh', padding: '40px', fontFamily: 'Inter, sans-serif' }}>
+      
+      {/* HEADER */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '50px', borderBottom: '1px solid #222', paddingBottom: '30px' }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Shield size={32} color="var(--primary)" /> Painel de Controle Super Admin
-          </h1>
-          <p style={{ color: '#888' }}>Gestão avançada do sistema, usuários e auditoria global.</p>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 950, color: '#D4AF37', margin: 0 }}>PAINEL SUPER ADMIN</h1>
+          <p style={{ color: '#555', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', marginTop: '5px' }}>Controle Total do Sistema</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <Link href="/admin/super/builder" className="btn-primary" style={{ background: 'var(--primary)', color: '#000', padding: '0.6rem 1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', borderRadius: '8px', fontWeight: '900', fontSize: '0.85rem' }}>
-             <Layout size={18} /> CONSTRUTOR DE SITE
-          </Link>
+          <Link href="/admin" style={secondaryBtn}>PAINEL ADMIN</Link>
           <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.6rem 1rem', borderRadius: '8px', border: '1px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold', fontSize: '0.85rem' }}>
             MODO ROOT ATIVO
           </div>
+          <Link href="/api/auth/signout" style={logoutBtn}>SAIR</Link>
         </div>
-      </div>
+      </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1.5rem', marginBottom: '3rem' }}>
-        <div className="premium-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Users color="var(--primary)" />
-            <div>
-              <div style={{ fontSize: '0.8rem', color: '#666' }}>USUÁRIOS CADASTRADOS</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{usersCount}</div>
-            </div>
-          </div>
-          <Link href="/admin/usuarios" style={{ display: 'block', marginTop: '1rem', color: 'var(--primary)', fontSize: '0.8rem', textDecoration: 'none', fontWeight: 'bold' }}>
-             GERENCIAR USUÁRIOS →
-          </Link>
-        </div>
-
-        <div className="premium-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Activity color="#4CAF50" />
-            <div>
-              <div style={{ fontSize: '0.8rem', color: '#666' }}>LOGS DE LANÇAMENTO</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{totalLogs}</div>
-            </div>
-          </div>
-          <div style={{ marginTop: '1rem', color: '#4CAF50', fontSize: '0.8rem', fontWeight: 'bold' }}>SISTEMA ESTÁVEL</div>
-        </div>
-
-        <div className="premium-card">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <Database color="#2196F3" />
-            <div>
-              <div style={{ fontSize: '0.8rem', color: '#666' }}>TAMANHO DO BANCO</div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{databaseSize}</div>
-            </div>
-          </div>
-          <div style={{ marginTop: '1rem', color: '#2196F3', fontSize: '0.8rem', fontWeight: 'bold' }}>AUTO-VACUUM: ON</div>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: '3rem' }}>
-         <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Database size={20} color="var(--primary)" /> Gerenciador de Banco de Dados (PostgreSQL)
-         </h2>
-         <DbManager />
-      </div>
-
-      <div style={{ marginBottom: '3rem' }}>
-          <CmsManager config={config} />
-      </div>
-
-      <div style={{ marginBottom: '3rem' }}>
-          <PageBuilder config={config} />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
         
-        {/* Auditoria de Notas */}
-        <div>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Terminal size={20} color="var(--primary)" /> Auditoria Global de Atividades
-          </h2>
-          <div className="premium-card" style={{ padding: 0 }}>
-             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-               <thead>
-                 <tr style={{ textAlign: 'left', borderBottom: '1px solid #333', fontSize: '0.8rem', color: '#666' }}>
-                   <th style={{ padding: '1rem' }}>DATA/HORA</th>
-                   <th>COMPETIDOR</th>
-                   <th>AÇÃO</th>
-                   <th style={{ textAlign: 'right', paddingRight: '1rem' }}>NOTA</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {recentActivity.map((log) => (
-                   <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a', fontSize: '0.9rem' }}>
-                     <td style={{ padding: '0.75rem 1rem', color: '#666' }}>{new Date(log.dataHora).toLocaleTimeString()}</td>
-                     <td style={{ fontWeight: 'bold' }}>{log.competidor.nome}</td>
-                     <td>Lançamento: {log.round.etapa.nome} • R{log.round.numero}</td>
-                     <td style={{ textAlign: 'right', paddingRight: '1rem', fontWeight: 'bold', color: 'var(--primary)' }}>{log.notaTotal.toFixed(2)}</td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-          </div>
+        {/* COLUNA ESQUERDA: PERSONALIZAÇÃO */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+           <section style={cardSection}>
+              <h2 style={sectionTitle}><Layout size={22} color="#D4AF37" /> PERSONALIZAR PÁGINA INICIAL</h2>
+              <CmsManager config={config} />
+           </section>
+
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <Link href="/admin/super/usuarios" style={toolCard}>
+                 <Users size={32} color="#D4AF37" />
+                 <div>
+                    <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>USUÁRIOS</div>
+                    <div style={{ fontSize: '0.7rem', color: '#555', fontWeight: 700 }}>GERENCIAR ACESSOS</div>
+                 </div>
+              </Link>
+              <Link href="/admin/super/vmix" style={toolCard}>
+                 <Monitor size={32} color="#D4AF37" />
+                 <div>
+                    <div style={{ fontWeight: 900, fontSize: '1.1rem' }}>VMIX</div>
+                    <div style={{ fontSize: '0.7rem', color: '#555', fontWeight: 700 }}>GRÁFICOS E OVERLAYS</div>
+                 </div>
+              </Link>
+           </div>
         </div>
 
-        {/* Console de Manutenção */}
-        <div>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <AlertCircle size={20} color="#ff4444" /> Ferramentas de Sistema
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-             <button className="premium-card" style={{ textAlign: 'left', width: '100%', cursor: 'pointer', border: '1px solid rgba(255,68,68,0.2)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#ff4444' }}>
-                  <Trash2 size={20} />
-                  <div>
-                    <h4 style={{ margin: 0 }}>Limpar Cache de Rankings</h4>
-                    <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>Força o recálculo imediato de todos os pontos.</p>
-                  </div>
-                </div>
-             </button>
-
-             <button className="premium-card" style={{ textAlign: 'left', width: '100%', cursor: 'pointer', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary)' }}>
-                  <RefreshCcw size={20} />
-                  <div>
-                    <h4 style={{ margin: 0 }}>Sincronizar Temporada</h4>
-                    <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>Atualiza as pontuações globais do campeonato.</p>
-                  </div>
-                </div>
-             </button>
-
-             <div className="premium-card" style={{ background: '#000', border: '1px solid #333' }}>
-                <h4 style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.75rem' }}>INFORMAÇÕES DE AMBIENTE</h4>
-                <div style={{ fontSize: '0.75rem', fontFamily: 'monospace', color: '#4CAF50' }}>
-                   <div>OS: {process.platform}</div>
-                   <div>NODE: {process.version}</div>
-                   <div>DATABASE: SQLITE</div>
-                   <div style={{ marginTop: '0.5rem', color: '#fff' }}>STATUS: ONLINE</div>
-                </div>
-             </div>
-          </div>
+        {/* COLUNA DIREITA: BANCO DE DADOS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+           <section style={cardSection}>
+              <h2 style={sectionTitle}><Database size={22} color="#D4AF37" /> BANCO DE DADOS E FERRAMENTAS</h2>
+              <DbManager />
+           </section>
         </div>
-      </div>
 
-      <div style={{ marginTop: '3rem' }}>
-         <h2 style={{ fontSize: '1.2rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Activity size={20} color="#4CAF50" /> Log de Auditoria Root (Ações de Sistema)
-         </h2>
-         <div className="premium-card" style={{ padding: 0 }}>
-             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-               <thead>
-                 <tr style={{ textAlign: 'left', borderBottom: '1px solid #333', fontSize: '0.8rem', color: '#666' }}>
-                   <th style={{ padding: '1rem' }}>DATA/HORA</th>
-                   <th>USUÁRIO</th>
-                   <th>AÇÃO</th>
-                   <th>DETALHES</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {systemLogs.map((log: any) => (
-                   <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a', fontSize: '0.85rem' }}>
-                     <td style={{ padding: '0.75rem 1rem', color: '#666' }}>{new Date(log.dataHora).toLocaleString()}</td>
-                     <td style={{ fontWeight: 'bold' }}>{log.usuarioNome}</td>
-                     <td style={{ color: 'var(--primary)' }}>{log.acao}</td>
-                     <td style={{ color: '#888', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.detalhes}</td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-          </div>
       </div>
     </div>
   );
 }
+
+// --- ESTILOS INLINE (Garante que funcione sem Tailwind) ---
+const cardSection = { background: '#0a0a0a', padding: '40px', borderRadius: '30px', border: '1px solid #1a1a1a' };
+const sectionTitle = { fontSize: '1.2rem', fontWeight: 950, marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' };
+const secondaryBtn = { background: '#1a1a1a', color: '#fff', padding: '12px 25px', borderRadius: '12px', fontWeight: 900, textDecoration: 'none', fontSize: '0.8rem', border: '1px solid #333' };
+const logoutBtn = { background: 'rgba(255, 68, 68, 0.1)', color: '#ff4444', padding: '12px 25px', borderRadius: '12px', fontWeight: 900, textDecoration: 'none', fontSize: '0.8rem' };
+const toolCard = { background: '#0a0a0a', padding: '30px', borderRadius: '25px', border: '1px solid #111', textDecoration: 'none', color: '#fff', display: 'flex', flexDirection: 'column' as const, gap: '20px', transition: 'all 0.2s' };
