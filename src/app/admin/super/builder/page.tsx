@@ -38,20 +38,38 @@ export default function EliteVisualBuilder() {
   const [isDragging, setIsDragging] = useState(false);
   const [guides, setGuides] = useState<{ x?: number, y?: number } | null>(null);
 
-  // Carregar dados iniciais
+  // ref para guardar blocos por aba sem re-render
+  const tabBlocksRef = useRef<Record<string, any[]>>({});
+
+  // Carregar dados UMA unica vez
   useEffect(() => {
     async function load() {
       const res = await fetch('/api/public/config');
       const data = await res.json();
       setConfig(data);
-      const initialBlocks = data?.siteLayouts?.[activeTab] || [];
-      const normalizedBlocks = initialBlocks.map((b: any) => ({ ...b, elements: b.elements || [] }));
-      setBlocks(normalizedBlocks);
-      addToHistory(normalizedBlocks);
+      const normalize = (arr: any[]) => (arr || []).map((b: any) => ({ ...b, elements: b.elements || [] }));
+      tabBlocksRef.current = {
+        HOME: normalize(data?.siteLayouts?.HOME),
+        OVERLAYS: normalize(data?.siteLayouts?.OVERLAYS),
+      };
+      const homeBlocks = tabBlocksRef.current['HOME'];
+      setBlocks(homeBlocks);
+      addToHistory(homeBlocks);
       setLoading(false);
     }
     load();
-  }, [activeTab]);
+  }, []); // <-- sem deps: carrega apenas 1 vez
+
+  // Troca de aba SEM perder edicoes nao salvas
+  const handleTabChange = (newTab: 'HOME' | 'OVERLAYS') => {
+    if (newTab === activeTab) return;
+    tabBlocksRef.current[activeTab] = blocks; // salva estado atual
+    const nextBlocks = tabBlocksRef.current[newTab] || [];
+    setBlocks(nextBlocks);
+    setSelectedBlockId(null);
+    setSelectedElementId(null);
+    setActiveTab(newTab);
+  };
 
   // --- SISTEMA DE HISTÓRICO (UNDO/REDO) ---
   const addToHistory = (newBlocks: any[]) => {
@@ -245,7 +263,7 @@ export default function EliteVisualBuilder() {
           }
 
           return (
-            <div style={{ width: '100%', height: '100%', background: '#111', borderRadius: element.style?.borderRadius, overflow: 'hidden', position: 'relative' }}>
+            <div style={{ width: '100%', height: '100%', background: '#111', borderRadius: element.style?.borderRadius, overflow: 'visible', position: 'relative' }}>
               {isDirectMp4 ? (
                 <video src={srcUrl} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
               ) : (
@@ -307,8 +325,8 @@ export default function EliteVisualBuilder() {
              <button onClick={redo} disabled={historyIndex >= history.length - 1} style={iconBtnStyle(false)}><Redo2 size={18} /></button>
           </div>
           <div style={{ display: 'flex', background: '#111', padding: '4px', borderRadius: '12px' }}>
-            <button onClick={() => setActiveTab('HOME')} style={tabStyle(activeTab === 'HOME')}>SITE WEB</button>
-            <button onClick={() => setActiveTab('OVERLAYS')} style={tabStyle(activeTab === 'OVERLAYS')}>vMIX OVERLAY</button>
+            <button onClick={() => handleTabChange('HOME')} style={tabStyle(activeTab === 'HOME')}>SITE WEB</button>
+            <button onClick={() => handleTabChange('OVERLAYS')} style={tabStyle(activeTab === 'OVERLAYS')}>vMIX OVERLAY</button>
           </div>
         </div>
 
@@ -388,11 +406,20 @@ export default function EliteVisualBuilder() {
                   key={block.id}
                   onClick={() => setSelectedBlockId(block.id)}
                   style={{ 
-                    height: '650px', background: block.style?.background || '#050505', position: 'relative', overflow: 'hidden',
+                    height: '650px', background: block.style?.background || '#050505', position: 'relative', overflow: 'visible',
                     border: selectedBlockId === block.id ? `3px solid ${config?.primaryColor}` : '1px solid #111',
-                    marginBottom: '30px', borderRadius: '30px', boxShadow: '0 30px 60px rgba(0,0,0,0.6)'
+                    marginBottom: '30px', borderRadius: '30px', boxShadow: '0 30px 60px rgba(0,0,0,0.6)', opacity: block.visible === false ? 0.3 : 1
                   }}
                 >
+                  {/* CONTROLES DA SECAO */}
+                  <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '6px', zIndex: 1000 }}>
+                    <button onClick={e => { e.stopPropagation(); const nb = blocks.map(b => b.id === block.id ? { ...b, visible: b.visible === false } : b); setBlocks(nb); addToHistory(nb); }} style={{ background: '#111', border: '1px solid #333', color: block.visible === false ? '#555' : '#fff', cursor: 'pointer', borderRadius: '8px', padding: '6px 10px', fontSize: '0.65rem', fontWeight: 900 }}>
+                      {block.visible === false ? 'OCULTA' : 'VISIVEL'}
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); if(window.confirm('Excluir esta secao?')) { const nb = blocks.filter(b => b.id !== block.id); setBlocks(nb); addToHistory(nb); if(selectedBlockId === block.id) setSelectedBlockId(null); } }} style={{ background: '#1a0000', border: '1px solid #440000', color: '#ff4444', cursor: 'pointer', borderRadius: '8px', padding: '6px 10px', fontSize: '0.65rem', fontWeight: 900 }}>
+                      EXCLUIR
+                    </button>
+                  </div>
                   {/* GUIAS DE ALINHAMENTO */}
                   {guides?.x && <div style={{ position: 'absolute', left: guides.x, top: 0, bottom: 0, width: '1px', background: config?.primaryColor, zIndex: 999 }} />}
                   {guides?.y && <div style={{ position: 'absolute', top: guides.y, left: 0, right: 0, height: '1px', background: config?.primaryColor, zIndex: 999 }} />}
@@ -405,6 +432,8 @@ export default function EliteVisualBuilder() {
                 </section>
               ))}
            </div>
+        
+               <div onClick={() => { const newId = `blk_${Date.now()}`; const nb = [...blocks, { id: newId, type: 'CUSTOM', visible: true, title: 'Nova Secao', subtitle: '', style: { background: '#0a0a0a' }, elements: [] }]; setBlocks(nb); addToHistory(nb); setSelectedBlockId(newId); }} style={{ width: previewMode === 'desktop' ? '1200px' : '375px', margin: '0 auto 40px', height: '80px', border: '2px dashed #1a1a1a', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#333', fontWeight: 900, fontSize: '0.85rem', letterSpacing: '2px' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = config?.primaryColor || '#d4af37'; (e.currentTarget as HTMLElement).style.color = config?.primaryColor || '#d4af37'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1a1a1a'; (e.currentTarget as HTMLElement).style.color = '#333'; }}>+ NOVA SECAO</div>
         </main>
 
         {/* ⚙️ INSPETOR ELITE (RIGHT) */}
@@ -515,7 +544,7 @@ export default function EliteVisualBuilder() {
                         <div key={el.id} onClick={() => { setSelectedElementId(el.id); }}
                           style={{ display: 'flex', alignItems: 'center', gap: '8px', background: selectedElementId === el.id ? `${config?.primaryColor || '#d4af37'}22` : '#111', border: `1px solid ${selectedElementId === el.id ? (config?.primaryColor || '#d4af37') : '#222'}`, padding: '9px 12px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s' }}>
                           <span style={{ fontSize: '0.6rem', color: '#555', fontWeight: 900, minWidth: '22px' }}>Z{el.zIndex || 1}</span>
-                          <span style={{ fontSize: '0.72rem', color: '#fff', fontWeight: 700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{el.type}{el.content ? ` — ${String(el.content).substring(0,16)}` : ''}</span>
+                          <span style={{ fontSize: '0.72rem', color: '#fff', fontWeight: 700, flex: 1, overflow: 'visible', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{el.type}{el.content ? ` — ${String(el.content).substring(0,16)}` : ''}</span>
                           <button onClick={(e) => { e.stopPropagation(); updateElement(selectedBlock.id, el.id, { zIndex: (el.zIndex || 1) + 1 }); }} style={{ background: 'none', border: 'none', color: config?.primaryColor || '#d4af37', cursor: 'pointer', fontWeight: 900, fontSize: '0.8rem', padding: '2px 5px' }}>&#x25B2;</button>
                           <button onClick={(e) => { e.stopPropagation(); updateElement(selectedBlock.id, el.id, { zIndex: Math.max(1, (el.zIndex || 1) - 1) }); }} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', fontWeight: 900, fontSize: '0.8rem', padding: '2px 5px' }}>&#x25BC;</button>
                         </div>
@@ -550,4 +579,5 @@ const iconBtnStyle = (active: boolean) => ({
 
 const styleLabel = { fontSize: '0.65rem', color: '#444', fontWeight: '950', display: 'block', marginBottom: '10px', textTransform: 'uppercase' as const, letterSpacing: '1.5px' };
 const styleInput = { width: '100%', background: '#111', border: '1px solid #222', color: '#fff', padding: '15px', borderRadius: '12px', fontSize: '0.9rem', outline: 'none', transition: 'border 0.2s' };
+
 
