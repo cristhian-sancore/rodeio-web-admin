@@ -332,6 +332,10 @@ export async function updateMontariaNota(formData: FormData) {
         // Colocação na etapa
         etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
       });
+      // Acionar o Overlay no vMix (Colocar no ar)
+      const inputId = config.vmixInputNotaId || config.vmixInputId;
+      await triggerVMixOverlay(config as any, config.vmixOverlayChannel || 1, 'In', inputId as string);
+
       // Salvar o nome do replay no banco
       if (replayFileName) {
         await p.montaria.update({
@@ -969,12 +973,13 @@ export async function updateRankingMode(mode: string | null) {
   // Automação vMix: Acionar Overlay 4
   if (config.vmixUrl) {
     try {
+      const inputId = config.vmixInputRankingId;
       if (m !== 'OFF') {
-        // Liga o Overlay 4
-        await triggerVMixOverlay(config as any, 4, 'In');
+        // Liga o Overlay 4 com o input correto
+        await triggerVMixOverlay(config as any, 4, 'In', inputId as string);
       } else {
         // Desliga o Overlay 4
-        await triggerVMixOverlay(config as any, 4, 'Out');
+        await triggerVMixOverlay(config as any, 4, 'Out', inputId as string);
       }
     } catch (vErr) {
       console.error('Erro ao acionar Overlay 4 no vMix:', vErr);
