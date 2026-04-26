@@ -14,6 +14,8 @@ import { removeBackgroundAction } from './actions';
 // --- CONFIGURAÇÕES DE ELITE ---
 const ELEMENT_TYPES = [
   { type: 'TEXT', label: 'Texto', icon: Type, defaultContent: 'CLIQUE PARA EDITAR' },
+  { type: 'BUTTON', label: 'Botão', icon: MousePointer2, defaultContent: 'SAIBA MAIS' },
+  { type: 'VIDEO', label: 'Vídeo / Player', icon: Play, defaultContent: 'dQw4w9WgXcQ' },
   { type: 'SHAPE_RECT', label: 'Retângulo', icon: Square, defaultContent: '' },
   { type: 'SHAPE_CIRCLE', label: 'Círculo', icon: Circle, defaultContent: '' },
   { type: 'IMAGE', label: 'Imagem/Logo', icon: ImageIcon, defaultContent: '/hero-rodeo.png' },
@@ -208,6 +210,24 @@ export default function EliteVisualBuilder() {
             color: element.style?.color, textAlign: element.style?.textAlign as any, fontFamily: config?.fontFamily,
             letterSpacing: `${element.style?.letterSpacing || 0}px`, lineHeight: 1
           }}>{element.content}</div>;
+        case 'BUTTON':
+          return (
+            <button style={{ 
+              width: '100%', height: '100%', background: element.style?.background || '#ff4444', 
+              color: element.style?.color || '#fff', borderRadius: element.style?.borderRadius || '8px',
+              border: 'none', fontWeight: element.style?.fontWeight || 'bold', fontSize: `${element.style?.fontSize || 16}px`,
+              cursor: 'pointer'
+            }}>
+              {element.content}
+            </button>
+          );
+        case 'VIDEO':
+          return (
+            <div style={{ width: '100%', height: '100%', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: element.style?.borderRadius }}>
+              <Play size={48} color={element.style?.color || '#fff'} opacity={0.5} />
+              <span style={{ position: 'absolute', bottom: 10, fontSize: '10px', color: '#fff' }}>VÍDEO: {element.content}</span>
+            </div>
+          );
         case 'SHAPE_RECT':
         case 'SHAPE_CIRCLE':
           return <div style={{ width: '100%', height: '100%', background: element.style?.background, borderRadius: element.style?.borderRadius }} />;
@@ -381,6 +401,16 @@ export default function EliteVisualBuilder() {
                        try { const res = await removeBackgroundAction(selectedElement.content); updateElement(selectedBlockId!, selectedElement.id, { content: res }); } catch (e: any) { alert(e.message); }
                        btn.innerText = 'REMOVER FUNDO (AI)';
                     }} style={{ background: 'linear-gradient(90deg, #6366f1, #a855f7)', color: '#fff', border: 'none', padding: '12px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>✨ REMOVER FUNDO (AI)</button>
+                  </div>
+                )}
+                {selectedElement.type === 'VIDEO' && (
+                  <div><label style={styleLabel}>ID DO VÍDEO (YOUTUBE)</label><input value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput} placeholder="Ex: dQw4w9WgXcQ" /></div>
+                )}
+                {selectedElement.type === 'BUTTON' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div><label style={styleLabel}>TEXTO DO BOTÃO</label><input value={selectedElement.content} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { content: e.target.value })} style={styleInput} /></div>
+                    <div><label style={styleLabel}>LINK (URL)</label><input value={selectedElement.style?.link || ''} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, link: e.target.value } })} style={styleInput} placeholder="/ranking" /></div>
+                    <div><label style={styleLabel}>TAMANHO DA FONTE ({selectedElement.style?.fontSize || 16}px)</label><input type="range" min="10" max="100" value={selectedElement.style?.fontSize || 16} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, fontSize: parseInt(e.target.value) } })} style={{ width: '100%' }} /></div>
                   </div>
                 )}
                 {selectedElement.type !== 'TEXT' && (

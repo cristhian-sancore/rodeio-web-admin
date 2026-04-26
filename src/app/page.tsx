@@ -152,6 +152,32 @@ export default async function Home() {
                         {el.content}
                       </div>
                     );
+                  case 'BUTTON':
+                    return (
+                      <Link key={el.id} href={el.style?.link || '#'} style={{ 
+                        ...elStyle,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: el.style?.background || '#ff4444', 
+                        color: el.style?.color || '#fff', borderRadius: el.style?.borderRadius || '8px',
+                        fontWeight: el.style?.fontWeight || 'bold', fontSize: `${el.style?.fontSize || 16}px`,
+                        textDecoration: 'none', cursor: 'pointer'
+                      }}>
+                        {el.content}
+                      </Link>
+                    );
+                  case 'VIDEO':
+                    return (
+                      <div key={el.id} style={{ ...elStyle, background: '#000', borderRadius: el.style?.borderRadius, overflow: 'hidden' }}>
+                        <iframe 
+                          width="100%" height="100%" 
+                          src={`https://www.youtube.com/embed/${el.content}?autoplay=1&mute=1&loop=1&playlist=${el.content}`} 
+                          title="Video player" frameBorder="0" 
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                          allowFullScreen
+                          style={{ pointerEvents: 'none' }}
+                        ></iframe>
+                      </div>
+                    );
                   case 'SHAPE_RECT':
                   case 'SHAPE_CIRCLE':
                     return (
