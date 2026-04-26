@@ -6,8 +6,13 @@ import { getTopHighlights, getCompetidorRanking, getChampionshipRanking } from '
 import { getReplayFileMap } from '@/lib/gdrive'
 import { prisma } from '@/lib/db'
 import { VideoPlayer } from '@/components/VideoPlayer'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER';
+  
   const highlights = await getTopHighlights();
   
   const temporada = await prisma.temporada.findFirst({ where: { ativa: true } });
@@ -286,6 +291,24 @@ export default async function Home() {
       <footer style={{ background: '#050505', padding: '40px', textAlign: 'center', borderTop: '1px solid #111' }}>
         <p style={{ color: '#444' }}>&copy; 2026 {config?.titulo || "Rodeio Pro"} - Todos os direitos reservados.</p>
       </footer>
+
+      {isAdmin && (
+        <Link 
+          href="/admin/super/builder" 
+          style={{ 
+            position: 'fixed', bottom: '30px', right: '30px', 
+            background: 'linear-gradient(135deg, #d4af37 0%, #aa8b2c 100%)', 
+            color: '#000', padding: '15px 30px', borderRadius: '50px', 
+            fontWeight: '950', display: 'flex', alignItems: 'center', gap: '10px', 
+            boxShadow: '0 10px 30px rgba(212,175,55,0.4)', zIndex: 9999,
+            textDecoration: 'none', transition: 'transform 0.2s'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+        >
+          <Settings size={20} /> EDITAR DESIGN DO SITE
+        </Link>
+      )}
     </div>
   )
 }
