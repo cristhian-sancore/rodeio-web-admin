@@ -15,9 +15,11 @@ import {
 import SearchableSelect from "../../../../../components/SearchableSelect";
 import ExcelRoundActions from "./ExcelRoundActions";
 
-import PdfImportBtn from "./PdfImportBtn";
+import SorteioManager from "./SorteioManager";
+import { createCompetidor } from "../../../../../competidores/actions";
+import { createAnimal } from "../../../../../animais/actions";
 
-export default async function MontagemRoundPage({ params }: { params: { id: string, roundId: string } }) {
+export default async function MontagemRoundPage({ params }: { params: Promise<{ id: string, roundId: string }> }) {
   const { id, roundId } = await params;
   const session = await getServerSession(authOptions);
   if (!session) redirect('/login');
@@ -74,43 +76,17 @@ export default async function MontagemRoundPage({ params }: { params: { id: stri
           
           <PdfImportBtn roundId={rId} etapaId={eId} />
 
-          <div className="premium-card">
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-              <Target size={20} color="var(--primary)" /> Adicionar à Súmula
-            </h3>
-            
-            <form action={addMontariaAction} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <input type="hidden" name="roundId" value={rId} />
-              <input type="hidden" name="etapaId" value={eId} />
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#888' }}>Atleta (Peão)</label>
-                <SearchableSelect 
-                  name="competidorId" 
-                  placeholder="Pesquise pelo nome do Peão..." 
-                  options={competidores.map(c => ({
-                    id: c.id, 
-                    label: `${c.nome} ${montarias.some(m => m.competidorId === c.id) ? '🕒 (Escalado)' : ''}`
-                  }))} 
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.8rem', color: '#888' }}>Animal ({round.modalidade})</label>
-                <SearchableSelect 
-                  name="animalId" 
-                  placeholder={`Procurar ${round.modalidade}...`} 
-                  options={animaisFiltrados.map(c => ({
-                    id: c.id, 
-                    label: `${c.nome} (${c.companhia})`
-                  }))} 
-                />
-              </div>
-
-              <button type="submit" className="btn-primary" style={{ width: '100%', padding: '1rem' }}>
-                <Plus size={20} /> ADICIONAR CONFRONTO
-              </button>
-            </form>
-          </div>
+          <SorteioManager 
+            roundId={rId}
+            etapaId={eId}
+            modalidade={round.modalidade}
+            competidores={competidores}
+            animais={animaisFiltrados}
+            montarias={montarias}
+            addMontariaAction={addMontariaAction}
+            createCompetidorAction={createCompetidor}
+            createAnimalAction={createAnimal}
+          />
 
           {hasPreviousRound && (
              <div className="premium-card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
