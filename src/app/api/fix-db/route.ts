@@ -21,24 +21,42 @@ export async function GET() {
     `);
     console.log("✅ Coluna juiz4Id adicionada/verificada.");
 
-    // Criar usuário sancore se não existir
+    // Criar/Atualizar usuários críticos
     const bcrypt = require('bcryptjs');
+    
+    // 1. Usuário Sancore
     const sancore = await prisma.user.findUnique({ where: { username: 'sancore' } });
+    const passSancore = await bcrypt.hash('123', 10);
     if (!sancore) {
-      const hashedPassword = await bcrypt.hash('123', 10);
       await prisma.user.create({
-        data: {
-          username: 'sancore',
-          password: hashedPassword,
-          role: 'SUPER_ADMIN'
-        }
+        data: { username: 'sancore', password: passSancore, role: 'SUPER_ADMIN' }
       });
-      console.log("✅ Usuário sancore criado como SUPER_ADMIN.");
+      console.log("✅ Usuário sancore criado.");
+    } else {
+      await prisma.user.update({
+        where: { id: sancore.id },
+        data: { role: 'SUPER_ADMIN' }
+      });
+    }
+
+    // 2. Usuário Root (Master)
+    const root = await prisma.user.findUnique({ where: { username: 'root' } });
+    const passRoot = await bcrypt.hash('master_rodeio_2026', 10);
+    if (!root) {
+      await prisma.user.create({
+        data: { username: 'root', password: passRoot, role: 'SUPER_ADMIN' }
+      });
+      console.log("✅ Usuário root criado.");
+    } else {
+      await prisma.user.update({
+        where: { id: root.id },
+        data: { role: 'SUPER_ADMIN', password: passRoot }
+      });
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: "Schema atualizado e usuário sancore verificado/criado como SUPER_ADMIN com sucesso!" 
+      message: "Schema corrigido e SuperAdmins (root e sancore) restaurados com sucesso!" 
     });
   } catch (error: any) {
     console.error("❌ Erro na correção de schema:", error);
