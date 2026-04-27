@@ -24,6 +24,8 @@ import RideTimer from "./RideTimer";
 import JuizStatusPanel from "./JuizStatusPanel";
 import ScoringForm from "./ScoringForm";
 
+import ExecucaoRoundSelector from "./ExecucaoRoundSelector";
+
 export const dynamic = 'force-dynamic';
 
 export default async function ExecucaoPage({ searchParams }: { searchParams: Promise<{ roundId?: string, montariaId?: string, error?: string }> }) {
@@ -50,14 +52,12 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
     });
 
     const now = new Date();
-    // Se for antes das 6 da manhã, ainda consideramos o "dia operacional" de ontem
     const operationalDate = new Date(now);
     if (now.getHours() < 6) {
       operationalDate.setDate(operationalDate.getDate() - 1);
     }
     const todayStr = operationalDate.toISOString().split('T')[0];
 
-    // Se for Juiz, filtrar apenas rounds ativos para hoje (considerando a margem até 6h)
     const etapasFiltradas = isAdmin ? etapas : etapas.map((etapa: any) => ({
       ...etapa,
       rounds: etapa.rounds.filter((r: any) => {
@@ -69,48 +69,12 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
 
     return (
       <div className="fade-in">
-        <h1 style={{ marginBottom: '0.5rem', fontSize: '1.8rem', color: 'var(--primary)' }}>Célula de Lançamento em Tempo Real</h1>
-        <p style={{ color: '#888', marginBottom: '2.5rem' }}>{isAdmin ? 'O rodeio é dinâmico. Selecione o Round para acessar a súmula de campo.' : 'Painel do Juiz: Lançamento de notas para os rounds de hoje.'}</p>
-        
-        <div className="responsive-grid">
-          {etapasFiltradas.map((etapa: any) => (
-            <div key={etapa.id} className="premium-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <div style={{ width: '42px', height: '42px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Calendar size={20} color="var(--primary)" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{etapa.nome}</h2>
-                  <p style={{ margin: 0, fontSize: '0.7rem', color: '#666' }}>{etapa.cidade} - {etapa.estado}</p>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {etapa.rounds.map((round: any) => (
-                  <Link 
-                    key={round.id} 
-                    href={`/admin/execucao?roundId=${round.id}`} 
-                    className="premium-card" 
-                    style={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      textDecoration: 'none', 
-                      background: '#151515', 
-                      padding: '1rem',
-                      border: '1px solid #222'
-                    }}
-                  >
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: '0.9rem', color: '#fff' }}>ROUND {round.numero}</h4>
-                      <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-muted)' }}>{round._count.montarias} montarias escaladas</p>
-                    </div>
-                    <ArrowRight size={18} color="var(--primary)" />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
+        <div style={{ marginBottom: '2.5rem' }}>
+          <h1 style={{ fontSize: '2.5rem', fontWeight: 950, letterSpacing: '-1px', color: '#fff' }}>Célula de Lançamento <span style={{color:'var(--primary)'}}>em Tempo Real</span></h1>
+          <p style={{ color: '#888', fontSize: '1.1rem' }}>{isAdmin ? 'O rodeio é dinâmico. Selecione o Round para acessar a súmula de campo.' : 'Painel do Juiz: Lançamento de notas para os rounds de hoje.'}</p>
         </div>
+        
+        <ExecucaoRoundSelector etapas={etapasFiltradas} isAdmin={isAdmin} />
       </div>
     );
   }
