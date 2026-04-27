@@ -14,7 +14,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN' && userRole !== 'SUPER') redirect('/admin');
   const { error, success } = await searchParams;
 
-  const configData = await prisma.configuracao.findUnique({ where: { id: 1 } });
+  const configData = await prisma.configuracao.findFirst();
   const config = (configData || { 
     id: 1,
     numJuizes: 2, 

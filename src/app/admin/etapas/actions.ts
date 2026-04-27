@@ -480,85 +480,64 @@ export async function saveConfig(formData: FormData) {
     throw new Error("Não autorizado para alterar configurações globais.");
   }
 
+  const currentConfig = await prisma.configuracao.findFirst() || { id: 1 };
+  
   const numJuizesStr = formData.get('numJuizes') as string;
   const titulo = formData.get('titulo') as string;
-  
   const numJuizes = parseInt(numJuizesStr) || 1;
 
-  console.log('---- SAVING CONFIG ----');
-  console.log('RAW numJuizes:', numJuizesStr);
-  console.log('PARSED numJuizes:', numJuizes);
-  console.log('titulo:', titulo);
+  console.log('---- SAVING CONFIG (FIXED) ----', { id: currentConfig.id, numJuizes, titulo });
 
-  const safeParse = (val: any, fallback: any) => {
-    if (!val || typeof val !== 'string' || val === '[object Object]') return fallback;
-    try {
-      return JSON.parse(val);
-    } catch (e) {
-      console.error('SafeParse Error:', e);
-      return fallback;
-    }
+  const getFormVal = (key: string, fallback: any) => {
+    const val = formData.get(key);
+    return val !== null ? val as string : fallback;
+  };
+
+  const getFormInt = (key: string, fallback: number) => {
+    const val = formData.get(key);
+    return val !== null ? (parseInt(val as string) || fallback) : fallback;
   };
 
   try {
     await prisma.configuracao.upsert({
-      where: { id: 1 },
+      where: { id: currentConfig.id },
       update: { 
         numJuizes, 
         titulo,
-        vmixUrl: formData.get('vmixUrl') as string,
-        vmixInputNotaId: formData.get('vmixInputNotaId') as string,
-        vmixInputChamadaId: formData.get('vmixInputChamadaId') as string,
-        vmixInputRankingId: formData.get('vmixInputRankingId') as string,
-        vmixReplayInputId: formData.get('vmixReplayInputId') as string,
-        replayExportPath: formData.get('replayExportPath') as string,
-        vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
-        googleDriveFolderId: (formData.get('googleDriveFolderId') as string) || null,
-        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null,
-        homeHeroTitle: formData.get('homeHeroTitle') as string,
-        homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
-        homeHeroImage: formData.get('homeHeroImage') as string,
-        homeLayout: safeParse(formData.get('homeLayout'), undefined),
-        siteLayouts: safeParse(formData.get('siteLayouts'), undefined),
-        primaryColor: formData.get('primaryColor') as string,
-        secondaryColor: formData.get('secondaryColor') as string,
-        fontFamily: (() => { const f = formData.get('fontFamily') as string; return (f && f !== 'null') ? f : 'Inter'; })(),
-        logoUrl: formData.get('logoUrl') as string
+        vmixUrl: getFormVal('vmixUrl', (currentConfig as any).vmixUrl),
+        vmixInputNotaId: getFormVal('vmixInputNotaId', (currentConfig as any).vmixInputNotaId),
+        vmixInputChamadaId: getFormVal('vmixInputChamadaId', (currentConfig as any).vmixInputChamadaId),
+        vmixInputRankingId: getFormVal('vmixInputRankingId', (currentConfig as any).vmixInputRankingId),
+        vmixReplayInputId: getFormVal('vmixReplayInputId', (currentConfig as any).vmixReplayInputId),
+        replayExportPath: getFormVal('replayExportPath', (currentConfig as any).replayExportPath),
+        vmixOverlayChannel: getFormInt('vmixOverlayChannel', (currentConfig as any).vmixOverlayChannel || 1),
+        googleDriveFolderId: getFormVal('googleDriveFolderId', (currentConfig as any).googleDriveFolderId),
+        googleDriveApiKey: getFormVal('googleDriveApiKey', (currentConfig as any).googleDriveApiKey),
       },
       create: { 
         id: 1, 
         numJuizes, 
         titulo,
-        vmixUrl: formData.get('vmixUrl') as string,
-        vmixInputNotaId: formData.get('vmixInputNotaId') as string,
-        vmixInputChamadaId: formData.get('vmixInputChamadaId') as string,
-        vmixInputRankingId: formData.get('vmixInputRankingId') as string,
-        vmixReplayInputId: formData.get('vmixReplayInputId') as string,
-        replayExportPath: formData.get('replayExportPath') as string,
-        vmixOverlayChannel: parseInt(formData.get('vmixOverlayChannel') as string) || 1,
-        googleDriveFolderId: (formData.get('googleDriveFolderId') as string) || null,
-        googleDriveApiKey: (formData.get('googleDriveApiKey') as string) || null,
-        homeHeroTitle: formData.get('homeHeroTitle') as string,
-        homeHeroSubtitle: formData.get('homeHeroSubtitle') as string,
-        homeHeroImage: formData.get('homeHeroImage') as string,
-        homeLayout: safeParse(formData.get('homeLayout'), []),
-        siteLayouts: safeParse(formData.get('siteLayouts'), {}),
-        primaryColor: formData.get('primaryColor') as string,
-        secondaryColor: formData.get('secondaryColor') as string,
-        fontFamily: (() => { const f = formData.get('fontFamily') as string; return (f && f !== 'null') ? f : 'Inter'; })(),
-        logoUrl: formData.get('logoUrl') as string
+        vmixUrl: getFormVal('vmixUrl', ""),
+        vmixInputNotaId: getFormVal('vmixInputNotaId', ""),
+        vmixOverlayChannel: getFormInt('vmixOverlayChannel', 1)
       }
     });
 
-    console.log('✅ FULL CONFIG SAVED');
+    console.log('✅ CONFIG UPDATED SUCCESSFULLY');
   } catch (err) {
     console.error('❌ ERROR SAVING CONFIG:', err);
+    const { redirect } = await import('next/navigation');
+    redirect('/admin/configuracoes?error=SAVE_FAILED');
   }
 
   revalidatePath('/admin/configuracoes');
   revalidatePath('/admin/execucao');
   revalidatePath('/admin/super/builder');
   revalidatePath('/');
+  
+  const { redirect } = await import('next/navigation');
+  redirect('/admin/configuracoes?success=true');
 }
 
 export async function executeRawSql(sql: string) {
