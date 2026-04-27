@@ -52,7 +52,7 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
                 <MapPin size={16} color="#d4af37" /> {etapa.cidade} - {etapa.estado}
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <Calendar size={16} color="#d4af37" /> {etapa.dataInicio.toLocaleDateString()} até {etapa.dataFinal.toLocaleDateString()}
+                <Calendar size={16} color="#d4af37" /> {etapa.dataInicio ? new Date(etapa.dataInicio).toLocaleDateString() : 'Sem data'} até {etapa.dataFinal ? new Date(etapa.dataFinal).toLocaleDateString() : 'Sem data'}
               </span>
             </div>
           </div>
@@ -130,12 +130,12 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
 
               <div style={{ flex: 2 }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>Data Agenda</label>
-                <input name="dataAgenda" type="date" defaultValue={etapa.dataInicio.toISOString().split('T')[0]} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }} />
+                <input name="dataAgenda" type="date" defaultValue={etapa.dataInicio ? new Date(etapa.dataInicio).toISOString().split('T')[0] : ''} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }} />
               </div>
               
               <div style={{ flex: 2 }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>Juiz 1 (Fixo)</label>
-                <select name="juiz1" defaultValue={etapa.defaultJuiz1Id ?? etapa.temporada.defaultJuiz1Id ?? ""} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }}>
+                <select name="juiz1" defaultValue={etapa.defaultJuiz1Id ?? etapa.temporada?.defaultJuiz1Id ?? ""} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }}>
                   <option value="">Selecione o Juiz 1...</option>
                   {juizes.map((j: any) => <option key={`j1-${j.id}`} value={j.id}>{j.nome}</option>)}
                 </select>
@@ -144,7 +144,7 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
               {config.numJuizes >= 2 && (
                 <div style={{ flex: 2 }}>
                   <label style={{ display: 'block', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>Juiz 2</label>
-                  <select name="juiz2" defaultValue={etapa.defaultJuiz2Id ?? etapa.temporada.defaultJuiz2Id ?? ""} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }}>
+                  <select name="juiz2" defaultValue={etapa.defaultJuiz2Id ?? etapa.temporada?.defaultJuiz2Id ?? ""} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }}>
                     <option value="">Selecione o Juiz 2...</option>
                     {juizes.map((j: any) => <option key={`j2-${j.id}`} value={j.id}>{j.nome}</option>)}
                   </select>
