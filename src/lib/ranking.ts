@@ -39,12 +39,22 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     
     const classificacaoEtapa: Record<number, any> = {};
     
+    // 🏆 DECISÃO DE ACÚMULO GLOBAL: Só soma no campeonato se a etapa estiver encerrada
+    // Se estivermos vendo o ranking de UMA ETAPA ESPECÍFICA (etapaId presente), somamos sempre.
+    const isGlobalSeasonRanking = !!temporadaId && !etapaId;
+    const shouldAccumulateToSeason = !isGlobalSeasonRanking || isEtapaFinalizada;
+
     ms.forEach(m => {
       // Stats Peão
       if (!statsPeoes[m.competidorId]) {
         statsPeoes[m.competidorId] = { id: m.competidorId, nome: m.competidor.nome, origem: `${m.competidor.cidade || ''}-${m.competidor.uf || ''}`, notaAcumulada: 0, pontosLiga: 0, tempoTotal: 0, paradas: 0, fotoUrl: m.competidor.fotoUrl };
       }
-      statsPeoes[m.competidorId].notaAcumulada += m.notaTotal;
+
+      // Se for ranking de etapa OU etapa finalizada, soma a arena
+      if (shouldAccumulateToSeason) {
+        statsPeoes[m.competidorId].notaAcumulada += m.notaTotal;
+      }
+      
       statsPeoes[m.competidorId].tempoTotal += m.tempo;
       if (m.tempo >= 8) statsPeoes[m.competidorId].paradas += 1;
 
@@ -53,7 +63,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
       classificacaoEtapa[m.competidorId].pontos += m.notaTotal;
       classificacaoEtapa[m.competidorId].tempo += m.tempo;
       
-      // 🏆 NOTA DA ARENA: Soma sempre no campeonato
+      // 🏆 NOTA DA ARENA: Base para pontos de liga
       classificacaoEtapa[m.competidorId].cpts += m.notaTotal; 
       
       // 🎁 BÔNUS DE NOTA 90+: Apenas se etapa finalizada
@@ -113,7 +123,10 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
         if (idx === 0) r.cpts += (temp?.bonusMelhorNotaEtapa || 0);
       }
       
-      if (statsPeoes[r.id]) statsPeoes[r.id].pontosLiga += r.cpts;
+      // SÓ ADICIONA À LIGA SE A ETAPA ESTIVER ENCERRADA (Ou se for consulta de etapa específica que usa pontos acumulados)
+      if (shouldAccumulateToSeason && statsPeoes[r.id]) {
+         statsPeoes[r.id].pontosLiga += r.cpts;
+      }
     });
   });
 

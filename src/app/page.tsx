@@ -334,7 +334,19 @@ export default async function Home() {
                   <div className="premium-card" style={{ padding: '40px', background: 'linear-gradient(180deg, #0d0d0d 0%, #050505 100%)', borderRadius: '40px', border: '1px solid #1a1a1a', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
                       <div style={{ borderBottom: '1px solid #222', paddingBottom: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ background: `${primaryColor}22`, padding: '10px', borderRadius: '12px' }}><Zap size={24} color={primaryColor} /></div>
-                        <h3 style={{ textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>Líderes da Etapa</h3>
+                        <h3 style={{ textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          Líderes da Etapa
+                          {etapaAtiva?.ativa && (
+                            <span style={{ 
+                              background: '#ff444422', color: '#ff4444', fontSize: '0.65rem', 
+                              padding: '2px 8px', borderRadius: '4px', border: '1px solid #ff444444',
+                              display: 'flex', alignItems: 'center', gap: '5px'
+                            }}>
+                              <span style={{ width: '6px', height: '6px', background: '#ff4444', borderRadius: '50%', display: 'inline-block', animation: 'pulse 1.5s infinite' }}></span>
+                              EM ANDAMENTO
+                            </span>
+                          )}
+                        </h3>
                       </div>
                       <table style={{ width: '100%', borderSpacing: '0 15px', borderCollapse: 'separate' }}>
                         <tbody>
@@ -366,6 +378,9 @@ export default async function Home() {
                       <div style={{ borderBottom: '1px solid #222', paddingBottom: '20px', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ background: `${primaryColor}22`, padding: '10px', borderRadius: '12px' }}><Trophy size={24} color={primaryColor} /></div>
                         <h3 style={{ textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: 900, margin: 0 }}>Geral Campeonato</h3>
+                        <div style={{ marginLeft: 'auto', fontSize: '0.65rem', color: '#444', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                          Soma de Etapas Encerradas
+                        </div>
                       </div>
                       <table style={{ width: '100%', borderSpacing: '0 15px', borderCollapse: 'separate' }}>
                         <tbody>
