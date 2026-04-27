@@ -31,12 +31,13 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
 
     const juizes = await prisma.juiz.findMany({ orderBy: { nome: 'asc' } });
     const { getSafeConfig } = await import("@/lib/config-safe");
-    const config = await getSafeConfig();
+    const configData = await getSafeConfig();
+    const config = configData || { numJuizes: 2 };
 
     if (!etapa) return <div>Etapa não encontrada.</div>;
 
-  const roundsTouros = etapa.rounds.filter(r => r.modalidade === 'Touro');
-  const roundsCavalos = etapa.rounds.filter(r => r.modalidade === 'Cavalo' || r.modalidade === 'Cutiano');
+  const roundsTouros = (etapa.rounds || []).filter(r => r.modalidade === 'Touro');
+  const roundsCavalos = (etapa.rounds || []).filter(r => r.modalidade === 'Cavalo' || r.modalidade === 'Cutiano');
 
 
 
@@ -194,7 +195,7 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
                       {round.eFinal && <span style={{ background: 'var(--primary)', color: '#000', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>FINAL</span>}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                      {round.dataAgenda ? new Date(round.dataAgenda).toLocaleDateString() : 'Sem data'} • {round.montarias.length} montarias
+                      {round.dataAgenda ? new Date(round.dataAgenda).toLocaleDateString() : 'Sem data'} • {(round.montarias || []).length} montarias
                     </div>
                     {/* Exibição da Escala de Juízes */}
                     <div style={{ fontSize: '0.7rem', color: 'var(--primary)', marginTop: '4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
