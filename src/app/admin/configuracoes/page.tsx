@@ -8,7 +8,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
+import { headers } from "next/headers";
+import CopyLink from "@/components/CopyLink";
+
 export default async function ConfigPage({ searchParams }: { searchParams: Promise<{ error?: string, success?: string }> }) {
+  const headersList = await headers();
+  const host = headersList.get("host") || "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  const baseUrl = `${protocol}://${host}`;
+
   const session = await getServerSession(authOptions);
   const userRole = (session?.user as any)?.role;
   if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN' && userRole !== 'SUPER') redirect('/admin');
@@ -61,25 +69,19 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           <div style={{ padding: '1.5rem', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px' }}>
             <div style={{ color: 'var(--primary)', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>📺 PLACAR DE NOTAS</div>
-            <code style={{ display: 'block', background: '#111', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', color: '#aaa', border: '1px solid #222' }}>
-              /overlay/nota
-            </code>
+            <CopyLink url={`${baseUrl}/overlay/nota`} />
             <p style={{ margin: '0.5rem 0 0', fontSize: '0.7rem', color: '#555' }}>Exibe a nota total e os nomes na arena.</p>
           </div>
 
           <div style={{ padding: '1.5rem', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px' }}>
             <div style={{ color: '#2196F3', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>👤 PRÓXIMO COMPETIDOR (NEXT)</div>
-            <code style={{ display: 'block', background: '#111', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', color: '#aaa', border: '1px solid #222' }}>
-              /overlay/chamada
-            </code>
+            <CopyLink url={`${baseUrl}/overlay/chamada`} />
             <p style={{ margin: '0.5rem 0 0', fontSize: '0.7rem', color: '#555' }}>Tela cheia com foto e estatísticas do peão.</p>
           </div>
 
           <div style={{ padding: '1.5rem', background: '#0a0a0a', border: '1px solid #1a1a1a', borderRadius: '15px' }}>
             <div style={{ color: '#9c27b0', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>🏆 RANKING DO RODEIO</div>
-            <code style={{ display: 'block', background: '#111', padding: '0.75rem', borderRadius: '8px', fontSize: '0.85rem', color: '#aaa', border: '1px solid #222' }}>
-              /overlay/ranking
-            </code>
+            <CopyLink url={`${baseUrl}/overlay/ranking`} />
             <p style={{ margin: '0.5rem 0 0', fontSize: '0.7rem', color: '#555' }}>Tabela dinâmica com os 10 melhores da etapa.</p>
           </div>
         </div>
