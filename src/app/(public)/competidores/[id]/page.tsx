@@ -7,21 +7,22 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 
 export default async function CompetidorProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const competidor = await prisma.competidor.findUnique({
-    where: { id: parseInt(id) },
-    include: {
-      montarias: {
-        include: {
-          round: true,
-          etapa: true,
-          animal: true
-        },
-        orderBy: { dataHora: 'desc' }
+  try {
+    const competidor = await prisma.competidor.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        montarias: {
+          include: {
+            round: true,
+            etapa: true,
+            animal: true
+          },
+          orderBy: { dataHora: 'desc' }
+        }
       }
-    }
-  });
+    });
 
-  if (!competidor) return notFound();
+    if (!competidor) return notFound();
 
   // Buscar config do Google Drive
   const config = await prisma.configuracao.findUnique({ where: { id: 1 } });
@@ -34,11 +35,11 @@ export default async function CompetidorProfilePage({ params }: { params: Promis
   }
 
   // Cálculos de Estatísticas
-  const total = competidor.montarias.length;
-  const paradas = competidor.montarias.filter(m => !m.desclassificado && m.notaTotal > 0).length;
-  const aproveitamento = total > 0 ? ((paradas / total) * 100).toFixed(1) : "0";
-  const mNota = Math.max(...competidor.montarias.map(m => m.notaTotal), 0);
-  const mediaNotas = paradas > 0 ? (competidor.montarias.reduce((acc, m) => acc + m.notaTotal, 0) / paradas).toFixed(2) : "0";
+  const total = (competidor.montarias || []).length;
+  const paradas = (competidor.montarias || []).filter(m => !m.desclassificado && (m.notaTotal || 0) > 0).length;
+  const aproveitamento = total > 0 ? ((paradas / total) * 100).toFixed(1) : "0.0";
+  const mNota = Math.max(...(competidor.montarias || []).map(m => m.notaTotal || 0), 0);
+  const mediaNotas = paradas > 0 ? ((competidor.montarias || []).reduce((acc, m) => acc + (m.notaTotal || 0), 0) / paradas).toFixed(2) : "0.00";
 
   return (
     <div className="fade-in">
@@ -108,33 +109,33 @@ export default async function CompetidorProfilePage({ params }: { params: Promis
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', borderBottom: replayFile ? '1px solid #222' : 'none' }}>
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontWeight: 'bold' }}>{m.etapa.nome}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#666' }}>{new Date(m.dataHora).toLocaleDateString('pt-BR')} • Round {m.round.numero}</div>
+                    <div style={{ fontWeight: 'bold' }}>{m.etapa?.nome || 'Etapa não informada'}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#666' }}>{m.dataHora ? new Date(m.dataHora).toLocaleDateString('pt-BR') : 'Sem data'} • Round {m.round?.numero || '?'}</div>
                   </div>
                   <div>
                     <Link href={`/animais/${m.animalId}`} style={{ color: '#fff', textDecoration: 'none', fontWeight: '600' }}>
-                      {m.animal.nome}
+                      {m.animal?.nome || 'Animal não informado'}
                     </Link>
-                    <div style={{ fontSize: '0.75rem', color: '#666' }}>{m.animal.companhia}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#666' }}>{m.animal?.companhia || '---'}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.65rem', color: '#666' }}>PEÃO</div>
-                    <div style={{ opacity: 0.8 }}>{m.notaPeao.toFixed(2)}</div>
+                    <div style={{ opacity: 0.8 }}>{(m.notaPeao || 0).toFixed(2)}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.65rem', color: '#666' }}>ANIMAL</div>
-                    <div style={{ opacity: 0.8 }}>{m.notaAnimal.toFixed(2)}</div>
+                    <div style={{ opacity: 0.8 }}>{(m.notaAnimal || 0).toFixed(2)}</div>
                   </div>
                   <div style={{ 
                     fontSize: '1.4rem', 
                     fontWeight: '900', 
-                    color: m.desclassificado ? '#ff4444' : (m.notaTotal > 0 ? 'var(--primary)' : '#555'),
+                    color: m.desclassificado ? '#ff4444' : ((m.notaTotal || 0) > 0 ? 'var(--primary)' : '#555'),
                     minWidth: '80px',
                     textAlign: 'right'
                   }}>
-                    {m.desclassificado ? 'DESC' : (m.notaTotal > 0 ? m.notaTotal.toFixed(2) : '---')}
+                    {m.desclassificado ? 'DESC' : ((m.notaTotal || 0) > 0 ? (m.notaTotal || 0).toFixed(2) : '---')}
                   </div>
                 </div>
               </div>
@@ -158,6 +159,10 @@ export default async function CompetidorProfilePage({ params }: { params: Promis
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("[CompetidorProfilePage] Erro:", error);
+    return <div style={{ padding: '100px', textAlign: 'center' }}>Erro ao carregar perfil do competidor.</div>;
+  }
 }
 
 function StatCard({ icon: Icon, label, value }: any) {

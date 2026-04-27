@@ -112,12 +112,13 @@ export default function ScoringForm({
     }
   };
 
-  const searchKeyComp = montaria.competidor.nome.toUpperCase();
-  const searchKeyAnimal = montaria.animal.nome.toUpperCase();
+  const searchKeyComp = (montaria.competidor?.nome || "").toUpperCase();
+  const searchKeyAnimal = (montaria.animal?.nome || "").toUpperCase();
   
   const replayFileEntry = Object.entries(replayMap).find(([name]) => {
+    if (!name) return false;
     const upName = name.toUpperCase();
-    const normalize = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const normalize = (str: string) => (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     return normalize(upName).includes(normalize(searchKeyComp)) && 
            normalize(upName).includes(normalize(searchKeyAnimal));
   });
@@ -135,14 +136,14 @@ export default function ScoringForm({
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem', padding: '1.5rem', background: '#121212', borderRadius: '12px', border: '1px solid #222' }}>
         <div style={{ flex: 1, minWidth: '200px' }}>
           <span style={{ fontSize: '0.7rem', color: '#555', textTransform: 'uppercase', fontWeight: 'bold' }}>Peão Selecionado</span>
-          <h3 style={{ margin: '5px 0 0', color: '#fff' }}>{montaria.competidor.nome}</h3>
+          <h3 style={{ margin: '5px 0 0', color: '#fff' }}>{montaria.competidor?.nome || 'PEÃO NÃO INFORMADO'}</h3>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Ranking Etapa: <strong style={{color:'var(--primary)'}}>{currentRankText}</strong></p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#333', fontSize: '1.2rem', fontWeight: '900' }}>VS</div>
         <div style={{ flex: 1, minWidth: '200px', textAlign: 'right' }}>
           <span style={{ fontSize: '0.7rem', color: '#555', textTransform: 'uppercase', fontWeight: 'bold' }}>Animal Escalado</span>
-          <h3 style={{ margin: '5px 0 0', color: 'var(--primary)' }}>{montaria.animal.nome}</h3>
-          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Cia: {montaria.animal.companhia}</p>
+          <h3 style={{ margin: '5px 0 0', color: 'var(--primary)' }}>{montaria.animal?.nome || 'ANIMAL NÃO INFORMADO'}</h3>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.8rem' }}>Cia: {montaria.animal?.companhia || '---'}</p>
         </div>
       </div>
 

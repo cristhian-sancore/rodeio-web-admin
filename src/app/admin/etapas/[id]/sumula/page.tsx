@@ -8,24 +8,25 @@ export default async function SumulaImpressaoPage(props: { params: Promise<{ id:
   const params = await props.params;
   const etapaId = parseInt(params.id);
 
-  const etapa = await prisma.etapa.findUnique({
-    where: { id: etapaId },
-    include: {
-      temporada: true,
-      rounds: {
-        include: {
-          montarias: {
-            include: { competidor: true, animal: true },
-            orderBy: { notaTotal: 'desc' }
+  try {
+    const etapa = await prisma.etapa.findUnique({
+      where: { id: etapaId },
+      include: {
+        temporada: true,
+        rounds: {
+          include: {
+            montarias: {
+              include: { competidor: true, animal: true },
+              orderBy: { notaTotal: 'desc' }
+            },
+            juiz1: true, juiz2: true, juiz3: true, juiz4: true
           },
-          juiz1: true, juiz2: true, juiz3: true, juiz4: true
-        },
-        orderBy: { numero: 'asc' }
+          orderBy: { numero: 'asc' }
+        }
       }
-    }
-  });
+    });
 
-  if (!etapa) redirect('/admin/etapas');
+    if (!etapa) redirect('/admin/etapas');
 
   return (
     <div className="sumula-print-container">
@@ -47,7 +48,7 @@ export default async function SumulaImpressaoPage(props: { params: Promise<{ id:
             </div>
             <div style={{ textAlign: 'right' }}>
               <h2 style={{ fontSize: '1.5rem', margin: 0 }}>ROUND {round.numero}</h2>
-              <p style={{ margin: '0.2rem 0' }}>{round.modalidade.toUpperCase()} | {round.dataAgenda.toLocaleDateString()}</p>
+              <p style={{ margin: '0.2rem 0' }}>{round.modalidade.toUpperCase()} | {round.dataAgenda ? new Date(round.dataAgenda).toLocaleDateString() : 'SEM DATA'}</p>
             </div>
           </div>
 
@@ -77,14 +78,14 @@ export default async function SumulaImpressaoPage(props: { params: Promise<{ id:
               {round.montarias.map((m, idx) => (
                 <tr key={m.id} style={{ borderBottom: '1px solid #eee' }}>
                   <td style={tableCellStyle}>{idx + 1}º</td>
-                  <td style={{ ...tableCellStyle, fontWeight: 'bold' }}>{m.competidor.nome}</td>
-                  <td style={tableCellStyle}>{m.animal.nome}</td>
-                  <td style={tableCellStyle}>{m.animal.companhia}</td>
-                  <td style={tableCellStyle}>{m.tempo}s</td>
-                  <td style={tableCellStyle}>{m.j1Peao + m.j1Animal}</td>
-                  <td style={tableCellStyle}>{m.j2Peao + m.j2Animal}</td>
+                  <td style={{ ...tableCellStyle, fontWeight: 'bold' }}>{m.competidor?.nome || 'NÃO INFORMADO'}</td>
+                  <td style={tableCellStyle}>{m.animal?.nome || 'NÃO INFORMADO'}</td>
+                  <td style={tableCellStyle}>{m.animal?.companhia || '---'}</td>
+                  <td style={tableCellStyle}>{(m.tempo || 0)}s</td>
+                  <td style={tableCellStyle}>{(m.j1Peao || 0) + (m.j1Animal || 0)}</td>
+                  <td style={tableCellStyle}>{(m.j2Peao || 0) + (m.j2Animal || 0)}</td>
                   <td style={{ ...tableCellStyle, fontWeight: '900', background: '#f9f9f9' }}>
-                    {m.desclassificado ? 'DESC.' : m.notaTotal.toFixed(2)}
+                    {m.desclassificado ? 'DESC.' : (m.notaTotal || 0).toFixed(2)}
                   </td>
                 </tr>
               ))}
@@ -118,6 +119,10 @@ export default async function SumulaImpressaoPage(props: { params: Promise<{ id:
       `}</style>
     </div>
   );
+  } catch (error) {
+    console.error("[SumulaImpressaoPage] Erro:", error);
+    return <div>Erro ao gerar súmula para impressão. Verifique se os rounds possuem datas válidas.</div>;
+  }
 }
 
 const tableHeaderStyle: React.CSSProperties = {

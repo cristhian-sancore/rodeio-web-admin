@@ -7,21 +7,22 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 
 export default async function AnimalProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const animal = await prisma.animal.findUnique({
-    where: { id: parseInt(id) },
-    include: {
-      montarias: {
-        include: {
-          round: true,
-          etapa: true,
-          competidor: true
-        },
-        orderBy: { dataHora: 'desc' }
+  try {
+    const animal = await prisma.animal.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        montarias: {
+          include: {
+            round: true,
+            etapa: true,
+            competidor: true
+          },
+          orderBy: { dataHora: 'desc' }
+        }
       }
-    }
-  });
+    });
 
-  if (!animal) return notFound();
+    if (!animal) return notFound();
 
   // Buscar config do Google Drive
   const config = await prisma.configuracao.findUnique({ where: { id: 1 } });
@@ -33,12 +34,12 @@ export default async function AnimalProfilePage({ params }: { params: Promise<{ 
   }
 
   // Estatísticas
-  const montariasValidas = animal.montarias.filter(m => !m.desclassificado && m.notaAnimal > 0);
+  const montariasValidas = (animal.montarias || []).filter(m => !m.desclassificado && (m.notaAnimal || 0) > 0);
   const mediaValida = montariasValidas.length > 0
-    ? (montariasValidas.reduce((acc, m) => acc + m.notaAnimal, 0) / montariasValidas.length).toFixed(2)
-    : "0";
-  const mNota = Math.max(...animal.montarias.map(m => m.notaAnimal), 0);
-  const derrubadas = animal.montarias.filter(m => m.desclassificado || m.notaAnimal === 0).length;
+    ? (montariasValidas.reduce((acc, m) => acc + (m.notaAnimal || 0), 0) / montariasValidas.length).toFixed(2)
+    : "0.00";
+  const mNota = Math.max(...(animal.montarias || []).map(m => m.notaAnimal || 0), 0);
+  const derrubadas = (animal.montarias || []).filter(m => m.desclassificado || (m.notaAnimal || 0) === 0).length;
 
   return (
     <div className="fade-in">
@@ -104,23 +105,23 @@ export default async function AnimalProfilePage({ params }: { params: Promise<{ 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem', borderBottom: replayFile ? '1px solid #222' : 'none' }}>
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontWeight: 'bold' }}>{m.etapa.nome}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#666' }}>{new Date(m.dataHora).toLocaleDateString('pt-BR')} • Round {m.round.numero}</div>
+                    <div style={{ fontWeight: 'bold' }}>{m.etapa?.nome || 'Etapa não informada'}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#666' }}>{m.dataHora ? new Date(m.dataHora).toLocaleDateString('pt-BR') : 'Sem data'} • Round {m.round?.numero || '?'}</div>
                   </div>
                   <div>
                     <Link href={`/competidores/${m.competidorId}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#fff', textDecoration: 'none', fontWeight: '600' }}>
-                      <User size={14} /> {m.competidor.nome}
+                      <User size={14} /> {m.competidor?.nome || 'Competidor não informado'}
                     </Link>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.65rem', color: '#666' }}>NOTA ANIMAL</div>
-                    <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{m.notaAnimal.toFixed(2)}</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{(m.notaAnimal || 0).toFixed(2)}</div>
                   </div>
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '0.65rem', color: '#666' }}>NOTA PEÃO</div>
-                    <div style={{ opacity: 0.6 }}>{m.notaPeao.toFixed(2)}</div>
+                    <div style={{ opacity: 0.6 }}>{(m.notaPeao || 0).toFixed(2)}</div>
                   </div>
                   <div style={{ minWidth: '80px', textAlign: 'right' }}>
                     {m.desclassificado ? (
@@ -151,6 +152,10 @@ export default async function AnimalProfilePage({ params }: { params: Promise<{ 
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("[AnimalProfilePage] Erro:", error);
+    return <div style={{ padding: '100px', textAlign: 'center' }}>Erro ao carregar perfil do animal.</div>;
+  }
 }
 
 function StatCard({ icon: Icon, label, value }: any) {

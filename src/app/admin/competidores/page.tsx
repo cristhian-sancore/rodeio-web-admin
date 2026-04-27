@@ -6,9 +6,10 @@ import CompetidorManager from "./CompetidorManager";
 export default async function CompetidoresPage({ searchParams }: { searchParams: Promise<{ q?: string, error?: string }> }) {
   const { error } = await searchParams;
 
-  const competidores = await prisma.competidor.findMany({
-    orderBy: { nome: 'asc' }
-  });
+  try {
+    const competidores = await prisma.competidor.findMany({
+      orderBy: { nome: 'asc' }
+    });
 
   return (
     <div className="fade-in">
@@ -27,4 +28,8 @@ export default async function CompetidoresPage({ searchParams }: { searchParams:
       <CompetidorManager initialData={competidores} createAction={createCompetidor} />
     </div>
   );
+  } catch (error) {
+    console.error("[CompetidoresPage] Erro:", error);
+    return <div>Erro ao carregar lista de competidores.</div>;
+  }
 }

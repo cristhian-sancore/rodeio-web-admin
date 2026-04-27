@@ -7,26 +7,27 @@ export default async function EtapasPage(props: { searchParams: Promise<{ [key: 
   const searchParams = await props.searchParams;
   const hasError = searchParams?.error === 'ETAPA_HAS_LINKS';
   
-  const temporadas = await prisma.temporada.findMany({
-    orderBy: { ano: 'desc' }
-  });
+  try {
+    const temporadas = await prisma.temporada.findMany({
+      orderBy: { ano: 'desc' }
+    });
 
-  const etapas = await prisma.etapa.findMany({
-    include: { temporada: true },
-    orderBy: { dataInicio: 'desc' }
-  });
+    const etapas = await prisma.etapa.findMany({
+      include: { temporada: true },
+      orderBy: { dataInicio: 'desc' }
+    });
 
-  if (temporadas.length === 0) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '5rem', padding: '2rem' }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 900 }}>Nenhum Circuito Ativo</h2>
-        <p style={{ color: '#888', maxWidth: '500px', margin: '1rem auto' }}>Você precisa registrar um Circuito Master no painel de Configurações antes de agendar etapas.</p>
-        <a href="/admin/configuracoes" className="btn-primary" style={{ display: 'inline-flex', padding: '1rem 2rem', textDecoration: 'none', marginTop: '1rem', borderRadius: '12px' }}>
-          IR PARA CONFIGURAÇÕES DE CIRCUITO
-        </a>
-      </div>
-    );
-  }
+    if (temporadas.length === 0) {
+      return (
+        <div style={{ textAlign: 'center', marginTop: '5rem', padding: '2rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 900 }}>Nenhum Circuito Ativo</h2>
+          <p style={{ color: '#888', maxWidth: '500px', margin: '1rem auto' }}>Você precisa registrar um Circuito Master no painel de Configurações antes de agendar etapas.</p>
+          <a href="/admin/configuracoes" className="btn-primary" style={{ display: 'inline-flex', padding: '1rem 2rem', textDecoration: 'none', marginTop: '1rem', borderRadius: '12px' }}>
+            IR PARA CONFIGURAÇÕES DE CIRCUITO
+          </a>
+        </div>
+      );
+    }
 
   return (
     <div className="fade-in">
@@ -52,4 +53,8 @@ export default async function EtapasPage(props: { searchParams: Promise<{ [key: 
       />
     </div>
   );
+  } catch (error) {
+    console.error("[EtapasPage] Erro:", error);
+    return <div>Erro ao carregar lista de etapas.</div>;
+  }
 }

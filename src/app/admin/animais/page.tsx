@@ -6,9 +6,10 @@ import AnimalManager from "./AnimalManager";
 export default async function AnimaisPage({ searchParams }: { searchParams: Promise<{ q?: string, error?: string }> }) {
   const { error } = await searchParams;
 
-  const animais = await prisma.animal.findMany({
-    orderBy: { nome: 'asc' }
-  });
+  try {
+    const animais = await prisma.animal.findMany({
+      orderBy: { nome: 'asc' }
+    });
 
   return (
     <div className="fade-in">
@@ -27,4 +28,8 @@ export default async function AnimaisPage({ searchParams }: { searchParams: Prom
       <AnimalManager initialData={animais} createAction={createAnimal} />
     </div>
   );
+  } catch (error) {
+    console.error("[AnimaisPage] Erro:", error);
+    return <div>Erro ao carregar lista de animais.</div>;
+  }
 }

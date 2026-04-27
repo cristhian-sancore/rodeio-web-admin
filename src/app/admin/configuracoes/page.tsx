@@ -22,7 +22,8 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN' && userRole !== 'SUPER') redirect('/admin');
   const { error, success } = await searchParams;
 
-  const configData = await prisma.configuracao.findFirst();
+  try {
+    const configData = await prisma.configuracao.findFirst();
   const config = (configData || { 
     id: 1,
     numJuizes: 2, 
@@ -409,4 +410,8 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("[ConfigPage] Erro:", error);
+    return <div>Erro ao carregar configurações.</div>;
+  }
 }
