@@ -21,11 +21,10 @@ import { createAnimal } from "../../../../../animais/actions";
 
 export default async function MontagemRoundPage({ params }: { params: Promise<{ id: string, roundId: string }> }) {
   const { id, roundId } = await params;
+  const session = await getServerSession(authOptions);
+  if (!session) redirect('/login');
 
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) redirect('/login');
-
     const rId = parseInt(roundId);
     const eId = parseInt(id);
 
@@ -207,8 +206,8 @@ export default async function MontagemRoundPage({ params }: { params: Promise<{ 
     console.error("[MontagemRoundPage] Erro Fatal:", error);
     return (
       <div style={{ padding: '100px', textAlign: 'center' }}>
-         <h2 style={{ color: '#ff4444' }}>Erro na montagem do round</h2>
-         <p>Ocorreu um erro ao carregar os dados de sorteio.</p>
+         <h2 style={{ color: '#ff4444' }}>[DIAGNÓSTICO ATIVO]</h2>
+         <p>Ocorreu um erro ao carregar os dados de sorteio neste round.</p>
          <div style={{ marginTop: '1rem', padding: '1rem', background: '#000', border: '1px solid #333', borderRadius: '8px', color: '#ff4444', fontSize: '0.8rem', fontFamily: 'monospace', display: 'inline-block', maxWidth: '80%', textAlign: 'left' }}>
             <strong>LOG TÉCNICO:</strong><br/>
             {error?.message || String(error)}
