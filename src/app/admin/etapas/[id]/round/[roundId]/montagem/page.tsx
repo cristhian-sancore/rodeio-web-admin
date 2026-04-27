@@ -16,6 +16,7 @@ import SearchableSelect from "../../../../../components/SearchableSelect";
 import ExcelRoundActions from "./ExcelRoundActions";
 
 import SorteioManager from "./SorteioManager";
+import PdfImportBtn from "./PdfImportBtn";
 import { createCompetidor } from "../../../../../competidores/actions";
 import { createAnimal } from "../../../../../animais/actions";
 
