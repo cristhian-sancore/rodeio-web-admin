@@ -38,80 +38,85 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
 
   if (user.role === 'COMENTARISTA') redirect('/admin');
 
-  // --- SELEÇÃO DE ROUND ---
-  if (!roundId) {
-    const etapas = await (prisma as any).etapa.findMany({
-      where: { ativa: true },
-      include: {
-        rounds: {
-          orderBy: { numero: 'asc' },
-          include: { _count: { select: { montarias: true } } }
-        }
-      },
-      orderBy: { dataInicio: 'desc' }
+  try {
+    // --- SELEÇÃO DE ROUND ---
+    if (!roundId) {
+      const etapas = await prisma.etapa.findMany({
+        where: { ativa: true },
+        include: {
+          rounds: {
+            orderBy: { numero: 'asc' },
+            include: { _count: { select: { montarias: true } } }
+          }
+        },
+        orderBy: { dataInicio: 'desc' }
+      });
+
+      const now = new Date();
+      const operationalDate = new Date(now);
+      if (now.getHours() < 6) {
+        operationalDate.setDate(operationalDate.getDate() - 1);
+      }
+      const todayStr = operationalDate.toISOString().split('T')[0];
+
+      const etapasFiltradas = isAdmin ? etapas : etapas.map((etapa: any) => ({
+        ...etapa,
+        rounds: etapa.rounds.filter((r: any) => {
+          if (!r.dataAgenda) return false;
+          try {
+            const roundDateStr = new Date(r.dataAgenda).toISOString().split('T')[0];
+            return roundDateStr === todayStr;
+          } catch {
+            return false;
+          }
+        })
+      })).filter((etapa: any) => etapa.rounds.length > 0);
+
+      return (
+        <div className="fade-in">
+          <div style={{ marginBottom: '2.5rem' }}>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 950, letterSpacing: '-1px', color: '#fff' }}>Célula de Lançamento <span style={{color:'var(--primary)'}}>em Tempo Real</span></h1>
+            <p style={{ color: '#888', fontSize: '1.1rem' }}>{isAdmin ? 'O rodeio é dinâmico. Selecione o Round para acessar a súmula de campo.' : 'Painel do Juiz: Lançamento de notas para os rounds de hoje.'}</p>
+          </div>
+          
+          <ExecucaoRoundSelector etapas={etapasFiltradas} isAdmin={isAdmin} />
+        </div>
+      );
+    }
+
+    const rId = roundId ? parseInt(roundId) : NaN;
+    if (isNaN(rId)) return <div>Round inválido.</div>;
+
+    const round = await prisma.round.findUnique({
+      where: { id: rId },
+      include: { 
+        etapa: true,
+        juiz1: true,
+        juiz2: true,
+        juiz3: true,
+        juiz4: true
+      }
     });
 
-    const now = new Date();
-    const operationalDate = new Date(now);
-    if (now.getHours() < 6) {
-      operationalDate.setDate(operationalDate.getDate() - 1);
-    }
-    const todayStr = operationalDate.toISOString().split('T')[0];
+    if (!round) return <div>Round não encontrado.</div>;
 
-    const etapasFiltradas = isAdmin ? etapas : etapas.map((etapa: any) => ({
-      ...etapa,
-      rounds: etapa.rounds.filter((r: any) => {
-        if (!r.dataAgenda) return false;
-        const roundDateStr = r.dataAgenda.toISOString().split('T')[0];
-        return roundDateStr === todayStr;
+    // --- BUSCA DE DADOS ---
+    const [juizes, montarias] = await Promise.all([
+      prisma.juiz.findMany({ orderBy: { nome: 'asc' } }),
+      prisma.montaria.findMany({
+        where: { roundId: rId, removida: false },
+        orderBy: [
+          { notaTotal: 'asc' }, // Montarias sem nota primeiro
+          { dataHora: 'desc' }
+        ],
+        include: { competidor: true, animal: true }
       })
-    })).filter((etapa: any) => etapa.rounds.length > 0);
+    ]);
 
-    return (
-      <div className="fade-in">
-        <div style={{ marginBottom: '2.5rem' }}>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 950, letterSpacing: '-1px', color: '#fff' }}>Célula de Lançamento <span style={{color:'var(--primary)'}}>em Tempo Real</span></h1>
-          <p style={{ color: '#888', fontSize: '1.1rem' }}>{isAdmin ? 'O rodeio é dinâmico. Selecione o Round para acessar a súmula de campo.' : 'Painel do Juiz: Lançamento de notas para os rounds de hoje.'}</p>
-        </div>
-        
-        <ExecucaoRoundSelector etapas={etapasFiltradas} isAdmin={isAdmin} />
-      </div>
-    );
-  }
+    const selectedMontaria = montariaId ? montarias.find((m: any) => m.id === parseInt(montariaId)) : null;
 
-  const rId = roundId ? parseInt(roundId) : NaN;
-  if (isNaN(rId)) return <div>Round inválido.</div>;
-
-  const round = await (prisma as any).round.findUnique({
-    where: { id: rId },
-    include: { 
-      etapa: true,
-      juiz1: true,
-      juiz2: true,
-      juiz3: true,
-      juiz4: true
-    }
-  });
-
-  if (!round) return <div>Round não encontrado.</div>;
-
-  // --- BUSCA DE DADOS ---
-  const [juizes, montarias] = await Promise.all([
-    (prisma as any).juiz.findMany({ orderBy: { nome: 'asc' } }),
-    (prisma as any).montaria.findMany({
-      where: { roundId: rId, removida: false },
-      orderBy: [
-        { notaTotal: 'asc' }, // Montarias sem nota primeiro
-        { dataHora: 'desc' }
-      ],
-      include: { competidor: true, animal: true }
-    })
-  ]);
-
-  const selectedMontaria = montariaId ? montarias.find((m: any) => m.id === parseInt(montariaId)) : null;
-
-  const config = await getSafeConfig() || { numJuizes: 2, rankingMode: 'OFF', rankingPage: 0 };
-  const numJuizes = config.numJuizes;
+    const config = await getSafeConfig() || { numJuizes: 2, rankingMode: 'OFF', rankingPage: 0 };
+    const numJuizes = config.numJuizes;
 
   const isJ1 = isAdmin || (user.juizId && round.juiz1Id === user.juizId);
   const isJ2 = (numJuizes >= 2) && (isAdmin || (user.juizId && round.juiz2Id === user.juizId));
