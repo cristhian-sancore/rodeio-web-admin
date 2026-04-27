@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
+      bodySizeLimit: "20mb",
       allowedOrigins: ["rodeio.cristhiansancore.com.br", "localhost:3000", "192.168.18.55:3000"]
     }
   },

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { 
@@ -99,20 +99,21 @@ export default function EliteVisualBuilder() {
   const saveLayout = async () => {
     setIsSaving(true);
     const formData = new FormData();
-    const updatedLayouts = { ...config?.siteLayouts, [activeTab]: blocks };
+    const updatedLayouts = { ...(config?.siteLayouts || {}), [activeTab]: blocks };
     formData.append('siteLayouts', JSON.stringify(updatedLayouts));
-    formData.append('primaryColor', config.primaryColor);
-    formData.append('secondaryColor', config.secondaryColor);
-    formData.append('fontFamily', config.fontFamily || 'Inter');
-    formData.append('titulo', config.titulo);
-    formData.append('removeBgApiKey', config.removeBgApiKey || '');
+    formData.append('primaryColor', config?.primaryColor || '#D4AF37');
+    formData.append('secondaryColor', config?.secondaryColor || '#1a1a1a');
+    formData.append('fontFamily', config?.fontFamily || 'Inter');
+    formData.append('titulo', config?.titulo || 'RODEIO PRO');
+    formData.append('removeBgApiKey', config?.removeBgApiKey || '');
     
     try {
       await saveConfig(formData);
       setIsSaving(false);
       alert('Design de Elite publicado com sucesso! 🚀💎');
-    } catch (err) {
-      alert('Erro ao publicar.');
+    } catch (err: any) {
+      console.error("ERRO AO PUBLICAR BUILDER:", err);
+      alert('Erro ao publicar: ' + (err?.message || 'Falha na requisição. Veja o F12.'));
       setIsSaving(false);
     }
   };
