@@ -57,6 +57,27 @@ export default async function PublicRankingPage({ searchParams }: PageProps) {
     rankingResult = await getAnimalRanking(mode, roundId, currentEtapaId, temporadaId, modalidade);
   }
 
+  const config = await prisma.configuracao.findFirst();
+  const isCongelado = config?.rankingCongelado || false;
+
+  if (isCongelado) {
+    return (
+      <div style={{ height: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '2rem' }}>
+        <div style={{ width: '80px', height: '80px', background: 'rgba(212, 175, 55, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '2rem' }}>
+          <Clock size={40} color="var(--primary)" />
+        </div>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 900, marginBottom: '1rem' }}>Ranking em <span style={{color:'var(--primary)'}}>Conferência</span></h1>
+        <p style={{ color: '#888', maxWidth: '500px', fontSize: '1.1rem', lineHeight: '1.6' }}>
+          Os resultados estão sendo auditados pela comissão técnica para garantir a precisão das notas. 
+          <br/>Voltaremos em instantes com a classificação oficial.
+        </p>
+        <div style={{ marginTop: '2rem', fontSize: '0.8rem', color: '#444', textTransform: 'uppercase', letterSpacing: '2px' }}>
+          Processamento de Auditoria CNAR
+        </div>
+      </div>
+    );
+  }
+
   const list = rankingResult?.list || [];
 
   return (
