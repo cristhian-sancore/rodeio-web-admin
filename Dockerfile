@@ -60,7 +60,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
 
 # Ensure the SQLite DB path is accessible (if used) or just persistent prisma files
-VOLUME ["/app/prisma", "/app/public/uploads"]
+VOLUME ["/app/public/uploads"]
 
 # Grant permissions to the nextjs user for the whole app
 RUN chmod +x docker-entrypoint.sh && chown -R nextjs:nodev /app
