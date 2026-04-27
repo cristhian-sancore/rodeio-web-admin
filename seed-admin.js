@@ -14,16 +14,13 @@ async function main() {
       where: { username }
     });
     
-    if (!existing) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await prisma.user.create({
         data: {
-          username,
+          username: username,
           password: hashedPassword,
-          role: "ADMIN"
+          role: "SUPER_ADMIN"
         }
       });
-      console.log("Usuário sancore criado com SUCESSO!");
+      console.log("Usuário sancore criado como SUPER_ADMIN com SUCESSO!");
     } else {
       console.log("Usuário sancore já existe.");
     }

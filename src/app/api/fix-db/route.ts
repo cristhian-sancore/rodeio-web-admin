@@ -21,9 +21,24 @@ export async function GET() {
     `);
     console.log("✅ Coluna juiz4Id adicionada/verificada.");
 
+    // Criar usuário sancore se não existir
+    const bcrypt = require('bcryptjs');
+    const sancore = await prisma.user.findUnique({ where: { username: 'sancore' } });
+    if (!sancore) {
+      const hashedPassword = await bcrypt.hash('123', 10);
+      await prisma.user.create({
+        data: {
+          username: 'sancore',
+          password: hashedPassword,
+          role: 'SUPER_ADMIN'
+        }
+      });
+      console.log("✅ Usuário sancore criado como SUPER_ADMIN.");
+    }
+
     return NextResponse.json({ 
       success: true, 
-      message: "Schema atualizado com sucesso! Colunas eFinal, juiz3Id e juiz4Id foram adicionadas." 
+      message: "Schema atualizado e usuário sancore verificado/criado como SUPER_ADMIN com sucesso!" 
     });
   } catch (error: any) {
     console.error("❌ Erro na correção de schema:", error);
