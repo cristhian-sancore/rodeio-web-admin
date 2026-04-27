@@ -16,10 +16,10 @@ export default function ExcelRoundActions({ roundId, etapaId, data }: ExcelRound
   const [result, setResult] = useState<{ success: boolean; count: number; totalErrors?: number; errors?: string[] | null; error?: string } | null>(null);
 
   const handleExport = () => {
-    const ws = XLSX.utils.json_to_sheet(data.map(m => ({
-      Competidor: m.competidor.nome,
-      Animal: m.animal.nome,
-      Companhia: m.animal.companhia
+    const ws = XLSX.utils.json_to_sheet((data || []).map(m => ({
+      Competidor: m.competidor?.nome || 'N/A',
+      Animal: m.animal?.nome || 'N/A',
+      Companhia: m.animal?.companhia || 'N/A'
     })));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sorteio_Round");
