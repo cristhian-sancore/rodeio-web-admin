@@ -145,12 +145,15 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     }
   });
 
-  const leaderNota = sortedPeoes[0] ? (etapaId ? sortedPeoes[0].notaAcumulada : sortedPeoes[0].pontosLiga) : 0;
+  const leaderNota = sortedPeoes[0] ? (etapaId ? (sortedPeoes[0].notaAcumulada || 0) : (sortedPeoes[0].pontosLiga || 0)) : 0;
 
-  const peoes = sortedPeoes.map((p: any) => ({
-    ...p,
-    diff: (leaderNota - (etapaId ? p.notaAcumulada : p.pontosLiga)).toFixed(2)
-  }));
+  const peoes = sortedPeoes.map((p: any) => {
+    const val = etapaId ? (p.notaAcumulada || 0) : (p.pontosLiga || 0);
+    return {
+      ...p,
+      diff: (leaderNota - val).toFixed(2)
+    };
+  });
 
   const touros = Object.values(statsAnimais)
     .filter((a: any) => {
@@ -162,7 +165,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
   const leaderTouro = touros[0]?.media || 0;
   const tourosFormatados = touros.map(t => ({
      ...t,
-     diff: (leaderTouro - t.media).toFixed(2)
+     diff: (leaderTouro - (t.media || 0)).toFixed(2)
   }));
 
   return { peoes, touros: tourosFormatados };
