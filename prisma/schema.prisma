@@ -106,6 +106,7 @@ model Round {
   modalidade String         @default("Touro")
   dataAgenda DateTime       @default(now())
   dataHora   DateTime       @default(now())
+  eFinal     Boolean        @default(false)
   montarias  Montaria[]
   juiz4      Juiz?          @relation("Juiz4", fields: [juiz4Id], references: [id])
   juiz3      Juiz?          @relation("Juiz3", fields: [juiz3Id], references: [id])

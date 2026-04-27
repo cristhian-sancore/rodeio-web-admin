@@ -150,8 +150,14 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
       {/* Top Banner */}
       <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1.5rem' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#fff' }}>Lançamento de Campo: <span style={{color:'var(--primary)'}}>Round {round.numero}</span></h1>
-          <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>{round.etapa.nome} • Busque o peão na súmula abaixo para pontuar.</p>
+          <h1 style={{ margin: 0, fontSize: '2.5rem', fontWeight: 950, letterSpacing: '-1.5px', color: '#fff' }}>
+            {round.eFinal ? (
+              <>GRANDE <span style={{color:'var(--primary)'}}>FINAL</span></>
+            ) : (
+              <>Lançamento de Campo: <span style={{color:'var(--primary)'}}>Round {round.numero}</span></>
+            )}
+          </h1>
+          <p style={{ color: 'var(--text-muted)', margin: '0.5rem 0 0 0', fontSize: '1.1rem' }}>{round.etapa.nome} • Busque o peão na súmula abaixo para pontuar.</p>
         </div>
         
         {/* MODO MANUAL / AUDITORIA */}

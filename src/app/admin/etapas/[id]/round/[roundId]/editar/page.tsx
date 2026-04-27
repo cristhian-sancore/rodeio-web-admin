@@ -33,9 +33,14 @@ export default async function EditarRoundPage(props: { params: Promise<{ id: str
           <input type="hidden" name="id" value={round.id} />
           <input type="hidden" name="etapaId" value={etapaId} />
           
-          <div style={{ gridColumn: 'span 2' }}>
+          <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888' }}>Número do Round</label>
             <input name="numero" type="number" required defaultValue={round.numero} style={{ width: '100%', padding: '0.75rem', background: '#222', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>
+            <input id="eFinal" name="eFinal" type="checkbox" defaultChecked={round.eFinal} style={{ width: '20px', height: '20px' }} />
+            <label htmlFor="eFinal" style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>GRANDE FINAL?</label>
           </div>
 
           <div style={{ gridColumn: 'span 2', padding: '1.25rem', background: 'rgba(212, 175, 55, 0.05)', borderRadius: '10px', border: '1px solid rgba(212, 175, 55, 0.2)', marginTop: '0.5rem' }}>

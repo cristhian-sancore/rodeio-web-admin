@@ -148,6 +148,11 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
                   </select>
                 </div>
               )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', alignSelf: 'flex-end', paddingBottom: '0.5rem' }}>
+                <input id="eFinal" name="eFinal" type="checkbox" style={{ width: '20px', height: '20px' }} />
+                <label htmlFor="eFinal" style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>GRANDE FINAL?</label>
+              </div>
             </div>
 
             {config.numJuizes === 4 && (
@@ -182,7 +187,10 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
               {roundsTouros.map((round) => (
                 <div key={round.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
                   <div>
-                    <div style={{ fontWeight: 'bold' }}>ROUND {round.numero}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ fontWeight: 'bold' }}>{round.eFinal ? 'GRANDE FINAL' : `ROUND ${round.numero}`}</div>
+                      {round.eFinal && <span style={{ background: 'var(--primary)', color: '#000', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>FINAL</span>}
+                    </div>
                     <div style={{ fontSize: '0.75rem', color: '#666' }}>
                       {round.dataAgenda.toLocaleDateString()} • {round.montarias.length} montarias
                     </div>
@@ -215,7 +223,10 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
               {roundsCavalos.map((round) => (
                 <div key={round.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
                   <div>
-                    <div style={{ fontWeight: 'bold' }}>ROUND {round.numero}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ fontWeight: 'bold' }}>{round.eFinal ? 'GRANDE FINAL' : `ROUND ${round.numero}`}</div>
+                      {round.eFinal && <span style={{ background: '#4CAF50', color: '#000', fontSize: '0.6rem', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>FINAL</span>}
+                    </div>
                     <div style={{ fontSize: '0.75rem', color: '#666' }}>
                       {round.dataAgenda.toLocaleDateString()} • {round.montarias.length} montarias
                     </div>

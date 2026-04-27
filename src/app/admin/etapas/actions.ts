@@ -142,7 +142,7 @@ export async function importPdfAction(formData: FormData) {
   }
 }
 
-export async function createRound(etapaId: number, numero: number, juiz1Id?: number, juiz2Id?: number, juiz3Id?: number, juiz4Id?: number, modalidade?: string, dataAgenda?: Date) {
+export async function createRound(etapaId: number, numero: number, juiz1Id?: number, juiz2Id?: number, juiz3Id?: number, juiz4Id?: number, modalidade?: string, dataAgenda?: Date, eFinal: boolean = false) {
   const cleanId = (id?: any) => {
     const parsed = parseInt(String(id));
     return (parsed && parsed > 0) ? parsed : null;
@@ -163,7 +163,8 @@ export async function createRound(etapaId: number, numero: number, juiz1Id?: num
       juiz3Id: cleanId(juiz3Id), 
       juiz4Id: cleanId(juiz4Id), 
       modalidade: modalidade || "Touro",
-      dataAgenda: finalDate
+      dataAgenda: finalDate,
+      eFinal
     }
   });
   revalidatePath(`/admin/etapas/${etapaId}`);
@@ -202,8 +203,10 @@ export async function createRoundAction(formData: FormData) {
       dataAgenda = parsed;
     }
   }
+  
+  const eFinal = formData.get('eFinal') === 'on';
 
-  await createRound(etapaId, numero, juiz1Id, juiz2Id, juiz3Id, juiz4Id, modalidade, dataAgenda);
+  await createRound(etapaId, numero, juiz1Id, juiz2Id, juiz3Id, juiz4Id, modalidade, dataAgenda, eFinal);
 }
 
 
@@ -330,7 +333,9 @@ export async function updateMontariaNota(formData: FormData) {
         notaAnimal: notaAnimal,
         total: notaTotal,
         // Colocação na etapa
-        etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---'
+        etapaRank: stageRank.rank > 0 ? `${stageRank.rank}º` : '---',
+        // Nome do Round ou FINAL
+        roundNome: m.round.eFinal ? 'FINAL' : `ROUND ${m.round.numero}`
       });
       // Acionar o Overlay no vMix (Colocar no ar)
       const inputId = config.vmixInputNotaId || config.vmixInputId;
@@ -864,7 +869,7 @@ export async function updateRound(formData: FormData) {
   const juiz1Id = cleanId(formData.get('juiz1'));
   const juiz2Id = cleanId(formData.get('juiz2'));
   const juiz3Id = cleanId(formData.get('juiz3'));
-  const juiz4Id = cleanId(formData.get('juiz4'));
+  const eFinal = formData.get('eFinal') === 'on';
 
   await p.round.update({
     where: { id },
@@ -873,7 +878,8 @@ export async function updateRound(formData: FormData) {
       juiz1Id,
       juiz2Id,
       juiz3Id,
-      juiz4Id
+      juiz4Id,
+      eFinal
     }
   });
 

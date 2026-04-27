@@ -35,6 +35,7 @@ export interface VMixData {
   total: string | number;
   etapaRank?: string;
   etapaNome?: string;
+  roundNome?: string;
 }
 
 /**
@@ -113,7 +114,8 @@ export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<st
       'NotaPeao': data.notaPeao ?? '',
       'NotaAnimal': data.notaAnimal ?? '',
       'Total': data.total,
-      'EtapaRank': data.etapaRank || '---'
+      'EtapaRank': data.etapaRank || '---',
+      'Round': data.roundNome || ''
     };
 
     for (const [fieldName, value] of Object.entries(fields)) {
