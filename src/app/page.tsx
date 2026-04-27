@@ -137,12 +137,12 @@ export default async function Home() {
       <NavbarPublic />
 
       {layout.filter(block => block.visible !== false).map((block) => {
-        const bStyle = block.style || {};
-        const elements = block.elements || [];
+        const bStyle = block?.style || {};
+        const elements = block?.elements || [];
 
         if (elements && elements.length > 0) {
           return (
-            <section key={block.id} style={{
+            <section key={block.id || Math.random()} style={{
               height: '500px',
               background: bStyle.background || '#111',
               borderRadius: `${bStyle.borderRadius || 0}px`,
@@ -150,7 +150,9 @@ export default async function Home() {
               overflow: 'hidden',
               margin: '2rem 0'
             }}>
-              {elements.map((el: any) => {
+              {(elements || []).map((el: any) => {
+                if (!el) return null;
+
                 const elStyle: React.CSSProperties = {
                   position: 'absolute',
                   left: el.x,
