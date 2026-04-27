@@ -1,4 +1,4 @@
-name: Build, Push and Deploy Rodeio
+name: Build and Push Rodeio Image
 
 on:
   push:
@@ -9,7 +9,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,18 +41,3 @@ jobs:
           push: true
           tags: ghcr.io/${{ steps.owner.outputs.owner }}/rodeio-pro:latest
           no-cache: true
-
-      - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.VPS_USER }} --password-stdin
-            docker pull ghcr.io/${{ steps.owner.outputs.owner }}/rodeio-pro:latest
-            cd /opt/rodeio || cd ~/rodeio || cd /root/rodeio
-            docker compose down app
-            docker compose up -d app
-            docker image prune -f
-            echo "Deploy concluido com sucesso!"
