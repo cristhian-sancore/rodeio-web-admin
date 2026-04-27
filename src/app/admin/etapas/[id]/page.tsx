@@ -29,8 +29,6 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
           include: {
             juiz1: true,
             juiz2: true,
-            juiz3: true,
-            juiz4: true,
             montarias: {
               include: { competidor: true, animal: true }
             }
@@ -289,13 +287,14 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
     console.error("[EtapaDetailPage] Erro Fatal:", error);
     return (
       <div style={{ padding: '100px', textAlign: 'center' }}>
-         <h2 style={{ color: '#ff4444' }}>Erro ao carregar detalhes da etapa</h2>
-         <p>Ocorreu um erro interno ao processar os dados desta etapa.</p>
-         <div style={{ marginTop: '1rem', padding: '1rem', background: '#222', borderRadius: '8px', color: '#ff4444', fontSize: '0.8rem', fontFamily: 'monospace', display: 'inline-block', maxWidth: '80%' }}>
+         <h2 style={{ color: '#ff4444' }}>[DIAGNÓSTICO ATIVO]</h2>
+         <p>Se você está vendo esta mensagem, o código novo carregou.</p>
+         <div style={{ marginTop: '1rem', padding: '1rem', background: '#000', border: '1px solid #ff4444', borderRadius: '8px', color: '#ff4444', fontSize: '0.8rem', fontFamily: 'monospace', display: 'inline-block', maxWidth: '80%', textAlign: 'left' }}>
+            <strong>ERRO TÉCNICO:</strong><br/>
             {error?.message || String(error)}
          </div>
          <div style={{ marginTop: '2rem' }}>
-          <Link href="/admin/etapas" className="btn-primary">Voltar para Etapas</Link>
+          <Link href="/admin/etapas" className="btn-primary" style={{ background: '#444' }}>Voltar para Etapas</Link>
          </div>
       </div>
     );
