@@ -25,10 +25,17 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
   });
 
   // Processar cada etapa para calcular ranking de etapa e pontos de liga
-  Object.keys(etapaGroups).forEach(id => {
+    Object.keys(etapaGroups).forEach(id => {
     const eId = parseInt(id);
     const ms = etapaGroups[eId];
-    const temp = ms[0].etapa.temporada;
+    const etapaObj = ms[0].etapa;
+    const temp = etapaObj.temporada;
+
+    // 🏁 Critério de Etapa Finalizada: Inativa OU (Passou da data e sem pendências)
+    const agora = new Date();
+    const dataFinal = new Date(etapaObj.dataFinal);
+    const temPendencia = ms.some(m => m.notaTotal === 0 && !m.desclassificado && m.tempo === 0);
+    const isEtapaFinalizada = !etapaObj.ativa || (agora > dataFinal && !temPendencia);
     
     const classificacaoEtapa: Record<number, any> = {};
     
@@ -45,9 +52,14 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
       if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
       classificacaoEtapa[m.competidorId].pontos += m.notaTotal;
       classificacaoEtapa[m.competidorId].tempo += m.tempo;
-      classificacaoEtapa[m.competidorId].cpts += m.notaTotal; // 🏆 NOTA DA ARENA SOMA NO CAMPEONATO (Padrão CNAR)
       
-      if (m.notaTotal >= 90) classificacaoEtapa[m.competidorId].cpts += (temp?.bonusNotasAcima90 || 0);
+      // 🏆 NOTA DA ARENA: Soma sempre no campeonato
+      classificacaoEtapa[m.competidorId].cpts += m.notaTotal; 
+      
+      // 🎁 BÔNUS DE NOTA 90+: Apenas se etapa finalizada
+      if (isEtapaFinalizada && m.notaTotal >= 90) {
+        classificacaoEtapa[m.competidorId].cpts += (temp?.bonusNotasAcima90 || 0);
+      }
 
       // Stats Animais
       if (m.round.modalidade === 'Touro') {
@@ -60,31 +72,34 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     });
 
     // Ranking por Round para distribuir pontos de round (Top 5 CNAR)
-    const roundsGroups: Record<number, any[]> = {};
-    ms.forEach(m => {
-      if (!roundsGroups[m.roundId]) roundsGroups[m.roundId] = [];
-      roundsGroups[m.roundId].push(m);
-    });
-
-    Object.values(roundsGroups).forEach(rms => {
-      const sortedRound = rms
-        .filter(m => m.notaTotal > 0)
-        .sort((a, b) => b.notaTotal - a.notaTotal);
-      
-      const ptsRound = [temp?.ptsRound1, temp?.ptsRound2, temp?.ptsRound3, temp?.ptsRound4, temp?.ptsRound5];
-      
-      sortedRound.forEach((m, idx) => {
-        if (idx < 5) {
-          if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
-          classificacaoEtapa[m.competidorId].cpts += (ptsRound[idx] || 0);
-          
-          // Se for o primeiro, ainda ganha o bônus de melhor nota da noite (se configurado)
-          if (idx === 0) classificacaoEtapa[m.competidorId].cpts += (temp?.bonusMelhorNotaNoite || 0);
-        }
+    // 🎁 PONTOS DE ROUND: Apenas se etapa finalizada
+    if (isEtapaFinalizada) {
+      const roundsGroups: Record<number, any[]> = {};
+      ms.forEach(m => {
+        if (!roundsGroups[m.roundId]) roundsGroups[m.roundId] = [];
+        roundsGroups[m.roundId].push(m);
       });
-    });
 
-    // Ranking da Etapa para distribuir pontos de classificação final da etapa
+      Object.values(roundsGroups).forEach(rms => {
+        const sortedRound = rms
+          .filter(m => m.notaTotal > 0)
+          .sort((a, b) => b.notaTotal - a.notaTotal);
+        
+        const ptsRound = [temp?.ptsRound1, temp?.ptsRound2, temp?.ptsRound3, temp?.ptsRound4, temp?.ptsRound5];
+        
+        sortedRound.forEach((m, idx) => {
+          if (idx < 5) {
+            if (!classificacaoEtapa[m.competidorId]) classificacaoEtapa[m.competidorId] = { id: m.competidorId, pontos: 0, tempo: 0, cpts: 0 };
+            classificacaoEtapa[m.competidorId].cpts += (ptsRound[idx] || 0);
+            
+            // Bônus de melhor nota da noite
+            if (idx === 0) classificacaoEtapa[m.competidorId].cpts += (temp?.bonusMelhorNotaNoite || 0);
+          }
+        });
+      });
+    }
+
+    // Ranking Final da Etapa para distribuir pontos de pódio
     const rankingSorted = Object.values(classificacaoEtapa).sort((a: any, b: any) => {
       if (b.pontos !== a.pontos) return b.pontos - a.pontos;
       return b.tempo - a.tempo;
@@ -92,8 +107,12 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
 
     const ptsEtapa = [temp?.ptsEtapa1, temp?.ptsEtapa2, temp?.ptsEtapa3, temp?.ptsEtapa4, temp?.ptsEtapa5, temp?.ptsEtapa6, temp?.ptsEtapa7, temp?.ptsEtapa8, temp?.ptsEtapa9, temp?.ptsEtapa10];
     rankingSorted.forEach((r: any, idx) => {
-      if (idx < 10) r.cpts += (ptsEtapa[idx] || 0);
-      if (idx === 0) r.cpts += (temp?.bonusMelhorNotaEtapa || 0);
+      // 🎁 PONTOS DE PÓDIO DA ETAPA: Apenas se etapa finalizada
+      if (isEtapaFinalizada) {
+        if (idx < 10) r.cpts += (ptsEtapa[idx] || 0);
+        if (idx === 0) r.cpts += (temp?.bonusMelhorNotaEtapa || 0);
+      }
+      
       if (statsPeoes[r.id]) statsPeoes[r.id].pontosLiga += r.cpts;
     });
   });
