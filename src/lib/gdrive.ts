@@ -1,12 +1,7 @@
-import { prisma } from "./db";
+import { getSafeConfig } from "./config-safe";
 
 /**
  * Google Drive Integration para Replays de Montarias.
- * 
- * Requer:
- * 1. Uma pasta pública no Google Drive com os replays.
- * 2. Uma API Key do Google Cloud (Console: console.cloud.google.com > APIs > Drive API v3).
- * 3. O ID da pasta e a API Key configurados no Admin > Configurações.
  */
 
 /**
@@ -21,25 +16,27 @@ export function getDriveEmbedUrl(fileId: string): string {
  * Retorna um mapa de fileName -> fileId.
  */
 export async function getReplayFileMap(folderId: string): Promise<Record<string, { id: string, thumb: string | null }>> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos de limite
+
   try {
-    const config = await prisma.configuracao.findUnique({ where: { id: 1 } });
-    const apiKey = (config as any)?.googleDriveApiKey;
+    const config = await getSafeConfig();
+    const apiKey = config?.googleDriveApiKey;
     
     if (!apiKey) {
-      console.log('[GDrive] API Key não configurada - vídeos de replay não serão exibidos');
       return {};
     }
 
-    // Buscamos id, name e thumbnailLink.
     const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=files(id,name,thumbnailLink,mimeType)&pageSize=1000&key=${apiKey}`;
     
     const response = await fetch(url, { 
-      next: { revalidate: 30 }
+      signal: controller.signal,
+      cache: 'no-store' // Forçamos não cachear na rede se a página já for dinâmica
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[GDrive] Erro API (${response.status}):`, errorText);
       return {};
     }
 
@@ -55,10 +52,10 @@ export async function getReplayFileMap(folderId: string): Promise<Record<string,
       }
     });
 
-    console.log(`[GDrive] ${Object.keys(map).length} arquivos encontrados na pasta`);
     return map;
   } catch (error) {
-    console.error('[GDrive] Erro ao buscar arquivos:', error);
+    clearTimeout(timeoutId);
+    console.error('[GDrive] Erro ao buscar arquivos (timeout ou rede):', error);
     return {};
   }
 }

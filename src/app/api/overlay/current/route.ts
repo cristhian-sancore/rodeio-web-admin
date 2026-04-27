@@ -59,16 +59,19 @@ export async function getOverlayDataPayload() {
     // --- CÁLCULO DE ESTATÍSTICAS PARA A CHAMADA ---
     const etapaFull = await prisma.etapa.findUnique({ where: { id: montaria.etapaId }, select: { temporadaId: true } });
     const champRank = await getChampionshipRanking(etapaFull?.temporadaId || 1);
-    const myChampPos = (champRank?.list as any[])?.find(r => r.competidorId === montaria.competidorId);
+    const champList = Array.isArray(champRank?.list) ? champRank.list : [];
+    const myChampPos = champList.find(r => r.competidorId === montaria.competidorId);
     
-    const paradas = montaria.competidor.montarias.filter(m => m.notaTotal > 8).length; // Consideramos parada nota > 8
-    const totalMontarias = montaria.competidor.montarias.length;
+    const cMontarias = Array.isArray(montaria.competidor?.montarias) ? montaria.competidor.montarias : [];
+    const paradas = cMontarias.filter(m => m.notaTotal > 8).length; 
+    const totalMontarias = cMontarias.length;
     const percParadas = totalMontarias > 0 ? Math.round((paradas / totalMontarias) * 100) : 0;
 
-    const totalNotasAnimal = montaria.animal.montarias.reduce((acc, m) => acc + m.notaAnimal, 0);
-    const mediaAnimal = montaria.animal.montarias.length > 0 ? (totalNotasAnimal / montaria.animal.montarias.length).toFixed(2) : '0.00';
+    const aMontarias = Array.isArray(montaria.animal?.montarias) ? montaria.animal.montarias : [];
+    const totalNotasAnimal = aMontarias.reduce((acc, m) => acc + m.notaAnimal, 0);
+    const mediaAnimal = aMontarias.length > 0 ? (totalNotasAnimal / aMontarias.length).toFixed(2) : '0.00';
 
-    const stageRankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
+    const stageRankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId) || { rank: 0, diff: 0, notaAcumulada: 0 };
 
     return {
       active: true,

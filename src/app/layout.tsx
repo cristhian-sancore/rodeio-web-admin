@@ -37,7 +37,7 @@ export default async function RootLayout({
         <title>{config?.titulo || 'RODEIO PRO'}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href={`https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@400;700;900&display=swap`} rel="stylesheet" />
+        <link href={`https://fonts.googleapis.com/css2?family=${fontFamily.replaceAll(' ', '+')}:wght@400;700;900&display=swap`} rel="stylesheet" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content={primaryColor} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -57,13 +57,12 @@ export default async function RootLayout({
       <body className="antialiased">
         <Providers>{children}</Providers>
         <script dangerouslySetInnerHTML={{ __html: `
+          // Service Worker desativado para evitar problemas de cache em produção
           if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js').then(function(registration) {
-                console.log('SW registrado com sucesso: ', registration.scope);
-              }, function(err) {
-                console.log('Falha no registro do SW: ', err);
-              });
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              for(let registration of registrations) {
+                registration.unregister();
+              }
             });
           }
         `}} />

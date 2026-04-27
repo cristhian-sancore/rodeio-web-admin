@@ -81,37 +81,37 @@ export default async function Home() {
 
   const highlightItemsMap: Record<string, any> = {
     'LIDER_ETAPA': { 
-      label: 'LÍDER DA ETAPA', title: highlights?.etapaCompetidor?.nome || 'Nenhum competidor', 
-      subtitle: highlights?.etapaNome, nota: highlights?.etapaCompetidor?.nota || '0.00', pos: '1º LUGAR',
+      label: 'LÍDER DA ETAPA', title: highlights?.etapaCompetidor?.nome || 'Aguardando...', 
+      subtitle: highlights?.etapaNome || 'Etapa Atual', nota: highlights?.etapaCompetidor?.nota || '0.00', pos: '1º LUGAR',
       video: highlights?.etapaCompetidor ? findVideo(highlights.etapaCompetidor.nome, '') : null, 
       link: highlights?.etapaCompetidor ? `/competidores/${highlights.etapaCompetidor.competidorId}` : '#' 
     },
     'ANIMAL_ETAPA': { 
-      label: 'MELHOR ANIMAL (ETAPA)', title: highlights?.etapaAnimal?.nome || 'Aguardando', 
+      label: 'MELHOR ANIMAL (ETAPA)', title: highlights?.etapaAnimal?.nome || 'Aguardando...', 
       subtitle: highlights?.etapaAnimal?.info || 'Média min. 2 pulos', nota: highlights?.etapaAnimal?.nota || '0.00', pos: 'MELHOR MÉDIA',
       video: highlights?.etapaAnimal ? findVideo('', highlights.etapaAnimal.nome) : null,
       link: highlights?.etapaAnimal ? `/animais/${highlights.etapaAnimal.animalId}` : '#'
     },
     'CAMPEAO_TEMP': { 
-      label: 'LÍDER DO CAMPEONATO', title: highlights?.campeonatoCompetidor?.nome || 'Nenhum competidor', 
-      subtitle: highlights?.campeonatoNome, nota: highlights?.campeonatoCompetidor?.nota || '0.00', pos: '1º LUGAR GERAL',
+      label: 'LÍDER DO CAMPEONATO', title: highlights?.campeonatoCompetidor?.nome || 'Aguardando...', 
+      subtitle: highlights?.campeonatoNome || 'Temporada Atual', nota: highlights?.campeonatoCompetidor?.nota || '0.00', pos: '1º LUGAR GERAL',
       video: highlights?.campeonatoCompetidor ? findVideo(highlights.campeonatoCompetidor.nome, '') : null,
       link: highlights?.campeonatoCompetidor ? `/competidores/${highlights.campeonatoCompetidor.competidorId}` : '#'
     },
     'ANIMAL_TEMP': { 
-      label: 'MELHOR ANIMAL (TEMPORADA)', title: highlights?.campeonatoAnimal?.nome || 'Aguardando', 
+      label: 'MELHOR ANIMAL (TEMPORADA)', title: highlights?.campeonatoAnimal?.nome || 'Aguardando...', 
       subtitle: highlights?.campeonatoAnimal?.info || 'Média min. 2 pulos', nota: highlights?.campeonatoAnimal?.nota || '0.00', pos: 'RANKING GERAL',
       video: highlights?.campeonatoAnimal ? findVideo('', highlights.campeonatoAnimal.nome) : null,
       link: highlights?.campeonatoAnimal ? `/animais/${highlights.campeonatoAnimal.animalId}` : '#'
     },
     'MELHOR_NOITE_COMP': {
-      label: 'MELHOR DA NOITE', title: melhorNoiteComp?.nome || 'Nenhum competidor', 
+      label: 'MELHOR DA NOITE', title: melhorNoiteComp?.nome || 'Aguardando...', 
       subtitle: roundAtivo?.nome || 'Round Atual', nota: melhorNoiteComp?.nota || '0.00', pos: '1º LUGAR (NOITE)',
       video: melhorNoiteComp ? findVideo(melhorNoiteComp.nome, '') : null,
       link: melhorNoiteComp ? `/competidores/${melhorNoiteComp.competidorId}` : '#'
     },
     'MELHOR_NOITE_ANIMAL': {
-      label: 'MELHOR TOURO DA NOITE', title: melhorNoiteAni?.nome || 'Aguardando', 
+      label: 'MELHOR TOURO DA NOITE', title: melhorNoiteAni?.nome || 'Aguardando...', 
       subtitle: roundAtivo?.nome || 'Round Atual', nota: melhorNoiteAni?.nota || '0.00', pos: 'MELHOR MÉDIA (NOITE)',
       video: melhorNoiteAni ? findVideo('', melhorNoiteAni.nome) : null,
       link: melhorNoiteAni ? `/animais/${melhorNoiteAni.animalId}` : '#'
