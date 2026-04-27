@@ -2,6 +2,7 @@ import { Calendar, MapPin, Trophy, Plus, LayoutGrid, AlertTriangle, Edit, Trash2
 import Link from "next/link";
 import { createRoundAction, deleteRound } from "../actions";
 import { prisma } from "@/lib/db";
+import { getSafeConfig } from "@/lib/config-safe";
 
 export default async function EtapaDetailPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const params = await props.params;
@@ -30,11 +31,26 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
     });
 
     const juizes = await prisma.juiz.findMany({ orderBy: { nome: 'asc' } });
-    const { getSafeConfig } = await import("@/lib/config-safe");
     const configData = await getSafeConfig();
     const config = configData || { numJuizes: 2 };
 
-    if (!etapa) return <div>Etapa não encontrada.</div>;
+    if (!etapa) return (
+      <div style={{ padding: '100px', textAlign: 'center' }}>
+        <h2>Etapa não encontrada</h2>
+        <Link href="/admin/etapas" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-block' }}>Voltar para Etapas</Link>
+      </div>
+    );
+
+    // Formatação de data ultra-segura para o input date
+    let dataInicioIso = '';
+    try {
+      if (etapa.dataInicio) {
+        const d = new Date(etapa.dataInicio);
+        if (!isNaN(d.getTime())) {
+          dataInicioIso = d.toISOString().split('T')[0];
+        }
+      }
+    } catch (e) {}
 
   const roundsTouros = (etapa.rounds || []).filter(r => r.modalidade === 'Touro');
   const roundsCavalos = (etapa.rounds || []).filter(r => r.modalidade === 'Cavalo' || r.modalidade === 'Cutiano');
@@ -131,7 +147,7 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
 
               <div style={{ flex: 2 }}>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: '#888', marginBottom: '0.3rem' }}>Data Agenda</label>
-                <input name="dataAgenda" type="date" defaultValue={etapa.dataInicio ? new Date(etapa.dataInicio).toISOString().split('T')[0] : ''} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }} />
+                <input name="dataAgenda" type="date" defaultValue={dataInicioIso} style={{ width: '100%', padding: '0.6rem', background: '#222', border: '1px solid #444', borderRadius: '6px', color: '#fff' }} />
               </div>
               
               <div style={{ flex: 2 }}>
