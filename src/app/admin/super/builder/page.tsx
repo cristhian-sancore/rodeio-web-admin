@@ -71,14 +71,24 @@ export default function EliteVisualBuilder() {
     setActiveTab(newTab);
   };
 
-  // --- SISTEMA DE HISTÓRICO (UNDO/REDO) ---
-  const addToHistory = (newBlocks: any[]) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(JSON.parse(JSON.stringify(newBlocks)));
-    if (newHistory.length > 50) newHistory.shift(); // Limite de 50 passos
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
+  // --- SISTEMA DE HISTÓRICO AUTOMÁTICO ---
+  useEffect(() => {
+    if (loading) return;
+    // Adiciona ao histórico apenas se os blocos realmente mudaram e não for um "undo/redo"
+    const timeout = setTimeout(() => {
+      const currentBlocksStr = JSON.stringify(blocks);
+      const lastHistoryStr = historyIndex >= 0 ? JSON.stringify(history[historyIndex]) : '';
+      
+      if (currentBlocksStr !== lastHistoryStr) {
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(JSON.parse(currentBlocksStr));
+        if (newHistory.length > 50) newHistory.shift();
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [blocks]);
 
   const undo = () => {
     if (historyIndex > 0) {
@@ -118,44 +128,59 @@ export default function EliteVisualBuilder() {
     }
   };
 
-  // --- GESTÃO DE ELEMENTOS ---
+  // --- GESTÃO DE ELEMENTOS (UNIVERSAL) ---
   const addElementToBlock = (blockId: string, type: string) => {
     const typeInfo = ELEMENT_TYPES.find(t => t.type === type);
     const newElement = {
       id: Math.random().toString(36).substr(2, 9),
-      type,
-      x: 100, y: 100,
+      type, x: 100, y: 100,
       w: type.startsWith('SHAPE') ? 150 : 300,
-      h: type.startsWith('SHAPE') ? 100 : 50,
+      h: type.startsWith('SHAPE') ? 150 : 50,
       content: typeInfo?.defaultContent || '',
-      zIndex: (blocks.find(b => b.id === blockId)?.elements?.length || 0) + 1,
+      zIndex: 10,
       style: {
         color: '#ffffff',
         background: type === 'SHAPE_RECT' ? config?.primaryColor || '#D4AF37' : 'transparent',
-        fontSize: 24,
-        fontWeight: '950',
+        fontSize: 24, fontWeight: '950',
         borderRadius: type === 'SHAPE_CIRCLE' ? '100%' : '0px',
-        opacity: 1,
-        textAlign: 'center',
-        shadowBlur: 0,
-        shadowColor: 'rgba(0,0,0,0.5)',
-        letterSpacing: 0,
+        opacity: 1, textAlign: 'center', shadowBlur: 0, shadowColor: '#000000', letterSpacing: 0,
       }
     };
 
-    const newBlocks = blocks.map(b => b.id === blockId ? { ...b, elements: [...(b.elements || []), newElement] } : b);
-    setBlocks(newBlocks);
-    addToHistory(newBlocks);
+    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, elements: [...(b.elements || []), newElement] } : b));
     setSelectedElementId(newElement.id);
+    setSelectedBlockId(blockId);
   };
 
-  const updateElement = (blockId: string, elementId: string, updates: any, skipHistory = false) => {
-    const newBlocks = blocks.map(b => b.id === blockId ? {
+  const updateElement = (blockId: string, elementId: string, updates: any) => {
+    setBlocks(prev => prev.map(b => b.id === blockId ? {
       ...b,
-      elements: b.elements.map((el: any) => el.id === elementId ? { ...el, ...updates, style: { ...el.style, ...updates.style } } : el)
-    } : b);
-    setBlocks(newBlocks);
-    if (!skipHistory) addToHistory(newBlocks);
+      elements: b.elements.map((el: any) => el.id === elementId ? { 
+        ...el, 
+        ...updates, 
+        style: { ...el.style, ...(updates.style || {}) } 
+      } : el)
+    } : b));
+  };
+
+  const deleteElement = (blockId: string, elementId: string) => {
+    if (!confirm('Deseja realmente excluir este elemento?')) return;
+    setBlocks(prev => prev.map(b => b.id === blockId ? {
+      ...b,
+      elements: b.elements.filter((el: any) => el.id !== elementId)
+    } : b));
+    setSelectedElementId(null);
+  };
+
+  const duplicateElement = (blockId: string, element: any) => {
+    const newEl = { 
+      ...JSON.parse(JSON.stringify(element)), 
+      id: Math.random().toString(36).substr(2, 9), 
+      x: element.x + 20, 
+      y: element.y + 20 
+    };
+    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, elements: [...b.elements, newEl] } : b));
+    setSelectedElementId(newEl.id);
   };
 
   // --- RENDERIZADOR ELITE COM GUIAS ---
@@ -292,8 +317,8 @@ export default function EliteVisualBuilder() {
             <button title="Subir camada" onClick={(e) => { e.stopPropagation(); updateElement(blockId, element.id, { zIndex: (element.zIndex || 1) + 1 }); }} style={{ background: 'none', border: 'none', color: config?.primaryColor || '#d4af37', cursor: 'pointer', padding: '4px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '3px' }}>▲ FRENTE</button>
             <button title="Descer camada" onClick={(e) => { e.stopPropagation(); updateElement(blockId, element.id, { zIndex: Math.max(1, (element.zIndex || 1) - 1) }); }} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', padding: '4px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '3px' }}>▼ ATRÁS</button>
             <div style={{ width: '1px', background: '#333', margin: '0 4px' }} />
-            <button title="Duplicar" onClick={(e) => { e.stopPropagation(); const el = { ...element, id: Math.random().toString(36).substr(2,9), x: element.x+20, y: element.y+20 }; setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:[...b.elements,el]}:b)); addToHistory(blocks); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px' }}><Copy size={14}/></button>
-            <button title="Excluir" onClick={(e) => { e.stopPropagation(); setBlocks(blocks.map(b=>b.id===blockId?{...b,elements:b.elements.filter((el:any)=>el.id!==element.id)}:b)); addToHistory(blocks); setSelectedElementId(null); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px' }}><Trash2 size={14}/></button>
+            <button title="Duplicar" onClick={(e) => { e.stopPropagation(); duplicateElement(blockId, element); }} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '4px' }}><Copy size={14}/></button>
+            <button title="Excluir" onClick={(e) => { e.stopPropagation(); deleteElement(blockId, element.id); }} style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', padding: '4px' }}><Trash2 size={14}/></button>
             <div style={{ fontSize: '0.6rem', color: '#444', padding: '4px', alignSelf: 'center' }}>Z:{element.zIndex || 1}</div>
           </div>
         )}
@@ -320,6 +345,10 @@ export default function EliteVisualBuilder() {
           <Link href="/admin/super" style={{ color: '#444', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', fontWeight: '900' }}>
             <ArrowLeft size={16} /> PAINEL
           </Link>
+          <div style={{ width: '1px', height: '24px', background: '#222' }} />
+          <div style={{ fontSize: '1rem', fontWeight: '900', color: '#fff', textTransform: 'uppercase' }}>
+            {activeTab === 'HOME' ? 'SITE WEB' : 'OVERLAY'} <span style={{ color: config?.primaryColor || '#d4af37', marginLeft: '5px' }}>{config?.titulo && config.titulo !== 'undefined' ? config.titulo : ''}</span>
+          </div>
           <div style={{ width: '1px', height: '24px', background: '#222' }} />
           <div style={{ display: 'flex', background: '#111', padding: '4px', borderRadius: '12px' }}>
              <button onClick={undo} disabled={historyIndex <= 0} style={iconBtnStyle(false)}><Undo2 size={18} /></button>
@@ -396,7 +425,7 @@ export default function EliteVisualBuilder() {
               {/* Navbar Fake para dar contexto de site */}
               {activeTab === 'HOME' && (
                 <div style={{ height: '70px', borderBottom: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', marginBottom: '20px', opacity: 0.6 }}>
-                   <div style={{ color: config?.primaryColor || '#d4af37', fontWeight: 900, fontSize: '1.2rem' }}>{config?.titulo || 'RODEIO PRO'}</div>
+                   <div style={{ color: config?.primaryColor || '#d4af37', fontWeight: 900, fontSize: '1.2rem' }}>{config?.titulo && config.titulo !== 'undefined' ? config.titulo : 'RODEIO PRO'}</div>
                    <div style={{ display: 'flex', gap: '20px', fontSize: '0.8rem', fontWeight: 700 }}>
                       <span>AO VIVO</span><span>RANKINGS</span><span>COMPETIDORES</span>
                    </div>
@@ -505,7 +534,7 @@ export default function EliteVisualBuilder() {
                    <label style={{ ...styleLabel, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}><Sun size={14} /> SOMBRA PROJETADA (DROP SHADOW)</label>
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
                       <div><label style={{ fontSize: '0.6rem', color: '#666' }}>INTENSIDADE (BLUR)</label><input type="range" min="0" max="100" value={selectedElement.style?.shadowBlur} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, shadowBlur: parseInt(e.target.value) } })} style={{ width: '100%' }} /></div>
-                      <div><label style={{ fontSize: '0.6rem', color: '#666' }}>COR DA SOMBRA</label><input type="color" value={selectedElement.style?.shadowColor} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, shadowColor: e.target.value } })} style={{ width: '100%', height: '40px', background: 'none', border: 'none', cursor: 'pointer' }} /></div>
+                      <div><label style={{ fontSize: '0.6rem', color: '#666' }}>COR DA SOMBRA</label><input type="color" value={selectedElement.style?.shadowColor?.startsWith('#') ? selectedElement.style.shadowColor : '#000000'} onChange={e => updateElement(selectedBlockId!, selectedElement.id, { style: { ...selectedElement.style, shadowColor: e.target.value } })} style={{ width: '100%', height: '40px', background: 'none', border: 'none', cursor: 'pointer' }} /></div>
                    </div>
                 </div>
 
@@ -516,10 +545,7 @@ export default function EliteVisualBuilder() {
 
                 <div style={{ display: 'flex', gap: '12px' }}>
                    <button onClick={() => deleteElement(selectedBlockId!, selectedElement.id)} style={{ flex: 1, background: '#1a1a1a', color: '#ff4444', border: '1px solid #222', padding: '15px', borderRadius: '15px', cursor: 'pointer', fontWeight: 'bold' }}>EXCLUIR</button>
-                   <button onClick={() => {
-                     const el = { ...selectedElement, id: Math.random().toString(36).substr(2, 9), x: selectedElement.x + 20, y: selectedElement.y + 20 };
-                     setBlocks(blocks.map(b => b.id === selectedBlockId ? { ...b, elements: [...b.elements, el] } : b)); addToHistory(blocks); setSelectedElementId(el.id);
-                   }} style={{ flex: 1, background: '#1a1a1a', color: '#fff', border: '1px solid #222', padding: '15px', borderRadius: '15px', cursor: 'pointer', fontWeight: 'bold' }}>COPIAR</button>
+                   <button onClick={() => duplicateElement(selectedBlockId!, selectedElement)} style={{ flex: 1, background: '#1a1a1a', color: '#fff', border: '1px solid #222', padding: '15px', borderRadius: '15px', cursor: 'pointer', fontWeight: 'bold' }}>DUPLICAR</button>
                 </div>
              </div>
            ) : selectedBlock ? (
