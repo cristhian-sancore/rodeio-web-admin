@@ -13,7 +13,8 @@ export default async function AdminLayout({
   
   let config = null;
   try {
-    config = await prisma.configuracao.findFirst();
+    const { getSafeConfig } = await import("@/lib/config-safe");
+    config = await getSafeConfig();
   } catch (err) {
     console.error("Erro ao carregar config no AdminLayout:", err);
   }

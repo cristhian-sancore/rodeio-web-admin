@@ -573,7 +573,7 @@ export async function executeRawSql(sql: string) {
 
 export async function checkVMixStatus() {
   try {
-    const config = await prisma.configuracao.findFirst();
+    const config = await getSafeConfig();
     if (!config || !config.vmixUrl) return { online: false, error: 'vMix URL não configurada' };
 
     const controller = new AbortController();
@@ -591,7 +591,7 @@ export async function checkVMixStatus() {
 
 export async function deactivateVMixOverlay() {
   try {
-    const config = await prisma.configuracao.findFirst();
+    const config = await getSafeConfig();
     if (config && config.vmixUrl) {
       const { triggerVMixOverlay } = await import('@/lib/vmix');
       const channel = config.vmixOverlayChannel || 1;

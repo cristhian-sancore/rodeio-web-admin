@@ -10,33 +10,45 @@ export default async function AdminDashboard() {
   const user = session?.user as any;
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'SUPER';
 
-  const [competidoresCount, animaisCount, etapasCount, juizesCount, montariasCount, roundsDoJuiz] = await Promise.all([
-    prisma.competidor.count(),
-    prisma.animal.count(),
-    prisma.etapa.count(),
-    prisma.juiz.count(),
-    prisma.montaria.count(),
-    // Buscar rounds vinculados ao juiz
-    (!isAdmin && user?.juizId) ? prisma.round.findMany({
-      where: {
-        OR: [
-          { juiz1Id: user.juizId },
-          { juiz2Id: user.juizId },
-          { juiz3Id: user.juizId },
-          { juiz4Id: user.juizId },
-        ],
-        etapa: { ativa: true }
-      },
-      include: { etapa: true },
-      orderBy: { dataAgenda: 'asc' }
-    }) : Promise.resolve([]) as Promise<any[]>
-  ]);
+  let stats: any = { competidores: 0, animais: 0, etapas: 0, juizes: 0, montarias: 0 };
+  let roundsDoJuiz: any[] = [];
+  let ultimasMontarias: any[] = [];
 
-  const ultimasMontarias = await prisma.montaria.findMany({
-    take: 5,
-    orderBy: { dataHora: 'desc' },
-    include: { competidor: true, animal: true, round: { include: { etapa: true } } }
-  });
+  try {
+    const [cCount, aCount, eCount, jCount, mCount] = await Promise.all([
+      prisma.competidor.count().catch(() => 0),
+      prisma.animal.count().catch(() => 0),
+      prisma.etapa.count().catch(() => 0),
+      prisma.juiz.count().catch(() => 0),
+      prisma.montaria.count().catch(() => 0),
+    ]);
+    stats = { competidores: cCount, animais: aCount, etapas: eCount, juizes: jCount, montarias: mCount };
+
+    if (!isAdmin && user?.juizId) {
+      roundsDoJuiz = await prisma.round.findMany({
+        where: {
+          OR: [
+            { juiz1Id: user.juizId },
+            { juiz2Id: user.juizId },
+            { juiz3Id: user.juizId },
+            { juiz4Id: user.juizId },
+          ],
+          etapa: { ativa: true }
+        },
+        include: { etapa: true },
+        orderBy: { dataAgenda: 'asc' }
+      }).catch(() => []);
+    }
+
+    ultimasMontarias = await prisma.montaria.findMany({
+      take: 5,
+      orderBy: { dataHora: 'desc' },
+      include: { competidor: true, animal: true, round: { include: { etapa: true } } }
+    }).catch(() => []);
+
+  } catch (error) {
+    console.error("[AdminDashboard] Erro ao carregar dados:", error);
+  }
 
   return (
     <div>
@@ -54,11 +66,11 @@ export default async function AdminDashboard() {
       {/* Cards de Resumo - Apenas para Admin */}
       {isAdmin && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-          <SummaryCard icon={<Users />} label="Competidores" value={competidoresCount} color="#d4af37" href="/admin/competidores" />
-          <SummaryCard icon={<Cat />} label="Boiada" value={animaisCount} color="#ff4444" href="/admin/animais" />
-          <SummaryCard icon={<Calendar />} label="Etapas" value={etapasCount} color="#4CAF50" href="/admin/etapas" />
-          <SummaryCard icon={<Gavel />} label="Juízes" value={juizesCount} color="#2196F3" href="/admin/juizes" />
-          <SummaryCard icon={<Trophy />} label="Montarias" value={montariasCount} color="#fff" href="/admin/notas" />
+          <SummaryCard icon={<Users />} label="Competidores" value={stats.competidores} color="#d4af37" href="/admin/competidores" />
+          <SummaryCard icon={<Cat />} label="Boiada" value={stats.animais} color="#ff4444" href="/admin/animais" />
+          <SummaryCard icon={<Calendar />} label="Etapas" value={stats.etapas} color="#4CAF50" href="/admin/etapas" />
+          <SummaryCard icon={<Gavel />} label="Juízes" value={stats.juizes} color="#2196F3" href="/admin/juizes" />
+          <SummaryCard icon={<Trophy />} label="Montarias" value={stats.montarias} color="#fff" href="/admin/notas" />
         </div>
       )}
 
