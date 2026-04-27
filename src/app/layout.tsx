@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/Providers";
 
 import { prisma } from "@/lib/db";
+import { getSafeConfig } from "@/lib/config-safe";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,19 +21,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let config = null;
-  try {
-    config = await prisma.configuracao.findFirst();
-  } catch (err) {
-    // Falha silenciosa durante o build (prerender)
-  }
-  const primaryColor = '#d4af37';
-  const secondaryColor = '#111111';
-  const rawFont = config?.fontFamily;
-  const fontFamily = (typeof rawFont === 'string' && rawFont.trim() && rawFont.trim() !== 'null') ? rawFont.trim() : 'Inter';
+  const config = await getSafeConfig();
+  
+  const primaryColor = config?.primaryColor || '#d4af37';
+  const secondaryColor = config?.secondaryColor || '#111111';
+  const fontFamily = (config?.fontFamily || 'Inter').replace(/'/g, "");
 
   return (
-    <html lang="pt-br" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="pt-br">
       <head>
         <title>{config?.titulo || 'RODEIO PRO'}</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -47,22 +43,17 @@ export default async function RootLayout({
           :root {
             --primary: ${primaryColor};
             --secondary: ${secondaryColor};
-            --font-main: '${fontFamily}', sans-serif;
+            --font-main: "${fontFamily}", sans-serif;
           }
-          body {
-            font-family: var(--font-main);
-          }
+          body { font-family: var(--font-main); }
         `}} />
       </head>
       <body className="antialiased">
         <Providers>{children}</Providers>
         <script dangerouslySetInnerHTML={{ __html: `
-          // Service Worker desativado para evitar problemas de cache em produção
           if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
-              for(let registration of registrations) {
-                registration.unregister();
-              }
+              for(let registration of registrations) { registration.unregister(); }
             });
           }
         `}} />
