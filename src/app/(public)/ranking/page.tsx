@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { prisma } from "@/lib/db";
 import { Trophy, User, Cat, Clock, Award } from "lucide-react";
 import Link from "next/link";
