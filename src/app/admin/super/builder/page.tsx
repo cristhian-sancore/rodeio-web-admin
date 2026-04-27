@@ -183,6 +183,39 @@ export default function EliteVisualBuilder() {
     setSelectedElementId(newEl.id);
   };
 
+  // --- GESTÃO DE BLOCOS (SEÇÕES) ---
+  const addBlock = () => {
+    const newBlock = {
+      id: 'block_' + Math.random().toString(36).substr(2, 9),
+      type: 'CUSTOM',
+      visible: true,
+      title: 'NOVA SEÇÃO',
+      subtitle: 'Personalize este espaço',
+      style: { background: '#0a0a0a', minHeight: 600, padding: 80 },
+      elements: []
+    };
+    setBlocks(prev => [...prev, newBlock]);
+  };
+
+  const deleteBlock = (id: string) => {
+    if (!confirm('Excluir esta seção inteira e todos os seus elementos?')) return;
+    setBlocks(prev => prev.filter(b => b.id !== id));
+    setSelectedBlockId(null);
+    setSelectedElementId(null);
+  };
+
+  const moveBlock = (index: number, direction: 'up' | 'down') => {
+    const newBlocks = [...blocks];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newBlocks.length) return;
+    [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
+    setBlocks(newBlocks);
+  };
+
+  const updateBlockStyle = (blockId: string, styleUpdates: any) => {
+    setBlocks(prev => prev.map(b => b.id === blockId ? { ...b, style: { ...b.style, ...styleUpdates } } : b));
+  };
+
   // --- RENDERIZADOR ELITE COM GUIAS ---
   const VisualElement = ({ blockId, element }: { blockId: string, element: any }) => {
     const isSelected = selectedElementId === element.id;
@@ -431,39 +464,41 @@ export default function EliteVisualBuilder() {
                    </div>
                 </div>
               )}
-              {blocks.map((block) => (
+              {blocks.map((block, bIdx) => (
                 <section 
                   key={block.id}
-                  onClick={() => setSelectedBlockId(block.id)}
+                  onClick={() => { setSelectedBlockId(block.id); setSelectedElementId(null); }}
                   style={{ 
-                    height: '650px', background: block.style?.background || '#050505', position: 'relative', overflow: 'visible',
+                    position: 'relative', 
+                    minHeight: block.style?.minHeight || 650, 
+                    background: block.style?.backgroundImage ? `url(${block.style.backgroundImage}) center/cover no-repeat` : block.style?.background || '#050505',
                     border: selectedBlockId === block.id ? `3px solid ${config?.primaryColor}` : '1px solid #111',
-                    marginBottom: '30px', borderRadius: '30px', boxShadow: '0 30px 60px rgba(0,0,0,0.6)', opacity: block.visible === false ? 0.3 : 1
+                    marginBottom: '30px', borderRadius: '30px', boxShadow: '0 30px 60px rgba(0,0,0,0.6)', opacity: block.visible === false ? 0.3 : 1,
+                    overflow: 'visible'
                   }}
                 >
                   {/* CONTROLES DA SECAO */}
-                  <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 10, right: 10, display: 'flex', gap: '6px', zIndex: 1000 }}>
-                    <button onClick={e => { e.stopPropagation(); const nb = blocks.map(b => b.id === block.id ? { ...b, visible: b.visible === false } : b); setBlocks(nb); addToHistory(nb); }} style={{ background: '#111', border: '1px solid #333', color: block.visible === false ? '#555' : '#fff', cursor: 'pointer', borderRadius: '8px', padding: '6px 10px', fontSize: '0.65rem', fontWeight: 900 }}>
-                      {block.visible === false ? 'OCULTA' : 'VISIVEL'}
+                  <div onClick={e => e.stopPropagation()} style={{ position: 'absolute', top: 15, right: 15, display: 'flex', gap: '8px', zIndex: 1000 }}>
+                    <button onClick={e => { e.stopPropagation(); moveBlock(bIdx, 'up'); }} style={{ background: '#111', border: '1px solid #333', color: '#fff', cursor: 'pointer', borderRadius: '8px', padding: '6px' }}><ArrowUp size={14}/></button>
+                    <button onClick={e => { e.stopPropagation(); moveBlock(bIdx, 'down'); }} style={{ background: '#111', border: '1px solid #333', color: '#fff', cursor: 'pointer', borderRadius: '8px', padding: '6px' }}><ArrowDown size={14}/></button>
+                    <button onClick={e => { e.stopPropagation(); const nb = blocks.map(b => b.id === block.id ? { ...b, visible: b.visible === false } : b); setBlocks(nb); }} style={{ background: '#111', border: '1px solid #333', color: block.visible === false ? '#555' : '#fff', cursor: 'pointer', borderRadius: '8px', padding: '6px 12px', fontSize: '0.65rem', fontWeight: 900 }}>
+                      {block.visible === false ? 'OCULTA' : 'VISÍVEL'}
                     </button>
-                    <button onClick={e => { e.stopPropagation(); if(window.confirm('Excluir esta secao?')) { const nb = blocks.filter(b => b.id !== block.id); setBlocks(nb); addToHistory(nb); if(selectedBlockId === block.id) setSelectedBlockId(null); } }} style={{ background: '#1a0000', border: '1px solid #440000', color: '#ff4444', cursor: 'pointer', borderRadius: '8px', padding: '6px 10px', fontSize: '0.65rem', fontWeight: 900 }}>
+                    <button onClick={e => { e.stopPropagation(); deleteBlock(block.id); }} style={{ background: '#1a0000', border: '1px solid #440000', color: '#ff4444', cursor: 'pointer', borderRadius: '8px', padding: '6px 12px', fontSize: '0.65rem', fontWeight: 900 }}>
                       EXCLUIR
                     </button>
                   </div>
-                  {/* GUIAS DE ALINHAMENTO */}
-                  {guides?.x && <div style={{ position: 'absolute', left: guides.x, top: 0, bottom: 0, width: '1px', background: config?.primaryColor, zIndex: 999 }} />}
-                  {guides?.y && <div style={{ position: 'absolute', top: guides.y, left: 0, right: 0, height: '1px', background: config?.primaryColor, zIndex: 999 }} />}
 
                   {block.elements.map((el: any) => (
                     <VisualElement key={el.id} blockId={block.id} element={el} />
                   ))}
 
-                  {block.elements.length === 0 && <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.05, fontSize: '3rem', fontWeight: 900 }}>{block.type}</div>}
+                  {block.elements.length === 0 && <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.1, fontSize: '2rem', fontWeight: 900 }}>{block.type} (VAZIO)</div>}
                 </section>
               ))}
            </div>
         
-               <div onClick={() => { const newId = `blk_${Date.now()}`; const nb = [...blocks, { id: newId, type: 'CUSTOM', visible: true, title: 'Nova Secao', subtitle: '', style: { background: '#0a0a0a' }, elements: [] }]; setBlocks(nb); addToHistory(nb); setSelectedBlockId(newId); }} style={{ width: previewMode === 'desktop' ? '1200px' : '375px', margin: '0 auto 40px', height: '80px', border: '2px dashed #1a1a1a', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#333', fontWeight: 900, fontSize: '0.85rem', letterSpacing: '2px' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = config?.primaryColor || '#d4af37'; (e.currentTarget as HTMLElement).style.color = config?.primaryColor || '#d4af37'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#1a1a1a'; (e.currentTarget as HTMLElement).style.color = '#333'; }}>+ NOVA SECAO</div>
+           <div onClick={addBlock} style={{ width: previewMode === 'desktop' ? '1200px' : '375px', margin: '0 auto 100px', height: '100px', border: '3px dashed #111', borderRadius: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#222', fontWeight: 900, fontSize: '1rem', letterSpacing: '3px', transition: 'all 0.3s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = config?.primaryColor || '#d4af37'; (e.currentTarget as HTMLElement).style.color = config?.primaryColor || '#d4af37'; (e.currentTarget as HTMLElement).style.background = '#050505'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#111'; (e.currentTarget as HTMLElement).style.color = '#222'; (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>+ ADICIONAR NOVA SEÇÃO DE ELITE</div>
         </main>
 
         {/* ⚙️ INSPETOR ELITE (RIGHT) */}
