@@ -52,6 +52,7 @@ COPY --from=builder --chown=nextjs:nodev /app/.next/static ./.next/static
 # IMPORTANT: Copy Prisma and management scripts
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/seed-admin.js ./seed-admin.js
+COPY --from=builder /app/create-super-admin.js ./create-super-admin.js
 COPY --from=builder /app/package.json ./package.json
 # Copy node_modules to ensure maintainability tools and bcryptjs are available
 COPY --from=builder /app/node_modules ./node_modules
