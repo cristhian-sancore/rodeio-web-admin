@@ -259,4 +259,14 @@ export default async function EtapaDetailPage(props: { params: Promise<{ id: str
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("[EtapaDetailPage] Erro Fatal:", error);
+    return (
+      <div style={{ padding: '100px', textAlign: 'center' }}>
+         <h2 style={{ color: '#ff4444' }}>Erro ao carregar detalhes da etapa</h2>
+         <p>Ocorreu um erro interno ao processar os dados desta etapa.</p>
+         <Link href="/admin/etapas" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-block' }}>Voltar para Etapas</Link>
+      </div>
+    );
+  }
 }
