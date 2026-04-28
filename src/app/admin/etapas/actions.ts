@@ -518,6 +518,9 @@ export async function saveConfig(formData: FormData) {
         vmixOverlayChannel: getFormInt('vmixOverlayChannel', (currentConfig as any).vmixOverlayChannel || 1),
         googleDriveFolderId: getFormVal('googleDriveFolderId', (currentConfig as any).googleDriveFolderId),
         googleDriveApiKey: getFormVal('googleDriveApiKey', (currentConfig as any).googleDriveApiKey),
+        homeHeroTitle: getFormVal('homeHeroTitle', (currentConfig as any).homeHeroTitle),
+        homeHeroSubtitle: getFormVal('homeHeroSubtitle', (currentConfig as any).homeHeroSubtitle),
+        homeHeroImage: getFormVal('homeHeroImage', (currentConfig as any).homeHeroImage),
       },
       create: { 
         id: 1, 
@@ -525,7 +528,10 @@ export async function saveConfig(formData: FormData) {
         titulo,
         vmixUrl: getFormVal('vmixUrl', ""),
         vmixInputNotaId: getFormVal('vmixInputNotaId', ""),
-        vmixOverlayChannel: getFormInt('vmixOverlayChannel', 1)
+        vmixOverlayChannel: getFormInt('vmixOverlayChannel', 1),
+        homeHeroTitle: getFormVal('homeHeroTitle', "RODEIO PRO"),
+        homeHeroSubtitle: getFormVal('homeHeroSubtitle', "A plataforma definitiva para gestão de eventos..."),
+        homeHeroImage: getFormVal('homeHeroImage', "https://images.unsplash.com/photo-1530103043960-ef38714abb15?q=80&w=2070&auto=format&fit=crop"),
       }
     });
 
@@ -542,7 +548,13 @@ export async function saveConfig(formData: FormData) {
   revalidatePath('/');
   
   const { redirect } = await import('next/navigation');
-  redirect('/admin/configuracoes?success=true');
+  const redirectTo = formData.get('redirectTo') as string;
+  
+  if (redirectTo) {
+    redirect(redirectTo);
+  } else {
+    redirect('/admin/configuracoes?success=true');
+  }
 }
 
 export async function executeRawSql(sql: string) {

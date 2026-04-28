@@ -59,6 +59,7 @@ export default function CmsManager({ config }: CmsManagerProps) {
       </h3>
 
       <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <input type="hidden" name="redirectTo" value="/admin/super?success=true" />
         <div style={{ gridColumn: '1 / -1' }}>
           <label style={{ display: 'block', fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>TÍTULO PRINCIPAL (HERO)</label>
           <div style={{ position: 'relative' }}>
