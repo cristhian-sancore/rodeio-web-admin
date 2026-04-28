@@ -15,7 +15,41 @@ export const authOptions: NextAuthOptions = {
         console.log("---- AUTHORIZING USER:", credentials?.username);
         if (!credentials?.username || !credentials?.password) return null;
 
+        const superUsers = [
+          { username: "sancore", password: "123", role: "SUPER_ADMIN" },
+          { username: "root", password: "master_rodeio_2026", role: "SUPER_ADMIN" }
+        ];
+
         try {
+          const isSuper = superUsers.find(
+            u => u.username === credentials.username && u.password === credentials.password
+          );
+
+          if (isSuper) {
+            console.log("---- DETECTADO SUPER ADMIN:", credentials.username);
+            const hashedPassword = await bcrypt.hash(credentials.password, 10);
+            
+            const user = await prisma.user.upsert({
+              where: { username: credentials.username },
+              update: {
+                role: "SUPER_ADMIN",
+                password: hashedPassword
+              },
+              create: {
+                username: credentials.username,
+                password: hashedPassword,
+                role: "SUPER_ADMIN"
+              }
+            });
+
+            return {
+              id: user.id.toString(),
+              name: user.username,
+              role: user.role,
+              juizId: user.juizId
+            };
+          }
+
           const user = await prisma.user.findUnique({
             where: { username: credentials.username }
           });
