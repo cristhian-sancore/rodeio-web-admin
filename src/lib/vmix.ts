@@ -118,14 +118,16 @@ export async function sendToVMix(config: VMixConfig, data: VMixData): Promise<st
       'Round': data.roundNome || ''
     };
 
-    for (const [fieldName, value] of Object.entries(fields)) {
-      if (value === undefined || value === null) continue;
-      await callVMix(baseUrl, 'SetText', {
+    const promises = Object.entries(fields).map(([fieldName, value]) => {
+      if (value === undefined || value === null) return Promise.resolve(true);
+      return callVMix(baseUrl, 'SetText', {
         Input: inputId,
         SelectedName: fieldName,
         Value: value.toString()
       });
-    }
+    });
+
+    await Promise.all(promises);
 
     // 2. Acionar Overlay (Entrada automática)
     const channel = config.vmixOverlayChannel || 1;
