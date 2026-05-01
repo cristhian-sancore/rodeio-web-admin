@@ -298,7 +298,7 @@ export async function updateMontariaNota(formData: FormData) {
   let notaPeao = j1P + j2P + j3P + j4P;
   let notaAnimal = j1A + j2A + j3A + j4A;
 
-  if (desclassificado || (tempo > 0.1 && tempo < 8)) notaPeao = 0;
+  if (desclassificado || (tempo > 0 && tempo < 8)) notaPeao = 0;
   
   let notaTotal = notaPeao + notaAnimal;
   
@@ -637,8 +637,18 @@ export async function fixDatabaseSchema() {
   }
 
   try {
-    // Tenta adicionar a coluna faltante manualmente via SQL
+    // 1. Tenta adicionar a coluna faltante manualmente via SQL
     await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
+    
+    // 2. Unificar tabela de configuração (Garantir ID 1 único)
+    await prisma.$executeRawUnsafe(`DELETE FROM "Configuracao" WHERE id != 1;`);
+    
+    // 3. Tenta forçar o ID 1 se não houver registros
+    const count = await prisma.configuracao.count();
+    if (count === 0) {
+      await prisma.configuracao.create({ data: { id: 1, titulo: "Rodeio Web", numJuizes: 2 } });
+    }
+
     revalidatePath('/admin/configuracoes');
     return { success: true };
   } catch (err: any) {
@@ -941,7 +951,7 @@ export async function updateRound(formData: FormData) {
   
   const cleanId = (val: any) => {
     const p = parseInt(String(val));
-    return (p && p > 0) ? p : undefined;
+    return (p && p > 0) ? p : null;
   };
 
   const juiz1Id = cleanId(formData.get('juiz1'));
@@ -1415,11 +1425,51 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
 
   try {
     const bytes = await file.arrayBuffer();
-    const data = await pdf(Buffer.from(bytes));
-    const text = data.text;
-    const lines = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 5);
+    const buffer = Buffer.from(bytes);
 
-    console.log('📄 PDF EXTRAÍDO:', text.length, 'caracteres,', lines.length, 'linhas');
+    // --- MOTOR DE EXTRAÇÃO GRID-BASED (ROBUSTO - SMART PIPE) ---
+    const data = await pdf(buffer, {
+      pagerender: (pageData: any) => {
+        return pageData.getTextContent().then((textContent: any) => {
+          let lastY: number | undefined;
+          let text = '';
+          
+          // Ordenar itens por Y (topo para baixo) e depois por X (esquerda para direita)
+          const items = textContent.items.sort((a: any, b: any) => {
+            const yA = a.transform[5];
+            const yB = b.transform[5];
+            if (Math.abs(yA - yB) > 5) return yB - yA;
+            return a.transform[4] - b.transform[4];
+          });
+
+          for (let item of items) {
+            const x = item.transform[4];
+            const y = item.transform[5];
+            
+            if (lastY !== undefined && Math.abs(lastY - y) > 5) {
+              text += '\n';
+            }
+            
+            // Adicionar separador baseado em thresholds fixos de X (Standard DataRodeo/CNAR)
+            // Seq (~30), Comp (~60), Cidade (~190), Animal (~310), Cia (~410), LD (~540)
+            if (x >= 60 && x < 65) text += ' | '; 
+            if (x >= 190 && x < 195) text += ' | ';
+            if (x >= 310 && x < 315) text += ' | ';
+            if (x >= 410 && x < 415) text += ' | ';
+            if (x >= 530 && x < 560) text += ' | ';
+            
+            text += item.str;
+            lastY = y;
+          }
+          return text;
+        });
+      }
+    });
+
+    const rawText = data.text;
+    const lines = rawText.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 5);
+
+    console.log('📄 PDF EXTRAÍDO (GRID):', rawText.length, 'char,', lines.length, 'lines');
 
     const [allCompetidores, allAnimais] = await Promise.all([
       p.competidor.findMany({ select: { id: true, nome: true } }),
@@ -1430,8 +1480,6 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
 
     let successCount = 0;
     let errors: string[] = [];
-
-    // Normalização para busca
     const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
     
     const compsMap = allCompetidores.map(c => ({ id: c.id, nome: normalize(c.nome) }));
@@ -1440,9 +1488,10 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
     for (const line of lines) {
       const normLine = normalize(line);
       
+      // Busca exata ou parcial do competidor
       const foundComp = compsMap.find(c => normLine.includes(c.nome));
       if (!foundComp) {
-        errors.push(`Atleta desconhecido: ${line.substring(0, 20)}...`);
+        errors.push(`Atleta não mapeado: ${line.substring(0, 30)}`);
         continue;
       }
 
@@ -1451,17 +1500,19 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
 
       let finalAnimalId = foundAnimal ? foundAnimal.id : null;
 
+      // Se não achou o animal pelo nome, tenta extrair a parte do animal
       if (!finalAnimalId) {
-        const parts = line.split(/[\s|]+/).map(p => p.trim()).filter(p => p.length > 2);
-        for (const p of parts) {
-          const normP = normalize(p);
-          if (normP !== foundComp.nome && normP.length > 3) {
-            const newAnimal = await prisma.animal.create({
-              data: { nome: p, companhia: 'IMPORTADO PDF' }
-            });
-            finalAnimalId = newAnimal.id;
-            break;
-          }
+        const parts = line.split('|').map(p => p.trim());
+        if (parts.length >= 4) {
+           const animalNome = parts[3]; // Padrão CNAR: Ordem | Nome | Cidade | Animal | Cia
+           if (animalNome && animalNome.length > 2) {
+              const newAnimal = await prisma.animal.create({
+                data: { nome: animalNome, companhia: parts[4] || 'IMPORTADO PDF' }
+              });
+              finalAnimalId = newAnimal.id;
+              // Atualizar mapa local para evitar duplicatas na mesma importação
+              animalsMap.push({ id: newAnimal.id, nome: normalize(newAnimal.nome) });
+           }
         }
       }
 
@@ -1499,12 +1550,12 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
     return { 
       success: true, 
       count: successCount,
-      textPreview: text.substring(0, 100) + '...'
+      totalLines: lines.length
     };
 
   } catch (err) {
     console.error('❌ ERRO AO PROCESSAR PDF:', err);
-    return { success: false, error: 'Falha ao ler o PDF. O arquivo pode estar protegido ou ser uma imagem.' };
+    return { success: false, error: 'Falha crítica ao ler o PDF.' };
   }
 }
 
