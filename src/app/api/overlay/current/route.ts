@@ -80,6 +80,7 @@ export async function getOverlayDataPayload() {
       rankingCongelado: (config as any).rankingCongelado,
       timerRunning: config.timerRunning,
       timerStartedAt: config.timerStartedAt,
+      exibirCronometroNoOverlay: (config as any).exibirCronometroNoOverlay ?? true,
       serverTime: Date.now(),
       data: {
         id: montaria.id,

@@ -112,6 +112,16 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
                 <option value="4">4 Juízes - Média / Divisão (Sistema Barretos)</option>
               </select>
             </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', height: '100%', paddingTop: '1.5rem' }}>
+              <input 
+                name="exibirCronometroNoOverlay" 
+                type="checkbox" 
+                defaultChecked={config.exibirCronometroNoOverlay} 
+                id="check-timer"
+                style={{ width: '25px', height: '25px', cursor: 'pointer', accentColor: 'var(--primary)' }} 
+              />
+              <label htmlFor="check-timer" style={{ color: '#fff', fontWeight: '600', cursor: 'pointer' }}>Exibir Cronômetro no Overlay</label>
+            </div>
           </div>
 
           <hr style={{ border: '0', borderTop: '1px solid #222', margin: '2rem 0' }} />

@@ -180,6 +180,7 @@ model Configuracao {
   fontFamily          String?   @default("Inter")
   logoUrl             String?   @default("")
   removeBgApiKey      String?   @default("")
+  exibirCronometroNoOverlay Boolean @default(true)
 }
 
 model RoundReserva {

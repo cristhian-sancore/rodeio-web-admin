@@ -11,7 +11,7 @@ interface OverlayData {
   rankingPage?: number;
   rankingData?: {
     title: string;
-    list: Array<{ pos: number; nome: string; info: string; nota: string; extra: string; }>;
+    list: Array<{ pos: number; nome: string; info: string; nota: string; extra: string; diff: string; }>;
   };
   rankingCongelado?: boolean;
   data?: {
@@ -39,6 +39,7 @@ interface OverlayData {
   };
   timerRunning?: boolean;
   timerStartedAt?: string;
+  exibirCronometroNoOverlay?: boolean;
   serverTime?: number;
 }
 
@@ -57,13 +58,8 @@ export default function OverlayNotaPage() {
   const nameRef = useRef<HTMLHeadingElement>(null);
 
   const d = data?.data;
-  const hasAnyScore = !!d && (
-      (d as any).j1P > 0 || (d as any).j1A > 0 || (d as any).j1Total > 0 ||
-      (d as any).j2P > 0 || (d as any).j2A > 0 || (d as any).j2Total > 0 ||
-      (d as any).j3P > 0 || (d as any).j3A > 0 || (d as any).j3Total > 0 ||
-      (d as any).j4P > 0 || (d as any).j4A > 0 || (d as any).j4Total > 0
-  );
-  const shouldHideLowerThird = timerVisible || (rideStarted && !hasAnyScore);
+  const isScored = !!d && (parseFloat(d.total) > 0 || d.desclassificado);
+  const isPendingScore = !isScored;
 
   // Carregar Configurações do Construtor
   useEffect(() => {
@@ -95,7 +91,7 @@ export default function OverlayNotaPage() {
 
   // Escuta visibilidade do Lower Third e força a saída da tela após 60 segundos (60s)
   useEffect(() => {
-    if (!shouldHideLowerThird && data?.mode === 'ID' && d) {
+    if (data?.mode === 'ID' && d) {
        setLowerThirdForcedHide(false);
        if (ltHideTimeoutRef.current) {
            clearTimeout(ltHideTimeoutRef.current);
@@ -103,15 +99,15 @@ export default function OverlayNotaPage() {
        }
        ltHideTimeoutRef.current = setTimeout(() => {
            setLowerThirdForcedHide(true);
-           deactivateVMixOverlay(); // Desativa vMix quando atingir 60s
-       }, 60000); // 60 segundos de permanência máxima do gráfico principal
+           deactivateVMixOverlay(); 
+       }, 60000); 
     } else {
        if (ltHideTimeoutRef.current) {
            clearTimeout(ltHideTimeoutRef.current);
            ltHideTimeoutRef.current = null;
        }
     }
-  }, [shouldHideLowerThird, data?.mode, d?.id]);
+  }, [data?.mode, d?.id]);
 
   useEffect(() => {
     document.documentElement.style.background = 'transparent';
@@ -128,7 +124,6 @@ export default function OverlayNotaPage() {
             const ping = (t1 - t0) / 2;
             const freshOffset = json.serverTime - (t1 - ping);
             serverOffsetRef.current = serverOffsetRef.current === 0 ? freshOffset : (serverOffsetRef.current * 0.7) + (freshOffset * 0.3);
-            console.log(`[Overlay] Calibrado! Ping: ${ping.toFixed(0)}ms, Offset: ${serverOffsetRef.current.toFixed(0)}ms`);
          }
        } catch (e) {
           console.error("Erro ao calibrar tempo", e);
@@ -144,10 +139,8 @@ export default function OverlayNotaPage() {
         try {
           const json = JSON.parse(event.data);
           if (json.active) {
-            // Calibração contínua baseada no sinal do servidor
             if (json.serverTime) {
                const currentOffset = json.serverTime - Date.now();
-               // Média simples para evitar pulos bruscos no cronômetro
                serverOffsetRef.current = (serverOffsetRef.current * 0.8) + (currentOffset * 0.2);
             }
             setData(json);
@@ -174,27 +167,12 @@ export default function OverlayNotaPage() {
     return () => es.close();
   }, []);
 
-  // Lógica de Scale para Nomes Gigantes
+  // Lógica de Scale para Nomes Gigantes (REMOVIDO EM FAVOR DE 2 LINHAS)
   useEffect(() => {
-    if (nameRef.current) {
-        // Ignora a escala atual para medir tamanho real brute
-        const originalTransform = nameRef.current.style.transform;
-        nameRef.current.style.transform = 'none';
-        
-        const nameWidth = nameRef.current.scrollWidth;
-        const maxAllowed = 650; // Pixels máximos até encostar nas notas
-        
-        if (nameWidth > maxAllowed) {
-            setNameScale(maxAllowed / nameWidth);
-        } else {
-            setNameScale(1);
-        }
-        nameRef.current.style.transform = originalTransform;
-    }
+    setNameScale(1);
   }, [data?.data?.competidor]);
 
   useEffect(() => {
-    // Nova montaria = Reseta o suspense do Lower Third
     setRideStarted(false);
   }, [data?.data?.id]);
 
@@ -208,13 +186,12 @@ export default function OverlayNotaPage() {
           timerTimeoutRef.current = null;
       }
     } else if (elapsedTime > 0 || (d && parseFloat(d.tempo) > 0)) {
-      // Backend parou o cronômetro ou tem nota (fechou o ride)
       if (timerTimeoutRef.current) clearTimeout(timerTimeoutRef.current);
       timerTimeoutRef.current = setTimeout(() => {
           setTimerVisible(false);
           timerTimeoutRef.current = null;
-          deactivateVMixOverlay(); // Desativa vMix quando o cronômetro sumir (10s após stop)
-      }, 10000); // Fica 10s na tela depois de paralisar
+          deactivateVMixOverlay(); 
+      }, 10000); 
     } else {
       setTimerVisible(false);
     }
@@ -230,14 +207,13 @@ export default function OverlayNotaPage() {
         
         if (elapsed >= 8) {
           setElapsedTime(8);
-          // Atingiu 8 segundos visuais
           setTimerVisible((prev) => {
              if (prev && !timerTimeoutRef.current) {
                  timerTimeoutRef.current = setTimeout(() => {
                      setTimerVisible(false);
                      timerTimeoutRef.current = null;
-                     deactivateVMixOverlay(); // Desativa vMix
-                 }, 10000); // Max Hide at delay
+                     deactivateVMixOverlay(); 
+                 }, 10000); 
              }
              return prev;
           });
@@ -277,7 +253,6 @@ export default function OverlayNotaPage() {
         .overlay-master { position: fixed; inset: 0; transition: opacity 0.5s ease; opacity: 0; }
         .overlay-master.show { opacity: 1; }
 
-        /* --- VARIÁVEIS DO CONSTRUTOR --- */
         :root {
           --accent: ${overlayStyle.accent};
           --accent-gradient: ${overlayStyle.useGradient ? `linear-gradient(180deg, ${overlayStyle.accent} 0%, rgba(0,0,0,0.5) 100%)` : overlayStyle.accent};
@@ -287,54 +262,63 @@ export default function OverlayNotaPage() {
           --font-scale: ${overlayStyle.fontScale};
         }
 
-        /* --- MODO ID (DESIGN ORIGINAL RESTAURADO) --- */
         .mode-ID .nota-container {
           position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
           display: flex; align-items: stretch; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
-          width: max-content; min-width: 800px;
+          width: max-content; 
           opacity: 1; transition: opacity 0.5s ease;
           zoom: var(--font-scale);
         }
         .mode-ID .nota-container.hidden { opacity: 0; pointer-events: none; }
+        
         .mode-ID .info-card {
           background: var(--bg-overlay);
           opacity: var(--opacity);
-          border-left: 12px solid var(--accent); padding: 30px 60px 30px 50px;
-          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 350px;
+          border-left: 12px solid var(--accent); padding: 20px 40px;
+          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 300px;
           border-radius: var(--radius) 0 0 var(--radius);
-          max-width: 900px; overflow: visible; display: flex; flex-direction: column; justify-content: center;
+          max-width: 500px; display: flex; flex-direction: column; justify-content: center;
+          z-index: 10;
         }
-        .mode-ID .competidor-name { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; white-space: nowrap; transform-origin: left center; }
-        .mode-ID .animal-name { color: var(--accent); font-size: 1.8rem; font-weight: 800; text-transform: uppercase; margin-top: 5px; display: block; border-top: 1px solid rgba(212,175,55,0.3); padding-top: 5px; width: 100%; }
+        .mode-ID .competidor-name { 
+          color: #fff; font-size: 2.6rem; font-weight: 950; text-transform: uppercase; 
+          margin: 0; transform-origin: left center; line-height: 1;
+          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+          word-break: break-word;
+        }
+        .mode-ID .animal-name { color: var(--accent); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
         
         .mode-ID .judges-section {
           background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -40px;
-          padding: 20px 40px 20px 80px; display: flex; gap: 40px;
+          padding: 15px 30px 15px 60px; display: flex; gap: 20px;
           clip-path: polygon(40px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%);
+          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
         }
-        .mode-ID .judge-box { border-left: 5px solid var(--accent); padding-left: 20px; min-width: 250px; display: flex; flex-direction: column; justify-content: space-between; }
-        .mode-ID .judge-title { font-size: 1.6rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 10px; display: block; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 4px; width: fit-content; letter-spacing: 1px; }
-        .mode-ID .judge-score-label { font-size: 1.3rem; color: var(--accent); font-weight: 900; text-transform: uppercase; opacity: 0.9; margin-right: 5px; }
-        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2.8rem; line-height: 1; }
-        .mode-ID .subtotal { font-size: 4rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 2px solid rgba(212, 175, 55, 0.4); padding-top: 10px; line-height: 1; text-align: center; }
+        .mode-ID .judges-section.pending { transform: translateX(-150%); opacity: 0; }
+
+        .mode-ID .judge-box { border-left: 4px solid var(--accent); padding-left: 15px; min-width: 160px; display: flex; flex-direction: column; }
+        .mode-ID .judge-title { font-size: 1.1rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 5px; display: block; opacity: 0.8; }
+        .mode-ID .judge-score-label { font-size: 0.9rem; color: var(--accent); font-weight: 900; margin-right: 3px; }
+        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2rem; line-height: 1; }
+        .mode-ID .subtotal { font-size: 2.8rem; color: #fff; font-weight: 950; margin-top: 5px; border-top: 2px solid rgba(212, 175, 55, 0.3); padding-top: 5px; line-height: 1; text-align: center; }
         
         .mode-ID .final-score-card {
-          min-width: 250px; background: var(--accent-gradient);
+          min-width: 200px; background: var(--accent-gradient);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          padding: 20px 40px 20px 60px; clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
+          padding: 15px 30px 15px 50px; clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
           margin-left: -40px;
           border-radius: 0 var(--radius) var(--radius) 0;
+          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.4s ease 0.1s;
         }
-        .mode-ID .total-value { font-size: 5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
+        .mode-ID .final-score-card.pending { transform: translateX(-200%); opacity: 0; }
+        .mode-ID .total-value { font-size: 4.5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
         
         .mode-ID .header-badges { position: absolute; top: -45px; left: 0; display: flex; gap: 10px; }
         .mode-ID .badge { 
           background: #000; color: var(--accent); padding: 5px 25px; font-weight: 900; font-size: 1.3rem; 
           border: 2px solid var(--accent); clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
         }
-        .mode-ID .badge-pos { background: var(--accent); color: #000; }
 
-        /* --- CRONÔMETRO INDEPENDENTE TOP-RIGHT --- */
         .timer-top-right {
           position: fixed; top: 40px; right: 40px;
           background: #000; border: 3px solid var(--accent); border-right: 15px solid var(--accent);
@@ -347,18 +331,16 @@ export default function OverlayNotaPage() {
         .timer-label { color: var(--accent); font-size: 1.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: -5px; }
         .timer-value { font-size: 4.5rem; font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1; }
 
-        /* --- MODO CHAMADA --- */
         .mode-CHAMADA .chamada-fullscreen {
           position: absolute; inset: 0;
           background: radial-gradient(circle at center, rgba(30,30,30,0.5) 0%, rgba(0,0,0,0.95) 100%);
           display: flex; align-items: center; justify-content: center;
         }
         .chamada-grid { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 1800px; height: 100%; position: relative; }
-        .side-photo { width: 500px; height: 750px; position: relative; clip-path: polygon(15% 0, 100% 0, 85% 100%, 0 100%); border: 8px solid var(--accent); overflow: hidden; box-shadow: 0 0 80px rgba(212,175,55,0.3); }
-        .side-photo img { width: 100%; height: 100%; object-fit: cover; animation: kenBurns 10s infinite alternate; }
-        .name-rider-full { font-size: 7rem; font-weight: 950; text-transform: uppercase; line-height: 0.85; margin: 20px 0 0; color: #fff; }
+        .side-photo { width: 450px; height: 650px; position: relative; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); border: 8px solid var(--accent); overflow: hidden; }
+        .side-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .center-info { flex: 1; text-align: center; padding: 0 50px; }
 
-        /* --- MODO RANKING --- */
         .mode-RANKING .ranking-wrapper {
           position: absolute; inset: 0;
           display: flex; align-items: center; justify-content: center;
@@ -367,15 +349,11 @@ export default function OverlayNotaPage() {
         .mode-RANKING .ranking-full {
           width: 100%; max-width: 1840px; height: 100%; max-height: 1000px; display: flex; flex-direction: column; 
           background: rgba(10, 10, 10, 0.98); padding: 50px 60px; border-radius: 24px; border: 4px solid var(--accent);
-          box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
-          animation: popCenter 0.5s ease-out;
         }
-
-        @keyframes popCenter { from { opacity: 0; transform: scale(1.5); filter: blur(20px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
       `}</style>
       
-      {/* CRONÔMETRO INDEPENDENTE */}
-      {(data?.timerRunning || elapsedTime > 0) && (
+      {/* CRONÔMETRO */}
+      {(data?.timerRunning || elapsedTime > 0) && data?.exibirCronometroNoOverlay && (
         <div className={`timer-top-right ${!timerVisible ? 'hidden' : ''}`}>
            <span className="timer-label">TEMPO</span>
            <span className="timer-value">{elapsedTime.toFixed(2)}s</span>
@@ -424,26 +402,26 @@ export default function OverlayNotaPage() {
 
       {/* LOWER THIRD (ID) */}
       {mode === 'ID' && d && (
-        <div className={`nota-container ${(shouldHideLowerThird || lowerThirdForcedHide) ? 'hidden' : ''}`}>
-          {/* HEADER BADGES (RANK E DIFF) */}
+        <div className={`nota-container ${lowerThirdForcedHide ? 'hidden' : ''}`}>
           <div className="header-badges">
-            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">{overlayStyle.labelRank}: {d.etapaRank}°</div>}
+            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">{overlayStyle.labelRank}: {d.etapaRank}</div>}
             {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">{overlayStyle.labelDiff}: {d.etapaDiff}</div>}
-            {!data?.rankingCongelado && d?.etapaNotaAcumulada && (d.roundNumero || 0) > 1 && parseFloat(d.etapaNotaAcumulada) > 0 && (
-              <div className="badge badge-acumulada" style={{ background: 'var(--accent)', color: '#000' }}>SOMA ETAPA: {parseFloat(d.etapaNotaAcumulada).toFixed(2)}</div>
-            )}
           </div>
 
           <div className="info-card">
              <h1 ref={nameRef} className="competidor-name" style={{ transform: `scale(${nameScale})` }}>{d.competidor}</h1>
-             <span className="animal-name">{d.animal}</span>
+             <div style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: 800, marginBottom: '5px', opacity: 0.9 }}>{d.competidorCidade}</div>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '5px' }}>
+                <span className="animal-name">{d.animal}</span>
+                <span style={{ color: '#fff', fontSize: '1.2rem', opacity: 0.7, fontWeight: 700 }}>{d.animalCompanhia}</span>
+             </div>
           </div>
 
-          <div className="judges-section">
+          <div className={`judges-section ${isPendingScore ? 'pending' : ''}`}>
              {[1,2,3,4].slice(0, numJuizes).map(i => (
                <div key={i} className="judge-box">
                   <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
-                  <div style={{ display: 'flex', gap: '20px', marginBottom: '8px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'baseline' }}>
                       <span className="judge-score-label">P:</span>
                       <span className="judge-score-value">{formatScore((d as any)[`j${i}P`])}</span>
@@ -457,27 +435,11 @@ export default function OverlayNotaPage() {
                </div>
              ))}
           </div>
-          <div className="final-score-card">
+
+          <div className={`final-score-card ${isPendingScore ? 'pending' : ''}`}>
               <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>{overlayStyle.labelScore}</span>
               <div className="total-value">{d.desclassificado ? '0.00' : formatScore(d.total)}</div>
           </div>
-
-          {/* ELEMENTOS CUSTOMIZADOS (CANVA STYLE) NO OVERLAY */}
-          {(config?.siteLayouts?.OVERLAYS?.find((b: any) => b.type === 'LOWER_THIRD')?.elements || []).map((el: any) => {
-             const elStyle: React.CSSProperties = {
-                position: 'absolute', left: el.x, top: el.y, width: el.w, height: el.h, zIndex: el.zIndex || 1, opacity: el.style?.opacity || 1
-             };
-             if (el.type === 'SHAPE_RECT' || el.type === 'SHAPE_CIRCLE') {
-                return <div key={el.id} style={{ ...elStyle, background: el.style?.background, borderRadius: el.style?.borderRadius }} />;
-             }
-             if (el.type === 'IMAGE') {
-                return <img key={el.id} src={el.content} style={{ ...elStyle, objectFit: 'contain' }} alt="" />;
-             }
-             if (el.type === 'TEXT') {
-                return <div key={el.id} style={{ ...elStyle, fontSize: `${el.style?.fontSize || 24}px`, fontWeight: '900', color: el.style?.color, fontFamily: config?.fontFamily }}>{el.content}</div>;
-             }
-             return null;
-          })}
         </div>
       )}
 
@@ -487,13 +449,12 @@ export default function OverlayNotaPage() {
           <div className="chamada-grid">
             <div className="side-photo photo-rider"><img src={d.competidorFoto} alt="P" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: 'var(--accent)', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.competidorCidade}</div></div>
             <div className="center-info">
-              <div style={{ fontSize: '6rem', fontWeight: 950, color: '#000', WebkitTextStroke: '2px var(--accent)', textShadow: '0 0 20px var(--accent)', fontStyle: 'italic', letterSpacing: '-5px' }}>CONFRONTO</div>
-              <h1 style={{ fontSize: '7rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 0.85, margin: '20px 0 0', color: '#fff' }}>{d.competidor}</h1>
-              <div style={{ fontSize: '4rem', color: 'var(--accent)', fontWeight: 800, margin: '10px 0', textTransform: 'uppercase' }}>{d.animal}</div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', marginTop: '50px' }}>
-                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>RANKING</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorRankChamp || '---'}</span></div>
-                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>PARADAS</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.competidorParadas || '0%'}</span></div>
-                <div style={{ border: '2px solid var(--accent)', background: 'rgba(212,175,55,0.1)', padding: '20px 40px', transform: 'skewX(-15deg)' }}><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '0.9rem', color: 'var(--accent)', fontWeight: 900 }}>MÉDIA BOI</span><span style={{ transform: 'skewX(15deg)', display: 'block', fontSize: '3.5rem', color: '#fff', fontWeight: 950 }}>{d.animalMedia || '0'}</span></div>
+              <div style={{ fontSize: '5rem', fontWeight: 950, color: '#fff', textTransform: 'uppercase', fontStyle: 'italic' }}>CONFRONTO</div>
+              <h1 style={{ fontSize: '6rem', fontWeight: 950, textTransform: 'uppercase', margin: '10px 0', color: '#fff' }}>{d.competidor}</h1>
+              <div style={{ fontSize: '3.5rem', color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase' }}>{d.animal}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '40px' }}>
+                <div style={{ border: '2px solid var(--accent)', padding: '15px 30px' }}><span style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 900 }}>RANKING</span><span style={{ fontSize: '3rem', color: '#fff', fontWeight: 950, display: 'block' }}>{d.competidorRankChamp || '---'}</span></div>
+                <div style={{ border: '2px solid var(--accent)', padding: '15px 30px' }}><span style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 900 }}>MÉDIA BOI</span><span style={{ fontSize: '3rem', color: '#fff', fontWeight: 950, display: 'block' }}>{d.animalMedia || '0'}</span></div>
               </div>
             </div>
             <div className="side-photo photo-bull"><img src={d.animalFoto} alt="T" /><div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '10px', background: 'rgba(0,0,0,0.8)', color: 'var(--accent)', textAlign: 'center', fontSize: '1.2rem', fontWeight: 900 }}>{d.animalCompanhia}</div></div>

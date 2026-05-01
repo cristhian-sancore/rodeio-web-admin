@@ -26,28 +26,39 @@ export async function importPdfAction(formData: FormData) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // --- MOTOR DE EXTRAÇÃO SMART PIPE (SENSÍVEL) ---
+    // --- MOTOR DE EXTRAÇÃO GRID-BASED (ROBUSTO) ---
     const data = await pdf(buffer, {
       pagerender: (pageData: any) => {
         return pageData.getTextContent().then((textContent: any) => {
           let lastY: number | undefined;
-          let lastX: number | undefined;
           let text = '';
-          for (let item of textContent.items) {
+          
+          // Ordenar itens por Y (topo para baixo) e depois por X (esquerda para direita)
+          const items = textContent.items.sort((a: any, b: any) => {
+            const yA = a.transform[5];
+            const yB = b.transform[5];
+            if (Math.abs(yA - yB) > 5) return yB - yA;
+            return a.transform[4] - b.transform[4];
+          });
+
+          for (let item of items) {
             const x = item.transform[4];
             const y = item.transform[5];
             
             if (lastY !== undefined && Math.abs(lastY - y) > 5) {
               text += '\n';
-            } else if (lastX !== undefined && (x - lastX) > 12) { // 12 unidades de gap (mais sensível)
-              text += ' | '; 
-            } else if (lastX !== undefined && (x - lastX) > 1) {
-              text += ' ';
             }
+            
+            // Adicionar separador baseado em thresholds fixos de X (DATARODEO Standard)
+            // Seq (~30), Comp (~60), Cidade (~190), Animal (~310), Cia (~410), LD (~540)
+            if (x >= 60 && x < 65) text += ' | '; 
+            if (x >= 190 && x < 195) text += ' | ';
+            if (x >= 310 && x < 315) text += ' | ';
+            if (x >= 410 && x < 415) text += ' | ';
+            if (x >= 530 && x < 560) text += ' | ';
             
             text += item.str;
             lastY = y;
-            lastX = x + (item.width || (item.str.length * 4)); 
           }
           return text;
         });
@@ -55,82 +66,97 @@ export async function importPdfAction(formData: FormData) {
     });
 
     const rawText = data.text;
-    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 5); // Ignora linhas muito curtas
+    const rawLines = rawText.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    
+    let mergedRows: string[] = [];
+    let currentRecord: string = "";
+    let isReservaSection = false;
+
+    // --- AGREGADOR DE REGISTROS MULTI-LINHA ---
+    for (const line of rawLines) {
+      if (line.toUpperCase().includes("RERIDER")) {
+        isReservaSection = true;
+        continue;
+      }
+
+      // Detecta início de registro: Número seguido de | (Ex: "1 |", "25 |", "R1 |")
+      if (/^([R]?\d+)\s*\|/.test(line)) {
+        if (currentRecord) mergedRows.push(currentRecord + (isReservaSection ? " [RESERVA]" : ""));
+        currentRecord = line;
+      } else if (currentRecord && !line.includes("DATARODEO") && !line.includes("SORTEIO") && !line.includes("SEQ |")) {
+        // Continuação do registro anterior (Nome ou Cidade quebrou linha)
+        const partsCurrent = currentRecord.split('|');
+        const partsNext = line.split('|');
+        
+        for (let i = 0; i < Math.max(partsCurrent.length, partsNext.length); i++) {
+          const pC = (partsCurrent[i] || "").trim();
+          const pN = (partsNext[i] || "").trim();
+          if (pN) {
+            partsCurrent[i] = pC + (pC ? " " : "") + pN;
+          }
+        }
+        currentRecord = partsCurrent.join(' | ');
+      }
+    }
+    if (currentRecord) mergedRows.push(currentRecord + (isReservaSection ? " [RESERVA]" : ""));
+
     let importedCount = 0;
 
-    console.log(`--- DEBUG PDF RAW (PRIMEIRAS 5 LINHAS) ---`);
-    lines.slice(0, 10).forEach(l => console.log(`[RAW]: ${l}`));
+    for (const row of mergedRows) {
+      const isReservaTag = row.includes("[RESERVA]");
+      const cleanRow = row.replace("[RESERVA]", "").trim();
+      const parts = cleanRow.split('|').map((p: string) => p.trim());
+      
+      if (parts.length < 3) continue;
 
-    for (const line of lines) {
-      const parts = line.split('|').map(p => p.trim()).filter(p => p.length > 0);
-      if (parts.length === 0) continue;
-
-      let num = "";
+      let num = parts[0].replace(/[^\d]/g, '');
       let nomeCompetidor = "";
       let nomeAnimal = "";
       let ciaDetectada = "NÃO INFORMADA";
 
-      // Tentar extrair número da primeira parte (pode estar colado: "1 CARLOS")
-      const firstPart = parts[0];
-      const matchNum = firstPart.match(/^(\d+)\s*(.*)$/);
-      
-      if (matchNum) {
-         num = matchNum[1];
-         const remainder = matchNum[2].trim();
-         
-         if (remainder.length > 0) {
-            // Caso: "1 CARLOS RAFAEL LANA | TOURO | CIA"
-            nomeCompetidor = remainder;
-            nomeAnimal = parts[1] || "A DEFINIR";
-            ciaDetectada = parts[2] || "NÃO INFORMADA";
-         } else if (parts.length >= 3) {
-            // Caso: "1 | CARLOS RAFAEL LANA | TOURO | CIA"
-            nomeCompetidor = parts[1];
-            nomeAnimal = parts[2];
-            ciaDetectada = parts[3] || "NÃO INFORMADA";
-         }
-
-         // Validar se não é cabeçalho
-         if (nomeCompetidor.toUpperCase().includes("NOME") || nomeAnimal.toUpperCase().includes("TOURO")) continue;
-         if (nomeCompetidor.length < 3) continue;
-
-         console.log(`[IMPORT] -> Atleta: ${nomeCompetidor} | Touro: ${nomeAnimal} | Cia: ${ciaDetectada}`);
-
-         // Gravar no Banco
-         let competidor = await p.competidor.findFirst({ where: { nome: { equals: nomeCompetidor, mode: 'insensitive' } } });
-         if (!competidor) competidor = await p.competidor.create({ data: { nome: nomeCompetidor, ranking: 0 } });
-
-         let animal = await p.animal.findFirst({ where: { nome: { equals: nomeAnimal, mode: 'insensitive' } } });
-         if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada } });
-
-         const existing = await p.montaria.findFirst({ where: { competidorId: competidor.id, roundId, removida: false } });
-         if (!existing) {
-           await p.montaria.create({ data: { competidorId: competidor.id, animalId: animal.id, roundId, etapaId } });
-           importedCount++;
-         }
+      // SEQ | COMPETIDOR | CIDADE | ANIMAL | TROPEIRO | LD
+      if (parts.length >= 5) {
+        nomeCompetidor = parts[1];
+        nomeAnimal = parts[3] || "A DEFINIR";
+        ciaDetectada = parts[4] || "NÃO INFORMADA";
+      } else {
+        // Fallback para formato antigo/simples
+        nomeCompetidor = parts[1];
+        nomeAnimal = parts[2] || "A DEFINIR";
+        ciaDetectada = parts[3] || "NÃO INFORMADA";
       }
 
-      // Caso 2: Reservas (R1 | NOME | CIA)
-      if (firstPart.toUpperCase().startsWith('R')) {
-         const matchR = firstPart.match(/R(\d+)\s*(.*)/i);
-         if (matchR) {
-            const ordem = parseInt(matchR[1]);
-            const remainder = matchR[2].trim();
-            let content = remainder || parts[1] || "RESERVA";
-            let ciaRes = remainder ? (parts[1] || "RESERVA") : (parts[2] || "RESERVA");
+      // Validar se não é cabeçalho ou vazio
+      if (nomeCompetidor.toUpperCase().includes("COMPETIDOR") || nomeAnimal.toUpperCase().includes("ANIMAL")) continue;
+      if (nomeCompetidor === "-" || nomeCompetidor.length < 2) {
+        // Tratar como Reserva se o competidor for "-"
+        if (isReservaTag || isReservaSection) {
+          let animal = await p.animal.findFirst({ where: { nome: { equals: nomeAnimal, mode: 'insensitive' } } });
+          if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada } });
 
-            if (content.toUpperCase().includes("RESERVA")) continue;
+          const existingRes = await p.roundReserva.findFirst({ where: { roundId, animalId: animal.id } });
+          if (!existingRes) {
+            await p.roundReserva.create({ data: { roundId, animalId: animal.id, ordem: parseInt(num) || 0 } });
+          }
+        }
+        continue;
+      }
 
-            console.log(`[IMPORT-RES] -> Touro: ${content} | Cia: ${ciaRes}`);
+      console.log(`[IMPORT] -> Atleta: ${nomeCompetidor} | Touro: ${nomeAnimal} | Cia: ${ciaDetectada}`);
 
-            let animal = await p.animal.findFirst({ where: { nome: { equals: content, mode: 'insensitive' } } });
-            if (!animal) animal = await p.animal.create({ data: { nome: content, companhia: ciaRes } });
+      // Gravar Competidor
+      let competidor = await p.competidor.findFirst({ where: { nome: { equals: nomeCompetidor, mode: 'insensitive' } } });
+      if (!competidor) competidor = await p.competidor.create({ data: { nome: nomeCompetidor, ranking: 0 } });
 
-            const existingRes = await p.roundReserva.findFirst({ where: { roundId, animalId: animal.id } });
-            if (!existingRes) {
-              await p.roundReserva.create({ data: { roundId, animalId: animal.id, ordem } });
-            }
-         }
+      // Gravar Animal
+      let animal = await p.animal.findFirst({ where: { nome: { equals: nomeAnimal, mode: 'insensitive' } } });
+      if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada } });
+
+      // Gravar Montaria
+      const existing = await p.montaria.findFirst({ where: { competidorId: competidor.id, roundId, removida: false } });
+      if (!existing) {
+        await p.montaria.create({ data: { competidorId: competidor.id, animalId: animal.id, roundId, etapaId } });
+        importedCount++;
       }
     }
 
@@ -141,6 +167,7 @@ export async function importPdfAction(formData: FormData) {
     return { success: false, error: err.message };
   }
 }
+
 
 export async function createRound(etapaId: number, numero: number, juiz1Id?: number, juiz2Id?: number, juiz3Id?: number, juiz4Id?: number, modalidade?: string, dataAgenda?: Date, eFinal: boolean = false) {
   const cleanId = (id?: any) => {
@@ -262,7 +289,7 @@ export async function updateMontariaNota(formData: FormData) {
   let notaPeao = j1P + j2P + j3P + j4P;
   let notaAnimal = j1A + j2A + j3A + j4A;
 
-  if (desclassificado || (tempo > 0 && tempo < 8)) notaPeao = 0;
+  if (desclassificado || (tempo > 0.1 && tempo < 8)) notaPeao = 0;
   
   let notaTotal = notaPeao + notaAnimal;
   
@@ -521,6 +548,7 @@ export async function saveConfig(formData: FormData) {
         homeHeroTitle: getFormVal('homeHeroTitle', (currentConfig as any).homeHeroTitle),
         homeHeroSubtitle: getFormVal('homeHeroSubtitle', (currentConfig as any).homeHeroSubtitle),
         homeHeroImage: getFormVal('homeHeroImage', (currentConfig as any).homeHeroImage),
+        exibirCronometroNoOverlay: formData.get('exibirCronometroNoOverlay') === 'on',
       },
       create: { 
         id: 1, 
@@ -532,6 +560,7 @@ export async function saveConfig(formData: FormData) {
         homeHeroTitle: getFormVal('homeHeroTitle', "RODEIO PRO"),
         homeHeroSubtitle: getFormVal('homeHeroSubtitle', "A plataforma definitiva para gestão de eventos..."),
         homeHeroImage: getFormVal('homeHeroImage', "https://images.unsplash.com/photo-1530103043960-ef38714abb15?q=80&w=2070&auto=format&fit=crop"),
+        exibirCronometroNoOverlay: true,
       }
     });
 
@@ -1298,9 +1327,10 @@ export async function importRoundMontariasAction(roundId: number, etapaId: numbe
           roundId,
           competidorId: competidor.id,
           animalId: animalId,
-          notaJ1A: 0, notaJ1P: 0, notaJ2A: 0, notaJ2P: 0,
-          notaJ3A: 0, notaJ3P: 0, notaJ4A: 0, notaJ4P: 0,
-          notaTotal: 0, tempo: 0
+          j1Animal: 0, j1Peao: 0, j2Animal: 0, j2Peao: 0,
+          j3Animal: 0, j3Peao: 0, j4Animal: 0, j4Peao: 0,
+          notaTotal: 0, tempo: 0,
+          etapaId: etapaId
         }
       });
 
@@ -1382,9 +1412,10 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
           roundId,
           competidorId: foundComp.id,
           animalId: finalAnimalId,
-          notaJ1A: 0, notaJ1P: 0, notaJ2A: 0, notaJ2P: 0,
-          notaJ3A: 0, notaJ3P: 0, notaJ4A: 0, notaJ4P: 0,
-          notaTotal: 0, tempo: 0
+          j1Animal: 0, j1Peao: 0, j2Animal: 0, j2Peao: 0,
+          j3Animal: 0, j3Peao: 0, j4Animal: 0, j4Peao: 0,
+          notaTotal: 0, tempo: 0,
+          etapaId: etapaId
         }
       });
 
