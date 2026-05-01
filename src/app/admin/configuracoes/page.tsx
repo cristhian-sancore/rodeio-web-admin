@@ -24,8 +24,18 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
 
   try {
     const configData = await prisma.configuracao.findFirst();
-    if (!configData) throw new Error("Configuração não encontrada no banco");
-    const config = configData as any;
+    const config = (configData || { 
+      id: 1,
+      numJuizes: 2, 
+      titulo: "Circuito Master Professional",
+      vmixUrl: "",
+      vmixInputId: "",
+      vmixOverlayChannel: 1,
+      vmixReplayInputId: "Instant Replay",
+      replayExportPath: "",
+      googleDriveFolderId: "",
+      googleDriveApiKey: ""
+    }) as any;
 
   const temporadas = await prisma.temporada.findMany({
     orderBy: { ano: 'desc' },

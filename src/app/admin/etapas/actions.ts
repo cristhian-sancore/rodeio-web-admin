@@ -512,6 +512,9 @@ export async function saveConfig(formData: FormData) {
     throw new Error("Não autorizado para alterar configurações globais.");
   }
 
+  const redirectTo = formData.get('redirectTo') as string;
+  let redirectPath = redirectTo || '/admin/configuracoes?success=true';
+
   const currentConfig = await prisma.configuracao.findFirst() || { id: 1 };
   
   const numJuizesStr = formData.get('numJuizes') as string;
@@ -573,14 +576,15 @@ export async function saveConfig(formData: FormData) {
        try {
          await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
          // Tentar salvar de novo após o fix
-         return await saveConfig(formData);
+         await saveConfig(formData);
+         return; // Sai após o sucesso do re-save
        } catch (fixErr) {
          console.error("Falha no auto-fix de schema:", fixErr);
        }
     }
-
-    const { redirect } = await import('next/navigation');
-    redirect('/admin/configuracoes?error=SAVE_FAILED');
+    
+    // Se chegamos aqui, falhou mesmo
+    redirectPath = '/admin/configuracoes?error=SAVE_FAILED';
   }
 
   revalidatePath('/admin/configuracoes');
@@ -589,13 +593,7 @@ export async function saveConfig(formData: FormData) {
   revalidatePath('/');
   
   const { redirect } = await import('next/navigation');
-  const redirectTo = formData.get('redirectTo') as string;
-  
-  if (redirectTo) {
-    redirect(redirectTo);
-  } else {
-    redirect('/admin/configuracoes?success=true');
-  }
+  redirect(redirectPath);
 }
 
 export async function executeRawSql(sql: string) {
