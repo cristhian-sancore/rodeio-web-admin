@@ -13,6 +13,7 @@ export default function PdfImportBtn({ roundId, etapaId }: Props) {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [count, setCount] = useState(0);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -34,9 +35,11 @@ export default function PdfImportBtn({ roundId, etapaId }: Props) {
         setTimeout(() => setStatus('idle'), 5000);
       } else {
         setStatus('error');
+        setErrorMessage(res.error || 'Erro desconhecido');
       }
-    } catch (err) {
+    } catch (err: any) {
       setStatus('error');
+      setErrorMessage(err.message || 'Falha na conexão');
     } finally {
       setLoading(false);
       e.target.value = ''; // Reset input
@@ -90,8 +93,11 @@ export default function PdfImportBtn({ roundId, etapaId }: Props) {
       )}
 
       {status === 'error' && (
-        <div style={{ marginTop: '1rem', color: '#ff4444', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <AlertCircle size={14} /> Erro ao ler PDF. Verifique o formato.
+        <div style={{ marginTop: '1rem', color: '#ff4444', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={14} /> <strong>Falha na Importação</strong>
+          </div>
+          <span style={{ fontSize: '0.7rem', opacity: 0.9, marginLeft: '1.4rem' }}>{errorMessage}</span>
         </div>
       )}
 

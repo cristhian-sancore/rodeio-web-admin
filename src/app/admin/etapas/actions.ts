@@ -162,10 +162,18 @@ export async function importPdfAction(formData: FormData) {
     }
 
     revalidatePath(`/admin/etapas/${etapaId}/round/${roundId}/montagem`);
+
+    // --- FALLBACK: Se o motor de grid falhou (0 importados), tenta o motor de busca semântica (Fuzzy) ---
+    if (importedCount === 0) {
+      console.log('⚠️ Motor Grid retornou 0. Tentando Motor Fuzzy...');
+      const fuzzyRes = await importRoundPdfAction(roundId, etapaId, formData);
+      return fuzzyRes;
+    }
+
     return { success: true, count: importedCount };
   } catch (err: any) {
     console.error('Erro no processamento do PDF:', err);
-    return { success: false, error: err.message };
+    return { success: false, error: 'Falha ao ler o PDF. O arquivo pode estar protegido, ser uma imagem (scan) ou ter formato incompatível.' };
   }
 }
 
@@ -1422,28 +1430,44 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
     for (const line of lines) {
       const normLine = normalize(line);
       
-      // Tentar encontrar um competidor na linha
       const foundComp = compsMap.find(c => normLine.includes(c.nome));
-      if (!foundComp) continue;
+      if (!foundComp) {
+        errors.push(`Atleta desconhecido: ${line.substring(0, 20)}...`);
+        continue;
+      }
 
-      // Tentar encontrar um animal na linha (excluindo o nome do competidor da busca)
       const lineWithoutComp = normLine.replace(foundComp.nome, '');
       const foundAnimal = animalsMap.find(a => lineWithoutComp.includes(a.nome));
 
-      const finalAnimalId = foundAnimal ? foundAnimal.id : (aDefinir?.id || 1);
+      let finalAnimalId = foundAnimal ? foundAnimal.id : null;
 
-      // Verificar duplicados
-      const exists = await p.montaria.findFirst({
+      if (!finalAnimalId) {
+        const parts = line.split(/[\s|]+/).map(p => p.trim()).filter(p => p.length > 2);
+        for (const p of parts) {
+          const normP = normalize(p);
+          if (normP !== foundComp.nome && normP.length > 3) {
+            const newAnimal = await prisma.animal.create({
+              data: { nome: p, companhia: 'IMPORTADO PDF' }
+            });
+            finalAnimalId = newAnimal.id;
+            break;
+          }
+        }
+      }
+
+      const animalId = finalAnimalId || (aDefinir?.id || 1);
+
+      const exists = await prisma.montaria.findFirst({
         where: { roundId, competidorId: foundComp.id, removida: false }
       });
 
       if (exists) continue;
 
-      await p.montaria.create({
+      await prisma.montaria.create({
         data: {
           roundId,
           competidorId: foundComp.id,
-          animalId: finalAnimalId,
+          animalId: animalId,
           j1Animal: 0, j1Peao: 0, j2Animal: 0, j2Peao: 0,
           j3Animal: 0, j3Peao: 0, j4Animal: 0, j4Peao: 0,
           notaTotal: 0, tempo: 0,
