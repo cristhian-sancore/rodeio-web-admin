@@ -12,7 +12,8 @@ import { authOptions } from "@/lib/auth";
 import { sendToVMix, triggerVMixOverlay } from "@/lib/vmix";
 import { getCompetidorStageRank } from "@/lib/ranking";
 import { getSafeConfig } from "@/lib/config-safe";
-import pdf from "pdf-parse";
+import pdf from 'pdf-parse';
+// @ts-ignore
 import { Buffer } from "buffer";
 
 export async function importPdfAction(formData: FormData) {
@@ -214,7 +215,7 @@ export async function createRoundAction(formData: FormData) {
 
   const cleanId = (val: any) => {
     const p = parseInt(String(val));
-    return (p && p > 0) ? p : null;
+    return (p && p > 0) ? p : undefined;
   };
 
   const juiz1Id = cleanId(formData.get('juiz1'));
@@ -337,7 +338,6 @@ export async function updateMontariaNota(formData: FormData) {
   // Integração vMix - Enviando TUDO separado para o usuário poder montar como quiser
   if (config.vmixUrl) {
     try {
-      // Calcular a posição do competidor na etapa
       const { getCompetidorStageRank } = await import('@/lib/ranking');
       const stageRank = await getCompetidorStageRank(m.etapaId, m.competidorId);
 
@@ -933,12 +933,13 @@ export async function updateRound(formData: FormData) {
   
   const cleanId = (val: any) => {
     const p = parseInt(String(val));
-    return (p && p > 0) ? p : null;
+    return (p && p > 0) ? p : undefined;
   };
 
   const juiz1Id = cleanId(formData.get('juiz1'));
   const juiz2Id = cleanId(formData.get('juiz2'));
   const juiz3Id = cleanId(formData.get('juiz3'));
+  const juiz4Id = cleanId(formData.get('juiz4'));
   const eFinal = formData.get('eFinal') === 'on';
 
   await p.round.update({
@@ -986,6 +987,8 @@ export async function updateMontariaAtiva(montariaId: number | null) {
           competidor: montaria.competidor.nome,
           animal: montaria.animal.nome,
           etapaNome: (montaria as any).etapa?.nome,
+          j1: 0,
+          j2: 0,
           total: 0,
           etapaRank: rankData.rank > 0 ? `${rankData.rank}º` : '---'
         });
@@ -1178,7 +1181,7 @@ export async function updateRankingCongelado(status: boolean) {
   revalidatePath('/ranking');
 }
 
-export async function importRidersFromPreviousRound(etapaId: number, currentRoundId: number) {
+export async function importRidersFromPreviousRound(etapaId: number, currentRoundId: number, _formData?: FormData): Promise<any> {
   // 1. Descobre qual é o Round Anterior baseado no número do atual
   const currentRound = await p.round.findUnique({ where: { id: currentRoundId } });
   if (!currentRound || currentRound.numero <= 1) return { error: 'Gatilho desativado: Este já é o primeiro round ou formato inválido.' };
@@ -1232,7 +1235,7 @@ export async function importRidersFromPreviousRound(etapaId: number, currentRoun
   return { success: true, importados: peoesParaImportar.length };
 }
 
-export async function importTopClassifiedRiders(etapaId: number, currentRoundId: number, limit: number) {
+export async function importTopClassifiedRiders(etapaId: number, currentRoundId: number, limit: number, _formData?: FormData): Promise<any> {
   const { getRanking } = await import('@/lib/ranking');
   const { peoes } = await getRanking({ etapaId });
 
@@ -1395,7 +1398,7 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
     const bytes = await file.arrayBuffer();
     const data = await pdf(Buffer.from(bytes));
     const text = data.text;
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+    const lines = text.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 5);
 
     console.log('📄 PDF EXTRAÍDO:', text.length, 'caracteres,', lines.length, 'linhas');
 

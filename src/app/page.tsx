@@ -146,7 +146,7 @@ export default async function Home() {
       <div className="landing-body" style={{ fontFamily: config?.fontFamily || 'Inter' }}>
         <NavbarPublic />
 
-        {layout.filter(block => block.visible !== false).map((block, bIdx) => {
+        {layout.filter((block: any) => block.visible !== false).map((block: any, bIdx: number) => {
           const bStyle = block?.style || {};
           const elements = block?.elements || [];
 
@@ -162,7 +162,6 @@ export default async function Home() {
               }}>
                 {(elements || []).map((el: any) => {
                   if (!el) return null;
-
                   const elStyle: React.CSSProperties = {
                     position: 'absolute',
                     left: el.x,

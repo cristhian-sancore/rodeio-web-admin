@@ -79,8 +79,8 @@ export async function updateCompetidor(formData: FormData) {
   redirect('/admin/competidores');
 }
 
-export async function deleteCompetidor(formData: FormData) {
-  const id = parseInt(formData.get('id') as string);
+export async function deleteCompetidor(arg: FormData | number) {
+  const id = typeof arg === 'number' ? arg : parseInt(arg.get('id') as string);
   
   const montariaCount = await prisma.montaria.count({ where: { competidorId: id } });
   

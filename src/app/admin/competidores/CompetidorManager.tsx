@@ -114,7 +114,7 @@ export default function CompetidorManager({ initialData, createAction }: Competi
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#888', fontSize: '0.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <label style={{ display: 'flex', marginBottom: '0.5rem', color: '#888', fontSize: '0.8rem', fontWeight: 'bold', alignItems: 'center', gap: '5px' }}>
                    <Camera size={14} /> FOTO / CÂMERA
                 </label>
                 <input 

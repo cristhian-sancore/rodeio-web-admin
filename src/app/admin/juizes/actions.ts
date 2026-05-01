@@ -31,8 +31,8 @@ export async function updateJuiz(formData: FormData) {
   redirect('/admin/juizes');
 }
 
-export async function deleteJuiz(formData: FormData) {
-  const id = parseInt(formData.get('id') as string);
+export async function deleteJuiz(arg: FormData | number) {
+  const id = typeof arg === 'number' ? arg : parseInt(arg.get('id') as string);
   
   // Safe delete validation: Checar se o juiz está trabalhando em algum round
   const userLinks = await prisma.user.count({ where: { juizId: id } });

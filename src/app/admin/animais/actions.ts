@@ -77,8 +77,8 @@ export async function updateAnimal(formData: FormData) {
   redirect('/admin/animais');
 }
 
-export async function deleteAnimal(formData: FormData) {
-  const id = parseInt(formData.get('id') as string);
+export async function deleteAnimal(arg: FormData | number) {
+  const id = typeof arg === 'number' ? arg : parseInt(arg.get('id') as string);
   
   const montariaCount = await prisma.montaria.count({ where: { animalId: id } });
   const reservaCount = await prisma.roundReserva.count({ where: { animalId: id } });

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { Settings, Shield, Palette, Layout, Gavel, Save, Plus, Database, Edit, Trash2, AlertCircle } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { saveConfig, saveTemporada, deleteTemporada } from "../etapas/actions";
+import { saveConfig, saveTemporada, deleteTemporada, fixDatabaseSchema } from "../etapas/actions";
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -269,7 +269,8 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
             </button>
           </div>
         </div>
-      </form>
+      </div>
+    </form>
       
       {/* MANUTENÇÃO DE SISTEMA */}
       <div className="premium-card" style={{ marginBottom: '3rem', borderLeft: '5px solid #607d8b' }}>
@@ -284,11 +285,7 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
         </div>
         
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-           <form action={async () => {
-              'use server';
-              const { fixDatabaseSchema } = await import("../etapas/actions");
-              await fixDatabaseSchema();
-           }}>
+            <form action={fixDatabaseSchema}>
               <button type="submit" className="btn-secondary" style={{ background: '#1a1a1a', borderColor: '#333', color: '#888' }}>
                  🔄 REPARAR SINCRONISMO DO BANCO
               </button>

@@ -60,7 +60,7 @@ export async function getOverlayDataPayload() {
     const etapaFull = await prisma.etapa.findUnique({ where: { id: montaria.etapaId }, select: { temporadaId: true } });
     const champRank = await getChampionshipRanking(etapaFull?.temporadaId || 1);
     const champList = Array.isArray(champRank?.list) ? champRank.list : [];
-    const myChampPos = champList.find(r => r.competidorId === montaria.competidorId);
+    const myChampPos = champList.find((r: any) => r.competidorId === montaria.competidorId);
     
     const cMontarias = Array.isArray(montaria.competidor?.montarias) ? montaria.competidor.montarias : [];
     const paradas = cMontarias.filter(m => m.notaTotal > 8).length; 
