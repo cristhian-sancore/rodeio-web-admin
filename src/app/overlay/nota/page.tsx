@@ -274,16 +274,16 @@ export default function OverlayNotaPage() {
         .mode-ID .info-card {
           background: var(--bg-overlay);
           opacity: var(--opacity);
-          border-left: 12px solid var(--accent); padding: 20px 40px;
-          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 300px;
+          border-left: 12px solid var(--accent); padding: 25px 50px;
+          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 450px;
           border-radius: var(--radius) 0 0 var(--radius);
-          max-width: 500px; display: flex; flex-direction: column; justify-content: center;
-          z-index: 10;
+          max-width: 850px; display: flex; align-items: center; justify-content: center;
+          z-index: 10; gap: 20px;
         }
         .mode-ID .competidor-name { 
-          color: #fff; font-size: 2.6rem; font-weight: 950; text-transform: uppercase; 
+          color: #fff; font-size: 2.4rem; font-weight: 950; text-transform: uppercase; 
           margin: 0; transform-origin: left center; line-height: 1;
-          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+          display: block; overflow: hidden;
           word-break: break-word;
         }
         .mode-ID .animal-name { color: var(--accent); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
@@ -409,11 +409,27 @@ export default function OverlayNotaPage() {
           </div>
 
           <div className="info-card">
-             <h1 ref={nameRef} className="competidor-name" style={{ transform: `scale(${nameScale})` }}>{d.competidor}</h1>
-             <div style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: 800, marginBottom: '5px', opacity: 0.9 }}>{d.competidorCidade}</div>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '5px' }}>
-                <span className="animal-name">{d.animal}</span>
-                <span style={{ color: '#fff', fontSize: '1.2rem', opacity: 0.7, fontWeight: 700 }}>{d.animalCompanhia}</span>
+             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <h1 ref={nameRef} className="competidor-name">{d.competidor}</h1>
+                <div style={{ fontSize: '1rem', color: '#888', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{d.competidorCidade}</div>
+             </div>
+             
+             {isPendingScore && (
+               <div style={{ 
+                 margin: '0 30px', 
+                 fontSize: '1.8rem', 
+                 fontWeight: 900, 
+                 color: 'var(--accent)', 
+                 fontStyle: 'italic',
+                 display: 'flex',
+                 alignItems: 'center',
+                 textShadow: '0 0 15px rgba(212,175,55,0.4)'
+               }}>VS</div>
+             )}
+             
+             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, textAlign: isPendingScore ? 'right' : 'left' }}>
+                <div style={{ color: isPendingScore ? '#fff' : 'var(--accent)', fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', lineHeight: 1 }}>{d.animal}</div>
+                <div style={{ fontSize: '1rem', color: '#888', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{d.animalCompanhia}</div>
              </div>
           </div>
 

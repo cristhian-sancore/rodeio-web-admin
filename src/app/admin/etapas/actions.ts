@@ -964,14 +964,11 @@ export async function updateRound(formData: FormData) {
 }
 
 export async function updateMontariaAtiva(montariaId: number | null) {
-  const currentConfig = await prisma.configuracao.findFirst();
-  
-  // Lógica de ativação simplificada (Permitir troca livre para o Admin)
-  await prisma.configuracao.upsert({
-    where: { id: currentConfig?.id || 1 },
-    update: { montariaAtivaId: montariaId },
-    create: { id: 1, montariaAtivaId: montariaId, numJuizes: 2, titulo: "Rodeio Web" }
-  });
+  // Usamos SQL puro para evitar quebra de schema se a coluna do cronômetro ainda não existir no DB
+  await prisma.$executeRawUnsafe(
+    `UPDATE "Configuracao" SET "montariaAtivaId" = $1 WHERE "id" = (SELECT "id" FROM "Configuracao" LIMIT 1)`,
+    montariaId
+  );
 
   if (montariaId) {
     try {
