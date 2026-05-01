@@ -134,7 +134,6 @@ export default function RideTimer({ initialValue, onTimeUpdate }: RideTimerProps
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
       <div style={{ position: 'relative', flex: 1 }}>
         <input 
-          name="tempo"
           type="number"
           step="0.01"
           value={formatTempo(tempo)}

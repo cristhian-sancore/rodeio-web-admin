@@ -44,6 +44,13 @@ export async function GET(req: Request) {
     const numJuizes = config?.numJuizes || 2;
     const round = montaria.round;
 
+    // Buscar logs de notas para esta montaria para saber quem enviou (mesmo que seja zero)
+    const logs = await prisma.logNota.findMany({
+      where: { montariaId: parseInt(montariaId) },
+      select: { juizNumero: true }
+    });
+    const enviaramSet = new Set(logs.map(l => l.juizNumero));
+
     const juizes = [];
     
     // Juiz 1
@@ -52,7 +59,7 @@ export async function GET(req: Request) {
       nome: round.juiz1?.nome || 'Juiz 1',
       notaPeao: montaria.j1Peao,
       notaAnimal: montaria.j1Animal,
-      enviou: montaria.j1Peao > 0 || montaria.j1Animal > 0
+      enviou: enviaramSet.has(1)
     });
 
     // Juiz 2
@@ -62,7 +69,7 @@ export async function GET(req: Request) {
         nome: round.juiz2?.nome || 'Juiz 2',
         notaPeao: montaria.j2Peao,
         notaAnimal: montaria.j2Animal,
-        enviou: montaria.j2Peao > 0 || montaria.j2Animal > 0
+        enviou: enviaramSet.has(2)
       });
     }
 
@@ -73,7 +80,7 @@ export async function GET(req: Request) {
         nome: round.juiz3?.nome || 'Juiz 3',
         notaPeao: montaria.j3Peao,
         notaAnimal: montaria.j3Animal,
-        enviou: montaria.j3Peao > 0 || montaria.j3Animal > 0
+        enviou: enviaramSet.has(3)
       });
     }
 
@@ -84,7 +91,7 @@ export async function GET(req: Request) {
         nome: round.juiz4?.nome || 'Juiz 4',
         notaPeao: montaria.j4Peao,
         notaAnimal: montaria.j4Animal,
-        enviou: montaria.j4Peao > 0 || montaria.j4Animal > 0
+        enviou: enviaramSet.has(4)
       });
     }
 
@@ -92,7 +99,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       juizes,
-      todosEnviaram
+      todosEnviaram,
+      tempo: montaria.tempo,
+      desclassificado: montaria.desclassificado,
+      motivo: montaria.motivo
     });
   } catch (error) {
     console.error("Erro API admin juiz-status:", error);

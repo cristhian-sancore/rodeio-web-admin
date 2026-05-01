@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Save, AlertTriangle, Lock, Monitor } from 'lucide-react';
 import { updateMontariaNota, applyRepasse, sendManualToOverlay } from '@/app/admin/etapas/actions';
-import RideTriangle from './RideTimer';
 import RideTimer from './RideTimer';
 import { VideoPlayer } from '@/components/VideoPlayer';
 
@@ -34,6 +33,11 @@ export default function ScoringForm({
   const [tempo, setTempo] = useState(montaria.tempo || 0);
   const [loading, setLoading] = useState(false);
   const [notified, setNotified] = useState(false);
+  const [desclassificado, setDesclassificado] = useState(montaria.desclassificado || false);
+  const [motivo, setMotivo] = useState(montaria.motivo || '');
+  
+  // Track focused fields to avoid overwriting while typing
+  const focusedField = useRef<string | null>(null);
   
   // Refs para os inputs para que possamos atualizar o valor visualmente sem perder o foco se o usuário estiver digitando
   // Na verdade, se o juiz enviar, queremos que o valor apareça no input do admin
@@ -62,12 +66,22 @@ export default function ScoringForm({
           const aKey = `j${j.numero}a` as keyof typeof notas;
           
           if (j.enviou) {
-            if (notas[pKey] !== j.notaPeao) { newNotas[pKey] = j.notaPeao; mudou = true; }
-            if (notas[aKey] !== j.notaAnimal) { newNotas[aKey] = j.notaAnimal; mudou = true; }
+            // Only update if the field is not focused
+            if (focusedField.current !== pKey && notas[pKey] !== j.notaPeao) { 
+              newNotas[pKey] = j.notaPeao; mudou = true; 
+            }
+            if (focusedField.current !== aKey && notas[aKey] !== j.notaAnimal) { 
+              newNotas[aKey] = j.notaAnimal; mudou = true; 
+            }
           }
         });
         
         if (mudou) setNotas(newNotas);
+
+        // Sync global fields if not focused
+        if (focusedField.current !== 'tempo' && json.tempo !== undefined && tempo !== json.tempo) setTempo(json.tempo);
+        if (focusedField.current !== 'desclassificado' && json.desclassificado !== undefined && desclassificado !== json.desclassificado) setDesclassificado(json.desclassificado);
+        if (focusedField.current !== 'motivo' && json.motivo !== undefined && motivo !== json.motivo) setMotivo(json.motivo);
       }
     } catch (err) {
       console.error('Erro ao atualizar notas em tempo real:', err);
@@ -193,7 +207,9 @@ export default function ScoringForm({
                     name={`j${num}Peao`} 
                     type="number" 
                     step="0.25" 
-                    defaultValue={(notas[pKey] || 0).toFixed(2)}
+                    value={notas[pKey] !== undefined ? notas[pKey] : ''}
+                    onFocus={() => focusedField.current = pKey}
+                    onBlur={() => focusedField.current = null}
                     onChange={e => setNotas({...notas, [pKey]: parseFloat(e.target.value) || 0})}
                     readOnly={!canEdit} 
                     style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
@@ -205,7 +221,9 @@ export default function ScoringForm({
                     name={`j${num}Animal`} 
                     type="number" 
                     step="0.25" 
-                    defaultValue={(notas[aKey] || 0).toFixed(2)}
+                    value={notas[aKey] !== undefined ? notas[aKey] : ''}
+                    onFocus={() => focusedField.current = aKey}
+                    onBlur={() => focusedField.current = null}
                     onChange={e => setNotas({...notas, [aKey]: parseFloat(e.target.value) || 0})}
                     readOnly={!canEdit} 
                     style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
@@ -219,12 +237,30 @@ export default function ScoringForm({
 
       <div style={{ padding: '1rem', background: 'rgba(255, 68, 68, 0.05)', borderRadius: '10px', border: '1px solid rgba(255, 68, 68, 0.2)', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-          <input type="checkbox" name="desclassificado" id="des" defaultChecked={montaria.desclassificado} style={{ width: '20px', height: '20px' }} />
+          <input 
+            type="checkbox" 
+            name="desclassificado" 
+            id="des" 
+            checked={desclassificado} 
+            onFocus={() => focusedField.current = 'desclassificado'}
+            onBlur={() => focusedField.current = null}
+            onChange={(e) => setDesclassificado(e.target.checked)} 
+            style={{ width: '20px', height: '20px' }} 
+          />
           <label htmlFor="des" style={{ color: '#ff4444', fontWeight: 'bold', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <AlertTriangle size={18} /> DESCLASSIFICAÇÃO / ZERO NOTA
           </label>
         </div>
-        <input name="motivo" type="text" defaultValue={montaria.motivo || ''} placeholder="Motivo da desclassificação..." style={{ background: '#111 !important', fontSize: '0.8rem' }} />
+        <input 
+          name="motivo" 
+          type="text" 
+          value={motivo} 
+          onFocus={() => focusedField.current = 'motivo'}
+          onBlur={() => focusedField.current = null}
+          onChange={(e) => setMotivo(e.target.value)} 
+          placeholder="Motivo da desclassificação..." 
+          style={{ background: '#111 !important', fontSize: '0.8rem' }} 
+        />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
