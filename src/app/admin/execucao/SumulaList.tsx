@@ -20,6 +20,9 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
       if (err.message === "AGUARDANDO_NOTAS_JUIZES") {
         setErrorVisible(true);
         setTimeout(() => setErrorVisible(false), 5000);
+      } else {
+        console.error("Erro ao selecionar montaria:", err);
+        alert("Erro ao selecionar montaria: " + err.message);
       }
     }
   };

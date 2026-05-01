@@ -983,7 +983,8 @@ export async function updateMontariaAtiva(montariaId: number | null) {
         const { getCompetidorStageRank } = await import('@/lib/ranking');
         const rankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
         
-        await sendToVMix(config as any, {
+        // Executar vMix em background sem dar await para não travar a UI do Admin
+        sendToVMix(config as any, {
           competidor: montaria.competidor.nome,
           animal: montaria.animal.nome,
           etapaNome: (montaria as any).etapa?.nome,
@@ -991,7 +992,7 @@ export async function updateMontariaAtiva(montariaId: number | null) {
           j2: 0,
           total: 0,
           etapaRank: rankData.rank > 0 ? `${rankData.rank}º` : '---'
-        });
+        }).catch(e => console.error("Erro vMix async:", e));
       }
     } catch (err) {
       console.error("Erro na automação vMix (Ativação):", err);
