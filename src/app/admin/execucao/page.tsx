@@ -126,15 +126,23 @@ export default async function ExecucaoPage({ searchParams }: { searchParams: Pro
     // Cálculo de Ranking Dinâmico para a Cédula
     let currentRankText = "---";
     if (selectedMontaria) {
-      const rankData = await getCompetidorStageRank(round.etapaId, selectedMontaria.competidorId);
-      currentRankText = rankData.rank > 0 ? `${rankData.rank}º` : "---";
+      try {
+        const rankData = await getCompetidorStageRank(round.etapaId, selectedMontaria.competidorId);
+        currentRankText = rankData.rank > 0 ? `${rankData.rank}º` : "---";
+      } catch (err) {
+        console.error("Erro ao calcular rank do peão:", err);
+      }
     }
     
     // Cálculo de Total de Páginas para o Ranking
     let rankingTotalItems = 0;
     if (config.rankingMode && config.rankingMode !== 'OFF') {
-       const rd = await getOverlayRankingData(config.rankingMode, rId, round.etapaId, round.etapa.temporadaId);
-       rankingTotalItems = rd?.list?.length || 0;
+       try {
+         const rd = await getOverlayRankingData(config.rankingMode, rId, round.etapaId, round.etapa.temporadaId);
+         rankingTotalItems = rd?.list?.length || 0;
+       } catch (err) {
+         console.error("Erro ao carregar dados do ranking:", err);
+       }
     }
     const totalPages = Math.ceil(rankingTotalItems / 10);
     const currentPage = (config as any).rankingPage || 0;

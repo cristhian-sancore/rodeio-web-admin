@@ -974,32 +974,36 @@ export async function updateMontariaAtiva(montariaId: number | null) {
   const currentConfig = await prisma.configuracao.findFirst();
   
   await prisma.configuracao.upsert({
-    where: { id: currentConfig?.id || 1 },
+    where: { id: 1 },
     update: { montariaAtivaId: montariaId },
     create: { id: 1, montariaAtivaId: montariaId, numJuizes: 2, titulo: "Rodeio Web" }
   });
 
-  if (montariaId) {
     try {
       const montaria = await prisma.montaria.findUnique({
         where: { id: montariaId },
-        include: { competidor: true, animal: true, etapa: { select: { nome: true } } }
+        include: { competidor: true, animal: true, etapa: { select: { nome: true, id: true } } }
       });
       const config = await prisma.configuracao.findFirst();
 
       if (montaria && config?.vmixUrl) {
-        const { getCompetidorStageRank } = await import('@/lib/ranking');
-        const rankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
+        let rankText = "---";
+        try {
+          const rankData = await getCompetidorStageRank(montaria.etapaId, montaria.competidorId);
+          rankText = rankData.rank > 0 ? `${rankData.rank}º` : "---";
+        } catch (rankErr) {
+          console.error("Erro ao calcular ranking para vMix:", rankErr);
+        }
         
         // Executar vMix em background sem dar await para não travar a UI do Admin
         sendToVMix(config as any, {
           competidor: montaria.competidor.nome,
           animal: montaria.animal.nome,
-          etapaNome: (montaria as any).etapa?.nome,
+          etapaNome: montaria.etapa?.nome || "---",
           j1: 0,
           j2: 0,
           total: 0,
-          etapaRank: rankData.rank > 0 ? `${rankData.rank}º` : '---'
+          etapaRank: rankText
         }).catch(e => console.error("Erro vMix async:", e));
       }
     } catch (err) {

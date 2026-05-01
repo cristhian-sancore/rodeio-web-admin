@@ -22,7 +22,6 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
         setTimeout(() => setErrorVisible(false), 5000);
       } else {
         console.error("Erro ao selecionar montaria:", err);
-        alert("Erro ao selecionar montaria: " + err.message);
       }
     }
   };
