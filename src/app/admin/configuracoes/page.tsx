@@ -23,19 +23,20 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   const { error, success } = await searchParams;
 
   try {
-    const configData = await prisma.configuracao.findFirst();
-  const config = (configData || { 
-    id: 1,
-    numJuizes: 2, 
-    titulo: "Circuito Master Professional",
-    vmixUrl: "",
-    vmixInputId: "",
-    vmixOverlayChannel: 1,
-    vmixReplayInputId: "Instant Replay",
-    replayExportPath: "",
-    googleDriveFolderId: "",
-    googleDriveApiKey: ""
-  }) as any;
+    const { getSafeConfig } = await import("@/lib/config-safe");
+    const configData = await getSafeConfig();
+    const config = (configData || { 
+      id: 1,
+      numJuizes: 2, 
+      titulo: "Circuito Master Professional",
+      vmixUrl: "",
+      vmixInputId: "",
+      vmixOverlayChannel: 1,
+      vmixReplayInputId: "Instant Replay",
+      replayExportPath: "",
+      googleDriveFolderId: "",
+      googleDriveApiKey: ""
+    }) as any;
 
   const temporadas = await prisma.temporada.findMany({
     orderBy: { ano: 'desc' },

@@ -565,8 +565,20 @@ export async function saveConfig(formData: FormData) {
     });
 
     console.log('✅ CONFIG UPDATED SUCCESSFULLY');
-  } catch (err) {
+  } catch (err: any) {
     console.error('❌ ERROR SAVING CONFIG:', err);
+    
+    // Tentar um reparo automático se o erro for de coluna faltante
+    if (err.message?.includes("exibirCronometroNoOverlay")) {
+       try {
+         await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
+         // Tentar salvar de novo após o fix
+         return await saveConfig(formData);
+       } catch (fixErr) {
+         console.error("Falha no auto-fix de schema:", fixErr);
+       }
+    }
+
     const { redirect } = await import('next/navigation');
     redirect('/admin/configuracoes?error=SAVE_FAILED');
   }
@@ -609,6 +621,25 @@ export async function executeRawSql(sql: string) {
     // 🛡️ OFUSCAÇÃO DE ERROS (PENTEST MEGA)
     // Não retornar a mensagem original do banco de dados para evitar vazamento de schema.
     return { success: false, error: 'Falha na execução do comando SQL. Verifique a sintaxe ou privilégios.' };
+  }
+}
+
+export async function fixDatabaseSchema() {
+  const session = await getServerSession(authOptions);
+  if (!['ADMIN', 'SUPER_ADMIN', 'SUPER'].includes((session?.user as any)?.role)) {
+    throw new Error("Não autorizado");
+  }
+
+  try {
+    // Tenta adicionar a coluna faltante manualmente via SQL
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
+    revalidatePath('/admin/configuracoes');
+    return { success: true };
+  } catch (err: any) {
+    console.error("Erro ao fixar schema:", err);
+    // Se falhar porque a coluna já existe, tudo bem
+    if (err.message?.includes("already exists")) return { success: true };
+    return { success: false, error: err.message };
   }
 }
 
