@@ -1006,14 +1006,12 @@ export async function updateMontariaAtiva(montariaId: number | null) {
           etapaRank: rankText
         }).catch(e => console.error("Erro vMix async:", e));
       }
-    } catch (err) {
-      console.error("Erro na automação vMix (Ativação):", err);
-    }
+    revalidatePath('/admin/execucao');
+    revalidatePath('/overlay/nota');
+    revalidatePath('/api/overlay/current');
+  } catch (err) {
+    console.error("Erro geral na ativação da montaria:", err);
   }
-
-  revalidatePath('/admin/execucao');
-  revalidatePath('/overlay/nota');
-  revalidatePath('/api/overlay/current');
 }
 
 export async function updateMontariaSorteio(formData: FormData) {
