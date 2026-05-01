@@ -23,20 +23,9 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   const { error, success } = await searchParams;
 
   try {
-    const { getSafeConfig } = await import("@/lib/config-safe");
-    const configData = await getSafeConfig();
-    const config = (configData || { 
-      id: 1,
-      numJuizes: 2, 
-      titulo: "Circuito Master Professional",
-      vmixUrl: "",
-      vmixInputId: "",
-      vmixOverlayChannel: 1,
-      vmixReplayInputId: "Instant Replay",
-      replayExportPath: "",
-      googleDriveFolderId: "",
-      googleDriveApiKey: ""
-    }) as any;
+    const configData = await prisma.configuracao.findFirst();
+    if (!configData) throw new Error("Configuração não encontrada no banco");
+    const config = configData as any;
 
   const temporadas = await prisma.temporada.findMany({
     orderBy: { ano: 'desc' },
@@ -263,7 +252,6 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
                 Crie em <strong style={{ color: '#4285F4' }}>console.cloud.google.com</strong> → APIs → Drive API v3 → Credenciais → API Key
               </div>
             </div>
-          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
             <button type="submit" className="btn-primary" style={{ padding: '0.75rem 2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -272,6 +260,34 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
           </div>
         </div>
       </form>
+      
+      {/* MANUTENÇÃO DE SISTEMA */}
+      <div className="premium-card" style={{ marginBottom: '3rem', borderLeft: '5px solid #607d8b' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div style={{ width: '45px', height: '45px', background: 'rgba(96, 125, 139, 0.1)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <AlertCircle size={24} color="#607d8b" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', color: '#fff', margin: 0 }}>Manutenção de Estrutura</h2>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>Use esta ferramenta se o painel estiver apresentando erros de 'coluna não encontrada'.</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+           <form action={async () => {
+              'use server';
+              const { fixDatabaseSchema } = await import("../etapas/actions");
+              await fixDatabaseSchema();
+           }}>
+              <button type="submit" className="btn-secondary" style={{ background: '#1a1a1a', borderColor: '#333', color: '#888' }}>
+                 🔄 REPARAR SINCRONISMO DO BANCO
+              </button>
+           </form>
+           <div style={{ fontSize: '0.8rem', color: '#555' }}>
+              Isso criará manualmente os campos novos (ex: Cronômetro) caso a migração automática falhe.
+           </div>
+        </div>
+      </div>
 
       {/* GERENCIAMENTO DE TEMPORADAS / CIRCUITOS */}
       <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
