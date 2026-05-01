@@ -971,15 +971,16 @@ export async function updateRound(formData: FormData) {
 }
 
 export async function updateMontariaAtiva(montariaId: number | null) {
-  const currentConfig = await prisma.configuracao.findFirst();
-  
-  await prisma.configuracao.upsert({
-    where: { id: 1 },
-    update: { montariaAtivaId: montariaId },
-    create: { id: 1, montariaAtivaId: montariaId, numJuizes: 2, titulo: "Rodeio Web" }
-  });
+  try {
+    const currentConfig = await prisma.configuracao.findFirst();
+    
+    await prisma.configuracao.upsert({
+      where: { id: 1 },
+      update: { montariaAtivaId: montariaId },
+      create: { id: 1, montariaAtivaId: montariaId, numJuizes: 2, titulo: "Rodeio Web" }
+    });
 
-    try {
+    if (montariaId) {
       const montaria = await prisma.montaria.findUnique({
         where: { id: montariaId },
         include: { competidor: true, animal: true, etapa: { select: { nome: true, id: true } } }
@@ -1000,17 +1001,24 @@ export async function updateMontariaAtiva(montariaId: number | null) {
           competidor: montaria.competidor.nome,
           animal: montaria.animal.nome,
           etapaNome: montaria.etapa?.nome || "---",
-          j1: 0,
-          j2: 0,
-          total: 0,
+          j1: 0, j2: 0, total: 0,
           etapaRank: rankText
         }).catch(e => console.error("Erro vMix async:", e));
       }
+    }
+
     revalidatePath('/admin/execucao');
     revalidatePath('/overlay/nota');
     revalidatePath('/api/overlay/current');
+    
+    return { success: true };
   } catch (err) {
-    console.error("Erro geral na ativação da montaria:", err);
+    console.error("❌ [updateMontariaAtiva] ERRO CRÍTICO:", err);
+    return { 
+      success: false, 
+      error: "Falha ao ativar montaria no servidor. Verifique o banco de dados.",
+      details: (err as any).message 
+    };
   }
 }
 

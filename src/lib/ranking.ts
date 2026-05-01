@@ -28,6 +28,7 @@ export async function getRanking(params: { roundId?: number; etapaId?: number; t
     Object.keys(etapaGroups).forEach(id => {
     const eId = parseInt(id);
     const ms = etapaGroups[eId];
+    if (!ms || ms.length === 0) return;
     const etapaObj = ms[0].etapa;
     const temp = etapaObj.temporada;
 

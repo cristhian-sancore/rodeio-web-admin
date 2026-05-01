@@ -14,7 +14,11 @@ export default function SumulaList({ montarias, roundId, selectedId }: { montari
   const handleSelect = async (mId: number) => {
     try {
       setErrorVisible(false);
-      await updateMontariaAtiva(mId);
+      const res = await updateMontariaAtiva(mId);
+      if (res && !res.success) {
+        alert("Erro no servidor: " + res.error);
+        return;
+      }
       router.push(`/admin/execucao?roundId=${roundId}&montariaId=${mId}`);
     } catch (err: any) {
       if (err.message === "AGUARDANDO_NOTAS_JUIZES") {
