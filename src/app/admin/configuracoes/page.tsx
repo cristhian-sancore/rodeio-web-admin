@@ -22,27 +22,36 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN' && userRole !== 'SUPER') redirect('/admin');
   const { error, success } = await searchParams;
 
+  let config: any = { 
+    id: 1,
+    numJuizes: 2, 
+    titulo: "Circuito Master Professional",
+    vmixUrl: "",
+    vmixInputId: "",
+    vmixOverlayChannel: 1,
+    vmixReplayInputId: "Instant Replay",
+    replayExportPath: "",
+    googleDriveFolderId: "",
+    googleDriveApiKey: "",
+    exibirCronometroNoOverlay: true
+  };
+
   try {
     const configData = await prisma.configuracao.findFirst();
-    const config = (configData || { 
-      id: 1,
-      numJuizes: 2, 
-      titulo: "Circuito Master Professional",
-      vmixUrl: "",
-      vmixInputId: "",
-      vmixOverlayChannel: 1,
-      vmixReplayInputId: "Instant Replay",
-      replayExportPath: "",
-      googleDriveFolderId: "",
-      googleDriveApiKey: ""
-    }) as any;
+    if (configData) {
+      config = { ...config, ...configData };
+    }
+  } catch (e) {
+    console.error("Erro ao carregar config (schema desatualizado):", e);
+  }
 
-  const temporadas = await prisma.temporada.findMany({
-    orderBy: { ano: 'desc' },
-    include: { etapas: true }
-  });
+  try {
+    const temporadas = await prisma.temporada.findMany({
+      orderBy: { ano: 'desc' },
+      include: { etapas: true }
+    });
 
-  const juizes = await prisma.juiz.findMany({ orderBy: { nome: 'asc' } });
+    const juizes = await prisma.juiz.findMany({ orderBy: { nome: 'asc' } });
 
   return (
     <div className="fade-in">
