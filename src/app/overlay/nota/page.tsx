@@ -262,62 +262,68 @@ export default function OverlayNotaPage() {
           --font-scale: ${overlayStyle.fontScale};
         }
 
-        .mode-ID .nota-container {
-          position: absolute; bottom: 80px; left: 60px; right: 60px;
-          display: flex; align-items: stretch; filter: drop-shadow(0 20px 60px rgba(0,0,0,0.8));
-          width: fit-content; max-width: calc(100vw - 120px);
-          opacity: 1; transition: opacity 0.5s ease;
-          zoom: var(--font-scale);
+        .mode-ID .bottom-container {
+          position: fixed; bottom: 80px; left: 0; width: 100%;
+          display: flex; justify-content: center; align-items: flex-end;
+          zoom: var(--font-scale); z-index: 10;
         }
-        .mode-ID .nota-container.hidden { opacity: 0; pointer-events: none; }
-        
-        .mode-ID .info-card {
-          background: var(--bg-overlay);
-          opacity: var(--opacity);
-          border-left: 14px solid var(--accent); padding: 30px 40px;
-          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 420px;
-          border-radius: var(--radius) 0 0 var(--radius);
-          max-width: 800px; display: flex; align-items: center; justify-content: center;
-          z-index: 10; gap: 30px; flex-shrink: 1;
-        }
-        .mode-ID .competidor-name { 
-          color: #fff; font-size: 3rem; font-weight: 950; text-transform: uppercase; 
-          margin: 0; transform-origin: left center; line-height: 0.9;
-          display: block; overflow: hidden;
-          word-break: break-word;
-        }
-        .mode-ID .animal-name { color: var(--accent); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
-        
-        .mode-ID .judges-section {
-          background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -30px;
-          padding: 12px 20px 12px 45px; display: flex; gap: 15px;
-          clip-path: polygon(30px 0, 100% 0, calc(100% - 20px) 100%, 0% 100%);
-          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
-          flex-shrink: 0;
-        }
-        .mode-ID .judges-section.pending { transform: translateX(-150%); opacity: 0; }
+        .mode-ID .bottom-container.hidden { opacity: 0; pointer-events: none; }
 
-        .mode-ID .judge-box { border-left: 3px solid var(--accent); padding-left: 12px; min-width: 130px; display: flex; flex-direction: column; }
-        .mode-ID .judge-title { font-size: 0.9rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 4px; display: block; opacity: 0.8; }
-        .mode-ID .judge-score-label { font-size: 0.8rem; color: var(--accent); font-weight: 900; margin-right: 2px; }
-        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2.2rem; line-height: 1; }
-        .mode-ID .subtotal { font-size: 3rem; color: #fff; font-weight: 950; margin-top: 8px; border-top: 3px solid rgba(212, 175, 55, 0.3); padding-top: 8px; line-height: 1; text-align: center; }
-        
-        .mode-ID .final-score-card {
-          min-width: 180px; background: var(--accent-gradient);
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-          padding: 12px 25px 12px 40px; clip-path: polygon(30px 0, 100% 0, 100% 100%, 0% 100%);
-          margin-left: -30px; flex-shrink: 0;
-          border-radius: 0 var(--radius) var(--radius) 0;
-          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.4s ease 0.1s;
+        /* LAYOUT 1: ANTES DA NOTA (VS) */
+        .mode-ID .vs-layout {
+          display: flex; align-items: center; justify-content: center;
+          background: var(--bg-overlay); opacity: var(--opacity);
+          border-left: 12px solid var(--accent); border-right: 12px solid var(--accent);
+          padding: 30px 60px; border-radius: var(--radius);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.8); gap: 60px;
+          min-width: 900px;
         }
-        .mode-ID .final-score-card.pending { transform: translateX(-200%); opacity: 0; }
-        .mode-ID .total-value { font-size: 5.5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
+        .mode-ID .vs-layout .col-comp { text-align: right; flex: 1; }
+        .mode-ID .vs-layout .col-anim { text-align: left; flex: 1; }
+        .mode-ID .vs-layout h1 { color: #fff; font-size: 3.8rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 1; }
+        .mode-ID .vs-layout .sub { font-size: 1.8rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 10px; letter-spacing: 1px; }
+        .mode-ID .vs-layout .vs-badge { font-size: 2.8rem; font-weight: 950; color: var(--accent); font-style: italic; text-shadow: 0 0 20px rgba(212,175,55,0.5); }
+
+        /* LAYOUT 2: COM NOTA (SCORE) */
+        .mode-ID .score-layout {
+          display: flex; align-items: stretch;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+          border-radius: var(--radius);
+          background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px);
+        }
+        .mode-ID .score-layout .info-block {
+          background: var(--bg-overlay); opacity: var(--opacity);
+          border-left: 14px solid var(--accent); padding: 25px 40px;
+          min-width: 450px; max-width: 600px; display: flex; flex-direction: column; justify-content: center;
+          border-radius: var(--radius) 0 0 var(--radius);
+        }
+        .mode-ID .score-layout .info-block h1 { color: #fff; font-size: 3rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 0.9; }
+        .mode-ID .score-layout .info-block .sub { font-size: 1.4rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 8px; letter-spacing: 1px; }
+        .mode-ID .score-layout .info-block .animal-name { color: #fff; font-size: 2.2rem; font-weight: 950; text-transform: uppercase; margin-top: 15px; line-height: 1; }
+        .mode-ID .score-layout .info-block .animal-cia { font-size: 1.3rem; color: #888; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+
+        .mode-ID .score-layout .judges-block {
+          padding: 15px 30px; display: flex; gap: 20px; align-items: center;
+        }
+        .mode-ID .score-layout .judge-box { border-left: 3px solid var(--accent); padding-left: 15px; display: flex; flex-direction: column; justify-content: center; min-width: 140px; }
+        .mode-ID .score-layout .judge-title { font-size: 1rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 6px; }
+        .mode-ID .score-layout .judge-scores { display: flex; justify-content: space-between; align-items: baseline; }
+        .mode-ID .score-layout .judge-score-label { font-size: 0.9rem; color: var(--accent); font-weight: 900; margin-right: 4px; }
+        .mode-ID .score-layout .judge-score-value { color: #fff; font-weight: 950; font-size: 2.4rem; line-height: 1; }
+        .mode-ID .score-layout .judge-subtotal { font-size: 3.5rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 3px solid rgba(212, 175, 55, 0.3); padding-top: 10px; text-align: center; line-height: 1; }
+
+        .mode-ID .score-layout .total-block {
+          background: var(--accent-gradient);
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          padding: 15px 40px; border-radius: 0 var(--radius) var(--radius) 0;
+        }
+        .mode-ID .score-layout .total-label { font-size: 1rem; font-weight: 900; color: #000; text-transform: uppercase; margin-bottom: 5px; }
+        .mode-ID .score-layout .total-value { font-size: 7rem; font-weight: 950; color: #000; letter-spacing: -3px; line-height: 1; }
         
-        .mode-ID .header-badges { position: absolute; top: -45px; left: 0; display: flex; gap: 10px; }
+        .mode-ID .header-badges { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; }
         .mode-ID .badge { 
-          background: #000; color: var(--accent); padding: 10px 40px; font-weight: 900; font-size: 2rem; 
-          border: 4px solid var(--accent); clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+          background: #000; color: var(--accent); padding: 10px 40px; font-weight: 900; font-size: 1.8rem; 
+          border: 3px solid var(--accent); border-radius: 6px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
         .timer-top-right {
@@ -403,62 +409,63 @@ export default function OverlayNotaPage() {
 
       {/* LOWER THIRD (ID) */}
       {mode === 'ID' && d && (
-        <div className={`nota-container ${lowerThirdForcedHide ? 'hidden' : ''}`}>
+        <div className={`bottom-container ${lowerThirdForcedHide ? 'hidden' : ''}`}>
+          
+          {/* BADGES SUPERIORES */}
           <div className="header-badges">
-            {!data?.rankingCongelado && d?.etapaRank && <div className="badge badge-rank">{overlayStyle.labelRank}: {d.etapaRank}</div>}
-            {!data?.rankingCongelado && d?.etapaDiff && <div className="badge badge-pos">{overlayStyle.labelDiff}: {d.etapaDiff}</div>}
+            {!data?.rankingCongelado && d?.etapaRank && <div className="badge">{overlayStyle.labelRank}: {d.etapaRank}</div>}
+            {!data?.rankingCongelado && d?.etapaDiff && <div className="badge">{overlayStyle.labelDiff}: {d.etapaDiff}</div>}
           </div>
 
-          <div className="info-card">
-             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-                <h1 ref={nameRef} className="competidor-name">{d.competidor}</h1>
-                {d.competidorCidade && (
-                  <div style={{ fontSize: '1.8rem', color: 'var(--accent)', fontWeight: 900, textTransform: 'uppercase', marginTop: '8px', letterSpacing: '1px', opacity: 0.9 }}>{d.competidorCidade}</div>
-                )}
-             </div>
-             
-             {isPendingScore && (
-               <div style={{ 
-                 margin: '0 30px', 
-                 fontSize: '1.8rem', 
-                 fontWeight: 900, 
-                 color: 'var(--accent)', 
-                 fontStyle: 'italic',
-                 display: 'flex',
-                 alignItems: 'center',
-                 textShadow: '0 0 15px rgba(212,175,55,0.4)'
-               }}>VS</div>
-             )}
-             
-             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, textAlign: isPendingScore ? 'right' : 'left' }}>
-                <div style={{ color: isPendingScore ? '#fff' : 'var(--accent)', fontSize: '3.8rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 1 }}>{d.animal}</div>
-                <div style={{ fontSize: '1.6rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: '5px' }}>{d.animalCompanhia}</div>
-             </div>
-          </div>
-
-          <div className={`judges-section ${isPendingScore ? 'pending' : ''}`}>
-             {[1,2,3,4].slice(0, numJuizes).map(i => (
-               <div key={i} className="judge-box">
-                  <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
-                  <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                      <span className="judge-score-label">P:</span>
-                      <span className="judge-score-value">{formatScore((d as any)[`j${i}P`])}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                      <span className="judge-score-label">T:</span>
-                      <span className="judge-score-value">{formatScore((d as any)[`j${i}A`])}</span>
-                    </div>
-                  </div>
-                  <div className="subtotal">{formatScore((d as any)[`j${i}Total`])}</div>
+          {isPendingScore ? (
+            /* LAYOUT 1: VS (ANTES DA NOTA) */
+            <div className="vs-layout">
+               <div className="col-comp">
+                  <h1>{d.competidor}</h1>
+                  {d.competidorCidade && <div className="sub">{d.competidorCidade}</div>}
                </div>
-             ))}
-          </div>
+               <div className="vs-badge">VS</div>
+               <div className="col-anim">
+                  <h1>{d.animal}</h1>
+                  <div className="sub" style={{ color: '#888' }}>{d.animalCompanhia}</div>
+               </div>
+            </div>
+          ) : (
+            /* LAYOUT 2: SCORE (COM NOTA) */
+            <div className="score-layout">
+              <div className="info-block">
+                  <h1>{d.competidor}</h1>
+                  {d.competidorCidade && <div className="sub">{d.competidorCidade}</div>}
+                  <div className="animal-name">{d.animal}</div>
+                  <div className="animal-cia">{d.animalCompanhia}</div>
+              </div>
 
-          <div className={`final-score-card ${isPendingScore ? 'pending' : ''}`}>
-              <span style={{ fontSize: '0.8rem', fontWeight: '900', color: '#000' }}>{overlayStyle.labelScore}</span>
-              <div className="total-value">{d.desclassificado ? '0.00' : formatScore(d.total)}</div>
-          </div>
+              <div className="judges-block">
+                 {[1,2,3,4].slice(0, numJuizes).map(i => (
+                   <div key={i} className="judge-box">
+                      <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
+                      <div className="judge-scores">
+                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                          <span className="judge-score-label">P:</span>
+                          <span className="judge-score-value">{formatScore((d as any)[`j${i}P`])}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                          <span className="judge-score-label">T:</span>
+                          <span className="judge-score-value">{formatScore((d as any)[`j${i}A`])}</span>
+                        </div>
+                      </div>
+                      <div className="judge-subtotal">{formatScore((d as any)[`j${i}Total`])}</div>
+                   </div>
+                 ))}
+              </div>
+
+              <div className="total-block">
+                  <span className="total-label">{overlayStyle.labelScore}</span>
+                  <div className="total-value">{d.desclassificado ? '0.00' : formatScore(d.total)}</div>
+              </div>
+            </div>
+          )}
+
         </div>
       )}
 
