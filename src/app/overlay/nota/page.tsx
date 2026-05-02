@@ -263,7 +263,7 @@ export default function OverlayNotaPage() {
         }
 
         .mode-ID .bottom-container {
-          position: fixed; bottom: 30px; left: 0; width: 100%;
+          position: fixed; bottom: 0; left: 0; width: 100%;
           display: flex; justify-content: center; align-items: flex-end;
           zoom: var(--font-scale); z-index: 10;
         }
@@ -271,54 +271,53 @@ export default function OverlayNotaPage() {
 
         /* LAYOUT 1: ANTES DA NOTA (VS) */
         .mode-ID .vs-layout {
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: center; justify-content: space-around;
           background: var(--bg-overlay); opacity: var(--opacity);
-          border-left: 12px solid var(--accent); border-right: 12px solid var(--accent);
-          padding: 30px 50px; border-radius: var(--radius);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.8); gap: 40px;
-          width: fit-content; max-width: calc(100vw - 120px);
+          padding: 15px 40px; border-top: 5px solid var(--accent);
+          box-shadow: 0 -10px 40px rgba(0,0,0,0.8); gap: 40px;
+          width: 100vw; max-width: 100vw; border-radius: 0;
         }
-        .mode-ID .vs-layout .col-comp { text-align: right; flex: 1 1 50%; min-width: 350px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
-        .mode-ID .vs-layout .col-anim { text-align: left; flex: 1 1 50%; min-width: 350px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
-        .mode-ID .vs-layout h1 { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 1; word-break: normal; overflow-wrap: break-word; }
-        .mode-ID .vs-layout .sub { font-size: 1.8rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 10px; letter-spacing: 1px; }
-        .mode-ID .vs-layout .vs-badge { font-size: 2.8rem; font-weight: 950; color: var(--accent); font-style: italic; text-shadow: 0 0 20px rgba(212,175,55,0.5); flex-shrink: 0; }
+        .mode-ID .vs-layout .col-comp { text-align: right; flex: 1 1 50%; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+        .mode-ID .vs-layout .col-anim { text-align: left; flex: 1 1 50%; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+        .mode-ID .vs-layout h1 { color: #fff; font-size: 2.8rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 1; word-break: normal; overflow-wrap: break-word; }
+        .mode-ID .vs-layout .sub { font-size: 1.4rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+        .mode-ID .vs-layout .vs-badge { font-size: 2.2rem; font-weight: 950; color: var(--accent); font-style: italic; text-shadow: 0 0 20px rgba(212,175,55,0.5); flex-shrink: 0; }
 
         /* LAYOUT 2: COM NOTA (SCORE) */
         .mode-ID .score-layout {
-          display: flex; align-items: stretch;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-          border-radius: var(--radius);
+          display: flex; align-items: stretch; justify-content: space-between;
+          box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+          border-radius: 0; width: 100vw; max-width: 100vw;
           background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px);
         }
         .mode-ID .score-layout .info-block {
           background: var(--bg-overlay); opacity: var(--opacity);
-          border-left: 14px solid var(--accent); padding: 25px 40px;
-          min-width: 450px; max-width: 600px; display: flex; flex-direction: column; justify-content: center;
-          border-radius: var(--radius) 0 0 var(--radius);
+          border-left: none; padding: 15px 40px;
+          flex: 1; display: flex; flex-direction: column; justify-content: center;
+          border-radius: 0; border-top: 5px solid var(--accent);
         }
-        .mode-ID .score-layout .info-block h1 { color: #fff; font-size: 3rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 0.9; }
-        .mode-ID .score-layout .info-block .sub { font-size: 1.4rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 8px; letter-spacing: 1px; }
-        .mode-ID .score-layout .info-block .animal-name { color: #fff; font-size: 2.2rem; font-weight: 950; text-transform: uppercase; margin-top: 15px; line-height: 1; }
-        .mode-ID .score-layout .info-block .animal-cia { font-size: 1.3rem; color: #888; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+        .mode-ID .score-layout .info-block h1 { color: #fff; font-size: 2.5rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 0.9; }
+        .mode-ID .score-layout .info-block .sub { font-size: 1.2rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 5px; letter-spacing: 1px; }
+        .mode-ID .score-layout .info-block .animal-name { color: #fff; font-size: 1.8rem; font-weight: 950; text-transform: uppercase; margin-top: 10px; line-height: 1; }
+        .mode-ID .score-layout .info-block .animal-cia { font-size: 1rem; color: #888; font-weight: 800; text-transform: uppercase; margin-top: 2px; }
 
         .mode-ID .score-layout .judges-block {
-          padding: 15px 30px; display: flex; gap: 20px; align-items: center;
+          padding: 10px 20px; display: flex; gap: 15px; align-items: center; justify-content: center;
         }
-        .mode-ID .score-layout .judge-box { border-left: 3px solid var(--accent); padding-left: 15px; display: flex; flex-direction: column; justify-content: center; min-width: 140px; }
-        .mode-ID .score-layout .judge-title { font-size: 1rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 6px; }
+        .mode-ID .score-layout .judge-box { border-left: 2px solid var(--accent); padding-left: 10px; display: flex; flex-direction: column; justify-content: center; min-width: 100px; }
+        .mode-ID .score-layout .judge-title { font-size: 0.9rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 4px; }
         .mode-ID .score-layout .judge-scores { display: flex; justify-content: space-between; align-items: baseline; }
-        .mode-ID .score-layout .judge-score-label { font-size: 0.9rem; color: var(--accent); font-weight: 900; margin-right: 4px; }
-        .mode-ID .score-layout .judge-score-value { color: #fff; font-weight: 950; font-size: 2.4rem; line-height: 1; }
-        .mode-ID .score-layout .judge-subtotal { font-size: 3.5rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 3px solid rgba(212, 175, 55, 0.3); padding-top: 10px; text-align: center; line-height: 1; }
+        .mode-ID .score-layout .judge-score-label { font-size: 0.8rem; color: var(--accent); font-weight: 900; margin-right: 4px; }
+        .mode-ID .score-layout .judge-score-value { color: #fff; font-weight: 950; font-size: 1.8rem; line-height: 1; }
+        .mode-ID .score-layout .judge-subtotal { font-size: 2.5rem; color: #fff; font-weight: 950; margin-top: 5px; border-top: 2px solid rgba(212, 175, 55, 0.3); padding-top: 5px; text-align: center; line-height: 1; }
 
         .mode-ID .score-layout .total-block {
           background: var(--accent-gradient);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          padding: 15px 40px; border-radius: 0 var(--radius) var(--radius) 0;
+          padding: 10px 50px; border-radius: 0; min-width: 250px;
         }
-        .mode-ID .score-layout .total-label { font-size: 1rem; font-weight: 900; color: #000; text-transform: uppercase; margin-bottom: 5px; }
-        .mode-ID .score-layout .total-value { font-size: 7rem; font-weight: 950; color: #000; letter-spacing: -3px; line-height: 1; }
+        .mode-ID .score-layout .total-label { font-size: 0.9rem; font-weight: 900; color: #000; text-transform: uppercase; margin-bottom: 0px; }
+        .mode-ID .score-layout .total-value { font-size: 6rem; font-weight: 950; color: #000; line-height: 0.9; letter-spacing: -2px; }
         
         .mode-ID .header-badges { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; }
         .mode-ID .badge { 
