@@ -12,6 +12,7 @@ interface Etapa {
   rounds: {
     id: number;
     numero: number;
+    modalidade: string;
     _count: { montarias: number };
   }[];
 }
@@ -106,8 +107,23 @@ export default function ExecucaoRoundSelector({ etapas, isAdmin }: ExecucaoRound
                        <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{round.numero}</span>
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#fff', fontWeight: 'bold' }}>ROUND {round.numero}</h4>
-                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#555' }}>{round._count.montarias} montarias escaladas</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#fff', fontWeight: 'bold' }}>ROUND {round.numero}</h4>
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: '800',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: round.modalidade === 'Cutiano' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(212, 175, 55, 0.15)',
+                          color: round.modalidade === 'Cutiano' ? '#60a5fa' : 'var(--accent)',
+                          textTransform: 'uppercase',
+                          border: round.modalidade === 'Cutiano' ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(212, 175, 55, 0.3)',
+                          letterSpacing: '0.5px'
+                        }}>
+                          {round.modalidade || 'Touro'}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.75rem', color: '#555', marginTop: '3px' }}>{round._count.montarias} montarias escaladas</p>
                     </div>
                   </div>
                   <ArrowRight size={18} color="var(--primary)" />
