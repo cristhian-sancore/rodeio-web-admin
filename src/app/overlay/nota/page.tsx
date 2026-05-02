@@ -448,11 +448,11 @@ export default function OverlayNotaPage() {
                   <div className="animal-cia">{d.animalCompanhia}</div>
               </div>
 
-              <div className="judges-block">
-                 {[1,2,3,4].slice(0, numJuizes).map(i => (
-                   <div key={i} className="judge-box">
-                      <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
-                      {numJuizes > 1 && (
+              {numJuizes > 1 && (
+                <div className="judges-block">
+                   {[1,2,3,4].slice(0, numJuizes).map(i => (
+                     <div key={i} className="judge-box">
+                        <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
                         <div className="judge-scores">
                           <div style={{ display: 'flex', alignItems: 'baseline' }}>
                             <span className="judge-score-label">P:</span>
@@ -463,18 +463,13 @@ export default function OverlayNotaPage() {
                             <span className="judge-score-value">{formatScore((d as any)[`j${i}A`])}</span>
                           </div>
                         </div>
-                      )}
-                      <div className="judge-subtotal" style={{ 
-                          borderTop: numJuizes === 1 ? 'none' : undefined, 
-                          marginTop: numJuizes === 1 ? 0 : undefined, 
-                          paddingTop: numJuizes === 1 ? 0 : undefined,
-                          fontSize: numJuizes === 1 ? '4.5rem' : undefined
-                      }}>
-                        {formatScore((d as any)[`j${i}Total`])}
-                      </div>
-                   </div>
-                 ))}
-              </div>
+                        <div className="judge-subtotal">
+                          {formatScore((d as any)[`j${i}Total`])}
+                        </div>
+                     </div>
+                   ))}
+                </div>
+              )}
 
               <div className="total-block">
                   <span className="total-label">{overlayStyle.labelScore}</span>
