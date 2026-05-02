@@ -263,7 +263,7 @@ export default function OverlayNotaPage() {
         }
 
         .mode-ID .bottom-container {
-          position: fixed; bottom: 80px; left: 0; width: 100%;
+          position: fixed; bottom: 30px; left: 0; width: 100%;
           display: flex; justify-content: center; align-items: flex-end;
           zoom: var(--font-scale); z-index: 10;
         }
