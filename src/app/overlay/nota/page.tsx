@@ -452,17 +452,26 @@ export default function OverlayNotaPage() {
                  {[1,2,3,4].slice(0, numJuizes).map(i => (
                    <div key={i} className="judge-box">
                       <span className="judge-title">{(d as any)[`j${i}Nome`]}</span>
-                      <div className="judge-scores">
-                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                          <span className="judge-score-label">P:</span>
-                          <span className="judge-score-value">{formatScore((d as any)[`j${i}P`])}</span>
+                      {numJuizes > 1 && (
+                        <div className="judge-scores">
+                          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                            <span className="judge-score-label">P:</span>
+                            <span className="judge-score-value">{formatScore((d as any)[`j${i}P`])}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                            <span className="judge-score-label">T:</span>
+                            <span className="judge-score-value">{formatScore((d as any)[`j${i}A`])}</span>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                          <span className="judge-score-label">T:</span>
-                          <span className="judge-score-value">{formatScore((d as any)[`j${i}A`])}</span>
-                        </div>
+                      )}
+                      <div className="judge-subtotal" style={{ 
+                          borderTop: numJuizes === 1 ? 'none' : undefined, 
+                          marginTop: numJuizes === 1 ? 0 : undefined, 
+                          paddingTop: numJuizes === 1 ? 0 : undefined,
+                          fontSize: numJuizes === 1 ? '4.5rem' : undefined
+                      }}>
+                        {formatScore((d as any)[`j${i}Total`])}
                       </div>
-                      <div className="judge-subtotal">{formatScore((d as any)[`j${i}Total`])}</div>
                    </div>
                  ))}
               </div>
