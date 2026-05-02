@@ -422,7 +422,11 @@ export default function OverlayNotaPage() {
             <div className="vs-layout">
                <div className="col-comp">
                   <h1>{d.competidor}</h1>
-                  {d.competidorCidade && <div className="sub">{d.competidorCidade}</div>}
+                  {d.competidorCidade ? (
+                    <div className="sub">{d.competidorCidade}</div>
+                  ) : (
+                    <div className="sub" style={{ opacity: 0.3, fontSize: '1.2rem', color: '#fff' }}>[CIDADE NÃO CADASTRADA]</div>
+                  )}
                </div>
                <div className="vs-badge">VS</div>
                <div className="col-anim">
@@ -435,7 +439,11 @@ export default function OverlayNotaPage() {
             <div className="score-layout">
               <div className="info-block">
                   <h1>{d.competidor}</h1>
-                  {d.competidorCidade && <div className="sub">{d.competidorCidade}</div>}
+                  {d.competidorCidade ? (
+                    <div className="sub">{d.competidorCidade}</div>
+                  ) : (
+                    <div className="sub" style={{ opacity: 0.3, fontSize: '1.2rem', color: '#fff' }}>[CIDADE NÃO CADASTRADA]</div>
+                  )}
                   <div className="animal-name">{d.animal}</div>
                   <div className="animal-cia">{d.animalCompanhia}</div>
               </div>
