@@ -17,13 +17,14 @@ export async function getOverlayDataPayload() {
     // Prioridade para Ranking se estiver ativo
     if (config.rankingMode && config.rankingMode !== 'OFF') {
       const activeMontaria = config.montariaAtivaId 
-        ? await prisma.montaria.findUnique({ where: { id: config.montariaAtivaId }, select: { roundId: true, etapaId: true } })
+        ? await prisma.montaria.findUnique({ where: { id: config.montariaAtivaId }, select: { roundId: true, etapaId: true, etapa: { select: { temporadaId: true } } } })
         : null;
 
       const rankingData = await getOverlayRankingData(
         config.rankingMode, 
         activeMontaria?.roundId, 
-        activeMontaria?.etapaId
+        activeMontaria?.etapaId,
+        activeMontaria?.etapa?.temporadaId
       );
 
       return { 
@@ -63,7 +64,7 @@ export async function getOverlayDataPayload() {
     const myChampPos = champList.find((r: any) => r.competidorId === montaria.competidorId);
     
     const cMontarias = Array.isArray(montaria.competidor?.montarias) ? montaria.competidor.montarias : [];
-    const paradas = cMontarias.filter(m => m.notaTotal > 8).length; 
+    const paradas = cMontarias.filter(m => m.tempo >= 8).length; 
     const totalMontarias = cMontarias.length;
     const percParadas = totalMontarias > 0 ? Math.round((paradas / totalMontarias) * 100) : 0;
 

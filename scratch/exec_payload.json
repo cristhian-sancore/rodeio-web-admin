@@ -1,0 +1,9 @@
+{
+  "AttachStdout": true,
+  "AttachStderr": true,
+  "Cmd": [
+    "node",
+    "-e",
+    "const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); async function run() { try { console.log('Checking column...'); await p.$executeRawUnsafe('ALTER TABLE \"Configuracao\" ADD COLUMN IF NOT EXISTS \"exibirCronometroNoOverlay\" BOOLEAN DEFAULT true;'); console.log('Cleaning duplicates...'); await p.$executeRawUnsafe('DELETE FROM \"Configuracao\" WHERE id != 1;'); const c = await p.configuracao.count(); if (c === 0) { console.log('Creating ID 1...'); await p.configuracao.create({data:{id:1,titulo:\"Rodeio Web\",numJuizes:2}}); } console.log('SUCCESS_SYNC'); } catch(e) { console.error(e); process.exit(1); } finally { await p.$disconnect(); } } run();"
+  ]
+}

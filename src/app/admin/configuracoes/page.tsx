@@ -37,7 +37,8 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
   };
 
   try {
-    const configData = await prisma.configuracao.findFirst();
+    const { getSafeConfig } = await import("@/lib/config-safe");
+    const configData = await getSafeConfig();
     if (configData) {
       config = { ...config, ...configData };
     }
@@ -45,14 +46,21 @@ export default async function ConfigPage({ searchParams }: { searchParams: Promi
     console.error("Erro ao carregar config (schema desatualizado):", e);
   }
 
+  let temporadas: any[] = [];
+  let juizes: any[] = [];
+  
   try {
-    const temporadas = await prisma.temporada.findMany({
+    temporadas = await prisma.temporada.findMany({
       orderBy: { ano: 'desc' },
       include: { etapas: true }
     });
 
-    const juizes = await prisma.juiz.findMany({ orderBy: { nome: 'asc' } });
+    juizes = await prisma.juiz.findMany({ orderBy: { nome: 'asc' } });
+  } catch (e) {
+    console.error("Erro ao carregar temporadas/juizes:", e);
+  }
 
+  try {
   return (
     <div className="fade-in">
       <h1 style={{ marginBottom: '2.5rem', fontSize: '2.2rem', fontWeight: '900' }}>Configurações do <span style={{color:'var(--primary)'}}>Painel</span></h1>

@@ -546,6 +546,7 @@ export async function saveConfig(formData: FormData) {
   };
 
   try {
+    await fixDatabaseSchemaInternal();
     await prisma.configuracao.upsert({
       where: { id: currentConfig.id },
       update: { 
@@ -582,20 +583,6 @@ export async function saveConfig(formData: FormData) {
     console.log('✅ CONFIG UPDATED SUCCESSFULLY');
   } catch (err: any) {
     console.error('❌ ERROR SAVING CONFIG:', err);
-    
-    // Tentar um reparo automático se o erro for de coluna faltante
-    if (err.message?.includes("exibirCronometroNoOverlay")) {
-       try {
-         await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
-         // Tentar salvar de novo após o fix
-         await saveConfig(formData);
-         return; // Sai após o sucesso do re-save
-       } catch (fixErr) {
-         console.error("Falha no auto-fix de schema:", fixErr);
-       }
-    }
-    
-    // Se chegamos aqui, falhou mesmo
     redirectPath = '/admin/configuracoes?error=SAVE_FAILED';
   }
 
@@ -634,33 +621,34 @@ export async function executeRawSql(sql: string) {
   }
 }
 
+// Versão INTERNA sem verificação de sessão (para uso interno em server actions)
+async function fixDatabaseSchemaInternal() {
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
+    await prisma.$executeRawUnsafe(`DELETE FROM "Configuracao" WHERE id != 1;`);
+    
+    const count = await prisma.configuracao.count();
+    if (count === 0) {
+      await prisma.configuracao.create({ data: { id: 1, titulo: "Rodeio Web", numJuizes: 2 } });
+    }
+    return { success: true };
+  } catch (err: any) {
+    console.error("Erro ao fixar schema (internal):", err);
+    if (err.message?.includes("already exists")) return { success: true };
+    return { success: false, error: err.message };
+  }
+}
+
+// Versão PÚBLICA com verificação de sessão (para uso em formulários)
 export async function fixDatabaseSchema() {
   const session = await getServerSession(authOptions);
   if (!['ADMIN', 'SUPER_ADMIN', 'SUPER'].includes((session?.user as any)?.role)) {
     throw new Error("Não autorizado");
   }
 
-  try {
-    // 1. Tenta adicionar a coluna faltante manualmente via SQL
-    await prisma.$executeRawUnsafe(`ALTER TABLE "Configuracao" ADD COLUMN IF NOT EXISTS "exibirCronometroNoOverlay" BOOLEAN DEFAULT true;`);
-    
-    // 2. Unificar tabela de configuração (Garantir ID 1 único)
-    await prisma.$executeRawUnsafe(`DELETE FROM "Configuracao" WHERE id != 1;`);
-    
-    // 3. Tenta forçar o ID 1 se não houver registros
-    const count = await prisma.configuracao.count();
-    if (count === 0) {
-      await prisma.configuracao.create({ data: { id: 1, titulo: "Rodeio Web", numJuizes: 2 } });
-    }
-
-    revalidatePath('/admin/configuracoes');
-    return { success: true };
-  } catch (err: any) {
-    console.error("Erro ao fixar schema:", err);
-    // Se falhar porque a coluna já existe, tudo bem
-    if (err.message?.includes("already exists")) return { success: true };
-    return { success: false, error: err.message };
-  }
+  const result = await fixDatabaseSchemaInternal();
+  revalidatePath('/admin/configuracoes');
+  return result;
 }
 
 export async function checkVMixStatus() {
@@ -986,8 +974,8 @@ export async function updateRound(formData: FormData) {
 
 export async function updateMontariaAtiva(montariaId: number | null) {
   try {
-    await fixDatabaseSchema();
-    const currentConfig = await prisma.configuracao.findFirst();
+    await fixDatabaseSchemaInternal();
+    const currentConfig = await getSafeConfig();
     
     await prisma.configuracao.upsert({
       where: { id: 1 },
