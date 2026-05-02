@@ -1488,7 +1488,7 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
           }
           i++;
        }
-       if (line.split('|').length >= 3 && line.match(/^\d+\s*\|/)) {
+       if (line.split('|').length >= 3 && /^\d+\s*\|/.test(line)) {
           lines.push(line);
        }
     }
@@ -1540,6 +1540,44 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
            finalCompId = newComp.id;
            compsMap.push({ id: newComp.id, nome: normalize(newComp.nome) });
         }
+      }
+
+      // TRATAMENTO PARA ANIMAIS RESERVAS (SEM COMPETIDOR)
+      if (!finalCompId && (extractedName === '-' || extractedName === '')) {
+         let finalAnimalId = null;
+         const animalNome = parts.length > 3 ? normalize(parts[3]) : '';
+         if (animalNome && animalNome !== 'A DEFINIR' && animalNome.length > 2) {
+            const foundAnimal = animalsMap.find(a => a.nome === animalNome || (animalNome.length > 4 && a.nome.includes(animalNome)));
+            if (foundAnimal) {
+               finalAnimalId = foundAnimal.id;
+            } else {
+               const newAnimal = await prisma.animal.create({
+                 data: { nome: parts[3].trim(), companhia: parts[4] ? parts[4].trim() : 'IMPORTADO PDF', tipo: animalType }
+               });
+               finalAnimalId = newAnimal.id;
+               animalsMap.push({ id: newAnimal.id, nome: normalize(newAnimal.nome) });
+            }
+         }
+
+         if (finalAnimalId) {
+            const lastReserva = await prisma.roundReserva.findFirst({
+               where: { roundId },
+               orderBy: { ordem: 'desc' }
+            });
+            const ordem = (lastReserva?.ordem || 0) + 1;
+            
+            const existingReserva = await prisma.roundReserva.findFirst({
+               where: { roundId, animalId: finalAnimalId }
+            });
+            
+            if (!existingReserva) {
+               await prisma.roundReserva.create({
+                  data: { roundId, animalId: finalAnimalId, ordem }
+               });
+               successCount++;
+            }
+         }
+         continue; // Pula para a próxima linha do PDF (não cria montaria vazia)
       }
 
       if (!finalCompId) {
