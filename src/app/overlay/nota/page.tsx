@@ -411,7 +411,9 @@ export default function OverlayNotaPage() {
           <div className="info-card">
              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                 <h1 ref={nameRef} className="competidor-name">{d.competidor}</h1>
-                <div style={{ fontSize: '1.4rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: '5px' }}>{d.competidorCidade}</div>
+                {d.competidorCidade && (
+                  <div style={{ fontSize: '1.8rem', color: 'var(--accent)', fontWeight: 900, textTransform: 'uppercase', marginTop: '8px', letterSpacing: '1px', opacity: 0.9 }}>{d.competidorCidade}</div>
+                )}
              </div>
              
              {isPendingScore && (
@@ -428,8 +430,8 @@ export default function OverlayNotaPage() {
              )}
              
              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, textAlign: isPendingScore ? 'right' : 'left' }}>
-                <div style={{ color: isPendingScore ? '#fff' : 'var(--accent)', fontSize: '3.2rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 1 }}>{d.animal}</div>
-                <div style={{ fontSize: '1.4rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: '5px' }}>{d.animalCompanhia}</div>
+                <div style={{ color: isPendingScore ? '#fff' : 'var(--accent)', fontSize: '3.8rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 1 }}>{d.animal}</div>
+                <div style={{ fontSize: '1.6rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: '5px' }}>{d.animalCompanhia}</div>
              </div>
           </div>
 

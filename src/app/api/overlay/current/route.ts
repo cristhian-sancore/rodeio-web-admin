@@ -87,7 +87,7 @@ export async function getOverlayDataPayload() {
         id: montaria.id,
         competidor: montaria.competidor.nome,
         competidorFoto: (montaria.competidor as any).fotoUrl || 'https://rodeio.cristhiansancore.com.br/default-rider.png',
-        competidorCidade: montaria.competidor.cidade,
+        competidorCidade: [montaria.competidor.cidade, montaria.competidor.uf].filter(Boolean).join(' - ') || '',
         competidorRankChamp: myChampPos ? `${myChampPos.pos}º` : '---',
         competidorParadas: `${percParadas}%`,
         
