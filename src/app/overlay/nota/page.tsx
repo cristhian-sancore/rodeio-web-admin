@@ -263,8 +263,8 @@ export default function OverlayNotaPage() {
         }
 
         .mode-ID .nota-container {
-          position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-          display: flex; align-items: stretch; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6));
+          position: absolute; bottom: 80px; left: 80px;
+          display: flex; align-items: stretch; filter: drop-shadow(0 20px 60px rgba(0,0,0,0.8));
           width: max-content; 
           opacity: 1; transition: opacity 0.5s ease;
           zoom: var(--font-scale);
@@ -274,15 +274,15 @@ export default function OverlayNotaPage() {
         .mode-ID .info-card {
           background: var(--bg-overlay);
           opacity: var(--opacity);
-          border-left: 12px solid var(--accent); padding: 25px 50px;
-          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 450px;
+          border-left: 18px solid var(--accent); padding: 40px 70px;
+          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 600px;
           border-radius: var(--radius) 0 0 var(--radius);
-          max-width: 850px; display: flex; align-items: center; justify-content: center;
-          z-index: 10; gap: 20px;
+          max-width: 1100px; display: flex; align-items: center; justify-content: center;
+          z-index: 10; gap: 40px;
         }
         .mode-ID .competidor-name { 
-          color: #fff; font-size: 2.4rem; font-weight: 950; text-transform: uppercase; 
-          margin: 0; transform-origin: left center; line-height: 1;
+          color: #fff; font-size: 3.8rem; font-weight: 950; text-transform: uppercase; 
+          margin: 0; transform-origin: left center; line-height: 0.9;
           display: block; overflow: hidden;
           word-break: break-word;
         }
@@ -299,8 +299,8 @@ export default function OverlayNotaPage() {
         .mode-ID .judge-box { border-left: 4px solid var(--accent); padding-left: 15px; min-width: 160px; display: flex; flex-direction: column; }
         .mode-ID .judge-title { font-size: 1.1rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 5px; display: block; opacity: 0.8; }
         .mode-ID .judge-score-label { font-size: 0.9rem; color: var(--accent); font-weight: 900; margin-right: 3px; }
-        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2rem; line-height: 1; }
-        .mode-ID .subtotal { font-size: 2.8rem; color: #fff; font-weight: 950; margin-top: 5px; border-top: 2px solid rgba(212, 175, 55, 0.3); padding-top: 5px; line-height: 1; text-align: center; }
+        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 3rem; line-height: 1; }
+        .mode-ID .subtotal { font-size: 4rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 4px solid rgba(212, 175, 55, 0.3); padding-top: 10px; line-height: 1; text-align: center; }
         
         .mode-ID .final-score-card {
           min-width: 200px; background: var(--accent-gradient);
@@ -311,12 +311,12 @@ export default function OverlayNotaPage() {
           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.4s ease 0.1s;
         }
         .mode-ID .final-score-card.pending { transform: translateX(-200%); opacity: 0; }
-        .mode-ID .total-value { font-size: 4.5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
+        .mode-ID .total-value { font-size: 7rem; font-weight: 950; color: #000; letter-spacing: -3px; line-height: 1; }
         
         .mode-ID .header-badges { position: absolute; top: -45px; left: 0; display: flex; gap: 10px; }
         .mode-ID .badge { 
-          background: #000; color: var(--accent); padding: 5px 25px; font-weight: 900; font-size: 1.3rem; 
-          border: 2px solid var(--accent); clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+          background: #000; color: var(--accent); padding: 10px 40px; font-weight: 900; font-size: 2rem; 
+          border: 4px solid var(--accent); clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
         }
 
         .timer-top-right {
@@ -328,8 +328,8 @@ export default function OverlayNotaPage() {
           clip-path: polygon(5% 0, 100% 0, 100% 100%, 0% 100%);
         }
         .timer-top-right.hidden { opacity: 0; pointer-events: none; }
-        .timer-label { color: var(--accent); font-size: 1.2rem; font-weight: 900; text-transform: uppercase; margin-bottom: -5px; }
-        .timer-value { font-size: 4.5rem; font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1; }
+        .timer-label { color: var(--accent); font-size: 1.8rem; font-weight: 900; text-transform: uppercase; margin-bottom: -5px; }
+        .timer-value { font-size: 6rem; font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1; }
 
         .mode-CHAMADA .chamada-fullscreen {
           position: absolute; inset: 0;
@@ -411,7 +411,7 @@ export default function OverlayNotaPage() {
           <div className="info-card">
              <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                 <h1 ref={nameRef} className="competidor-name">{d.competidor}</h1>
-                <div style={{ fontSize: '1rem', color: '#888', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{d.competidorCidade}</div>
+                <div style={{ fontSize: '1.4rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: '5px' }}>{d.competidorCidade}</div>
              </div>
              
              {isPendingScore && (
@@ -428,8 +428,8 @@ export default function OverlayNotaPage() {
              )}
              
              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, textAlign: isPendingScore ? 'right' : 'left' }}>
-                <div style={{ color: isPendingScore ? '#fff' : 'var(--accent)', fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase', lineHeight: 1 }}>{d.animal}</div>
-                <div style={{ fontSize: '1rem', color: '#888', fontWeight: 700, textTransform: 'uppercase', marginTop: '2px' }}>{d.animalCompanhia}</div>
+                <div style={{ color: isPendingScore ? '#fff' : 'var(--accent)', fontSize: '3.2rem', fontWeight: 950, textTransform: 'uppercase', lineHeight: 1 }}>{d.animal}</div>
+                <div style={{ fontSize: '1.4rem', color: '#888', fontWeight: 800, textTransform: 'uppercase', marginTop: '5px' }}>{d.animalCompanhia}</div>
              </div>
           </div>
 
