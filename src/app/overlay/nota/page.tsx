@@ -274,15 +274,15 @@ export default function OverlayNotaPage() {
           display: flex; align-items: center; justify-content: center;
           background: var(--bg-overlay); opacity: var(--opacity);
           border-left: 12px solid var(--accent); border-right: 12px solid var(--accent);
-          padding: 30px 60px; border-radius: var(--radius);
-          box-shadow: 0 20px 60px rgba(0,0,0,0.8); gap: 60px;
-          min-width: 900px;
+          padding: 30px 50px; border-radius: var(--radius);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.8); gap: 40px;
+          width: fit-content; max-width: calc(100vw - 120px);
         }
-        .mode-ID .vs-layout .col-comp { text-align: right; flex: 1; }
-        .mode-ID .vs-layout .col-anim { text-align: left; flex: 1; }
-        .mode-ID .vs-layout h1 { color: #fff; font-size: 3.8rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 1; }
+        .mode-ID .vs-layout .col-comp { text-align: right; flex: 1 1 50%; min-width: 350px; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+        .mode-ID .vs-layout .col-anim { text-align: left; flex: 1 1 50%; min-width: 350px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+        .mode-ID .vs-layout h1 { color: #fff; font-size: 3.5rem; font-weight: 950; text-transform: uppercase; margin: 0; line-height: 1; word-break: normal; overflow-wrap: break-word; }
         .mode-ID .vs-layout .sub { font-size: 1.8rem; color: var(--accent); font-weight: 900; text-transform: uppercase; margin-top: 10px; letter-spacing: 1px; }
-        .mode-ID .vs-layout .vs-badge { font-size: 2.8rem; font-weight: 950; color: var(--accent); font-style: italic; text-shadow: 0 0 20px rgba(212,175,55,0.5); }
+        .mode-ID .vs-layout .vs-badge { font-size: 2.8rem; font-weight: 950; color: var(--accent); font-style: italic; text-shadow: 0 0 20px rgba(212,175,55,0.5); flex-shrink: 0; }
 
         /* LAYOUT 2: COM NOTA (SCORE) */
         .mode-ID .score-layout {
