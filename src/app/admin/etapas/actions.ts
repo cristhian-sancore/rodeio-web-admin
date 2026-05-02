@@ -1523,7 +1523,8 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
       const parts = line.split('|').map(p => p.trim());
       if (parts.length < 3) continue;
 
-      const extractedName = normalize(parts[1]);
+      let extractedName = normalize(parts[1]);
+      if (extractedName === '-') extractedName = ''; // Force empty so it's treated as reserve
       
       let foundComp = compsMap.find(c => c.nome === extractedName);
       if (!foundComp) {
