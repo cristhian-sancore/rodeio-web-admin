@@ -23,6 +23,9 @@ export async function importPdfAction(formData: FormData) {
 
   if (!file || !roundId || !etapaId) return { success: false, error: 'Dados incompletos' };
 
+  const round = await p.round.findUnique({ where: { id: roundId } });
+  const animalType = round?.modalidade === 'Cutiano' ? 'Cavalo' : 'Touro';
+
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -133,7 +136,7 @@ export async function importPdfAction(formData: FormData) {
         // Tratar como Reserva se o competidor for "-"
         if (isReservaTag || isReservaSection) {
           let animal = await p.animal.findFirst({ where: { nome: { equals: nomeAnimal, mode: 'insensitive' } } });
-          if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada } });
+          if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada, tipo: animalType } });
 
           const existingRes = await p.roundReserva.findFirst({ where: { roundId, animalId: animal.id } });
           if (!existingRes) {
@@ -151,7 +154,7 @@ export async function importPdfAction(formData: FormData) {
 
       // Gravar Animal
       let animal = await p.animal.findFirst({ where: { nome: { equals: nomeAnimal, mode: 'insensitive' } } });
-      if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada } });
+      if (!animal) animal = await p.animal.create({ data: { nome: nomeAnimal, companhia: ciaDetectada, tipo: animalType } });
 
       // Gravar Montaria
       const existing = await p.montaria.findFirst({ where: { competidorId: competidor.id, roundId, removida: false } });
@@ -279,6 +282,7 @@ export async function updateMontariaNota(formData: FormData) {
   const numJuizes = parseInt(String(config.numJuizes)) || 2;
 
   const round = m.round;
+  const animalType = round.modalidade === 'Cutiano' ? 'Cavalo' : 'Touro';
 
   // Verificar permissões por juiz
   const isJ1 = isAdmin || (user.juizId && round.juiz1Id === user.juizId);
@@ -1271,6 +1275,9 @@ export async function importTopClassifiedRiders(etapaId: number, currentRoundId:
   const topPeoes = peoes.slice(0, limit);
   if (topPeoes.length === 0) return { error: 'Nenhum competidor classificado encontrado nesta etapa.' };
 
+  const round = await p.round.findUnique({ where: { id: currentRoundId } });
+  const animalType = round?.modalidade === 'Cutiano' ? 'Cavalo' : 'Touro';
+
   // Verifica quem JÁ está escalado
   const currentMontarias = await p.montaria.findMany({
     where: { roundId: currentRoundId, removida: false },
@@ -1284,7 +1291,7 @@ export async function importTopClassifiedRiders(etapaId: number, currentRoundId:
   let animalFantasma = await p.animal.findFirst({ where: { nome: 'A DEFINIR' } });
   if (!animalFantasma) {
     animalFantasma = await p.animal.create({
-      data: { nome: 'A DEFINIR', companhia: 'ORGANIZACAO' }
+      data: { nome: 'A DEFINIR', companhia: 'ORGANIZACAO', tipo: animalType }
     });
   }
 
@@ -1423,6 +1430,9 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
   const file = formData.get('file') as File;
   if (!file) return { success: false, error: 'Nenhum arquivo enviado.' };
 
+  const round = await p.round.findUnique({ where: { id: roundId } });
+  const animalType = round?.modalidade === 'Cutiano' ? 'Cavalo' : 'Touro';
+
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -1507,7 +1517,7 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
            const animalNome = parts[3]; // Padrão CNAR: Ordem | Nome | Cidade | Animal | Cia
            if (animalNome && animalNome.length > 2) {
               const newAnimal = await prisma.animal.create({
-                data: { nome: animalNome, companhia: parts[4] || 'IMPORTADO PDF' }
+                data: { nome: animalNome, companhia: parts[4] || 'IMPORTADO PDF', tipo: animalType }
               });
               finalAnimalId = newAnimal.id;
               // Atualizar mapa local para evitar duplicatas na mesma importação
