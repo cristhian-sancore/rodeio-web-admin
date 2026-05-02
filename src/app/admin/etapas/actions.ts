@@ -1524,22 +1524,33 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
       }
 
       let finalCompId = foundComp ? foundComp.id : null;
+      
+      const extractedCity = parts.length > 2 ? parts[2].trim() : '';
+      let cidade = extractedCity;
+      let uf = '';
+      if (extractedCity.includes('-')) {
+         const spl = extractedCity.split('-');
+         // Como algumas cidades vem com espaços "SÃO PAULO  - SP", pegamos o final corretamente
+         cidade = spl.slice(0, -1).join('-').trim();
+         uf = spl[spl.length - 1].trim().substring(0, 2);
+      } else {
+         cidade = extractedCity;
+      }
+
       if (!finalCompId) {
         if (extractedName.length > 2) {
-           const extractedCity = parts.length > 2 ? parts[2] : '';
-           let cidade = extractedCity;
-           let uf = '';
-           if (extractedCity.includes('-')) {
-             const spl = extractedCity.split('-');
-             cidade = spl[0].trim();
-             uf = spl[1].trim().substring(0, 2);
-           }
            const newComp = await prisma.competidor.create({
              data: { nome: extractedName, cidade, uf }
            });
            finalCompId = newComp.id;
            compsMap.push({ id: newComp.id, nome: normalize(newComp.nome) });
         }
+      } else if (cidade && cidade.length > 2) {
+         // Atualiza a cidade do peão no banco caso ele já existisse mas estivesse sem cidade
+         await prisma.competidor.update({
+            where: { id: finalCompId },
+            data: { cidade, uf }
+         });
       }
 
       // TRATAMENTO PARA ANIMAIS RESERVAS (SEM COMPETIDOR)
