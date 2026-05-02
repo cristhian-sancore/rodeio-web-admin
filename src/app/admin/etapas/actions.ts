@@ -1474,11 +1474,21 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
     });
 
     const rawText = data.text;
-    const rawLines = rawText.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    const rawLines = rawText.split('\n')
+      .map((l: string) => l.trim())
+      .filter((l: string) => {
+         if (l.length === 0) return false;
+         const upper = l.toUpperCase();
+         if (upper.includes('DATARODEO') || upper.includes('RERIDER') || upper.includes('RE RIDER') || upper.match(/^P[AÁ]GINA/)) return false;
+         return true;
+      });
+      
     const lines = [];
     for (let i = 0; i < rawLines.length; i++) {
        let line = rawLines[i];
-       while (i + 1 < rawLines.length && !rawLines[i + 1].includes('|') && rawLines[i + 1].length < 40 && !rawLines[i + 1].match(/^\d+\s*\|/)) {
+       
+       // Impede fusão se a próxima linha tiver números (telefones de rodapé etc)
+       while (i + 1 < rawLines.length && !rawLines[i + 1].includes('|') && rawLines[i + 1].length < 40 && !rawLines[i + 1].match(/^\d+\s*\|/) && !/\d/.test(rawLines[i + 1])) {
           let parts = line.split('|');
           if (parts.length > 1) {
             parts[1] = parts[1] + ' ' + rawLines[i + 1];
