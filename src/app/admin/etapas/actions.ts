@@ -986,6 +986,7 @@ export async function updateRound(formData: FormData) {
 
 export async function updateMontariaAtiva(montariaId: number | null) {
   try {
+    await fixDatabaseSchema();
     const currentConfig = await prisma.configuracao.findFirst();
     
     await prisma.configuracao.upsert({
