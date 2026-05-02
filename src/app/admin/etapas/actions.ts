@@ -1431,9 +1431,9 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
       pagerender: (pageData: any) => {
         return pageData.getTextContent().then((textContent: any) => {
           let lastY: number | undefined;
+          let lastCol = -1;
           let text = '';
           
-          // Ordenar itens por Y (topo para baixo) e depois por X (esquerda para direita)
           const items = textContent.items.sort((a: any, b: any) => {
             const yA = a.transform[5];
             const yB = b.transform[5];
@@ -1442,23 +1442,31 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
           });
 
           for (let item of items) {
-            const x = item.transform[4];
-            const y = item.transform[5];
-            
-            if (lastY !== undefined && Math.abs(lastY - y) > 5) {
-              text += '\n';
-            }
-            
-            // Adicionar separador baseado em thresholds fixos de X (Standard DataRodeo/CNAR)
-            // Seq (~30), Comp (~60), Cidade (~190), Animal (~310), Cia (~410), LD (~540)
-            if (x >= 60 && x < 65) text += ' | '; 
-            if (x >= 190 && x < 195) text += ' | ';
-            if (x >= 310 && x < 315) text += ' | ';
-            if (x >= 410 && x < 415) text += ' | ';
-            if (x >= 530 && x < 560) text += ' | ';
-            
-            text += item.str;
-            lastY = y;
+             const x = item.transform[4];
+             const y = item.transform[5];
+             
+             let col = 0;
+             if (x > 30 && x < 170) col = 1;
+             else if (x >= 170 && x < 300) col = 2;
+             else if (x >= 300 && x < 410) col = 3;
+             else if (x >= 410 && x < 530) col = 4;
+             else if (x >= 530) col = 5;
+
+             if (lastY !== undefined && Math.abs(lastY - y) > 5) {
+                text += '\n';
+                lastCol = -1;
+             }
+             
+             if (col > lastCol && lastCol !== -1) {
+                const diff = col - lastCol;
+                for (let i = 0; i < diff; i++) text += ' | ';
+             } else if (col === lastCol && text.length > 0 && !text.endsWith('\n')) {
+                text += ' ';
+             }
+             
+             text += item.str;
+             lastCol = col;
+             lastY = y;
           }
           return text;
         });
@@ -1466,7 +1474,24 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
     });
 
     const rawText = data.text;
-    const lines = rawText.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 5);
+    const rawLines = rawText.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    const lines = [];
+    for (let i = 0; i < rawLines.length; i++) {
+       let line = rawLines[i];
+       while (i + 1 < rawLines.length && !rawLines[i + 1].includes('|') && rawLines[i + 1].length < 40 && !rawLines[i + 1].match(/^\d+\s*\|/)) {
+          let parts = line.split('|');
+          if (parts.length > 1) {
+            parts[1] = parts[1] + ' ' + rawLines[i + 1];
+            line = parts.join('|');
+          } else {
+            line += ' ' + rawLines[i + 1];
+          }
+          i++;
+       }
+       if (line.split('|').length >= 3 && line.match(/^\d+\s*\|/)) {
+          lines.push(line);
+       }
+    }
 
     console.log('📄 PDF EXTRAÍDO (GRID):', rawText.length, 'char,', lines.length, 'lines');
 
@@ -1479,46 +1504,68 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
 
     let successCount = 0;
     let errors: string[] = [];
-    const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+    const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim().replace(/\s+/g, ' ');
     
     const compsMap = allCompetidores.map(c => ({ id: c.id, nome: normalize(c.nome) }));
     const animalsMap = allAnimais.map(a => ({ id: a.id, nome: normalize(a.nome) }));
 
     for (const line of lines) {
-      const normLine = normalize(line);
+      const parts = line.split('|').map(p => p.trim());
+      if (parts.length < 3) continue;
+
+      const extractedName = normalize(parts[1]);
       
-      // Busca exata ou parcial do competidor
-      const foundComp = compsMap.find(c => normLine.includes(c.nome));
+      let foundComp = compsMap.find(c => c.nome === extractedName);
       if (!foundComp) {
-        errors.push(`Atleta não mapeado: ${line.substring(0, 30)}`);
+         foundComp = compsMap.find(c => 
+           (extractedName.length > 5 && c.nome.startsWith(extractedName)) || 
+           (c.nome.length > 5 && extractedName.startsWith(c.nome))
+         );
+      }
+
+      let finalCompId = foundComp ? foundComp.id : null;
+      if (!finalCompId) {
+        if (extractedName.length > 2) {
+           const extractedCity = parts.length > 2 ? parts[2] : '';
+           let cidade = extractedCity;
+           let uf = '';
+           if (extractedCity.includes('-')) {
+             const spl = extractedCity.split('-');
+             cidade = spl[0].trim();
+             uf = spl[1].trim().substring(0, 2);
+           }
+           const newComp = await prisma.competidor.create({
+             data: { nome: extractedName, cidade, uf }
+           });
+           finalCompId = newComp.id;
+           compsMap.push({ id: newComp.id, nome: normalize(newComp.nome) });
+        }
+      }
+
+      if (!finalCompId) {
+        errors.push(`Atleta inválido ou em branco: ${line.substring(0, 30)}`);
         continue;
       }
 
-      const lineWithoutComp = normLine.replace(foundComp.nome, '');
-      const foundAnimal = animalsMap.find(a => lineWithoutComp.includes(a.nome));
-
-      let finalAnimalId = foundAnimal ? foundAnimal.id : null;
-
-      // Se não achou o animal pelo nome, tenta extrair a parte do animal
-      if (!finalAnimalId) {
-        const parts = line.split('|').map(p => p.trim());
-        if (parts.length >= 4) {
-           const animalNome = parts[3]; // Padrão CNAR: Ordem | Nome | Cidade | Animal | Cia
-           if (animalNome && animalNome.length > 2) {
-              const newAnimal = await prisma.animal.create({
-                data: { nome: animalNome, companhia: parts[4] || 'IMPORTADO PDF', tipo: animalType }
-              });
-              finalAnimalId = newAnimal.id;
-              // Atualizar mapa local para evitar duplicatas na mesma importação
-              animalsMap.push({ id: newAnimal.id, nome: normalize(newAnimal.nome) });
-           }
-        }
+      let finalAnimalId = null;
+      const animalNome = parts.length > 3 ? normalize(parts[3]) : '';
+      if (animalNome && animalNome !== 'A DEFINIR' && animalNome.length > 2) {
+         const foundAnimal = animalsMap.find(a => a.nome === animalNome || (animalNome.length > 4 && a.nome.includes(animalNome)));
+         if (foundAnimal) {
+            finalAnimalId = foundAnimal.id;
+         } else {
+            const newAnimal = await prisma.animal.create({
+              data: { nome: parts[3].trim(), companhia: parts[4] ? parts[4].trim() : 'IMPORTADO PDF', tipo: animalType }
+            });
+            finalAnimalId = newAnimal.id;
+            animalsMap.push({ id: newAnimal.id, nome: normalize(newAnimal.nome) });
+         }
       }
 
       const animalId = finalAnimalId || (aDefinir?.id || 1);
 
       const exists = await prisma.montaria.findFirst({
-        where: { roundId, competidorId: foundComp.id, removida: false }
+        where: { roundId, competidorId: finalCompId, removida: false }
       });
 
       if (exists) continue;
@@ -1526,7 +1573,7 @@ export async function importRoundPdfAction(roundId: number, etapaId: number, for
       await prisma.montaria.create({
         data: {
           roundId,
-          competidorId: foundComp.id,
+          competidorId: finalCompId,
           animalId: animalId,
           j1Animal: 0, j1Peao: 0, j2Animal: 0, j2Peao: 0,
           j3Animal: 0, j3Peao: 0, j4Animal: 0, j4Peao: 0,
