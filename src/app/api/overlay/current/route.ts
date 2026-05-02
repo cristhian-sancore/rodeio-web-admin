@@ -105,7 +105,7 @@ export async function getOverlayDataPayload() {
         j1Nome: montaria.round.juiz1?.nome || 'J1',
         j1P: montaria.j1Peao,
         j1A: montaria.j1Animal,
-        j1Total: (montaria.j1Peao + montaria.j1Animal).toFixed(2),
+        j1Total: ((montaria.j1Peao + montaria.j1Animal) * (config.numJuizes === 1 ? 2 : 1)).toFixed(2),
 
         j2Nome: montaria.round.juiz2?.nome || 'J2',
         j2P: montaria.j2Peao,

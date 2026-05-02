@@ -200,36 +200,59 @@ export default function ScoringForm({
                 </span>
                 {!canEdit && <Lock size={14} color="#333" />}
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>PEÃO</p>
-                  <input 
-                    name={`j${num}Peao`} 
-                    type="number" 
-                    step="0.25" 
-                    value={notas[pKey] !== undefined ? notas[pKey] : ''}
-                    onFocus={() => focusedField.current = pKey}
-                    onBlur={() => focusedField.current = null}
-                    onChange={e => setNotas({...notas, [pKey]: parseFloat(e.target.value) || 0})}
-                    readOnly={!canEdit} 
-                    style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
-                  />
+              {numJuizes === 1 ? (
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>NOTA FINAL (0 A 100)</p>
+                    <input 
+                      type="number" 
+                      step="0.25" 
+                      value={notas[pKey] !== undefined ? (notas[pKey] + notas[aKey]) * 2 : ''}
+                      onFocus={() => focusedField.current = pKey}
+                      onBlur={() => focusedField.current = null}
+                      onChange={e => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setNotas({...notas, [pKey]: val / 4, [aKey]: val / 4});
+                      }}
+                      readOnly={!canEdit} 
+                      style={{ textAlign: 'center', fontSize: '1.5rem', fontWeight: '900', background: '#000 !important' }} 
+                    />
+                    <input type="hidden" name={`j${num}Peao`} value={notas[pKey]} />
+                    <input type="hidden" name={`j${num}Animal`} value={notas[aKey]} />
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>TOURO</p>
-                  <input 
-                    name={`j${num}Animal`} 
-                    type="number" 
-                    step="0.25" 
-                    value={notas[aKey] !== undefined ? notas[aKey] : ''}
-                    onFocus={() => focusedField.current = aKey}
-                    onBlur={() => focusedField.current = null}
-                    onChange={e => setNotas({...notas, [aKey]: parseFloat(e.target.value) || 0})}
-                    readOnly={!canEdit} 
-                    style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
-                  />
+              ) : (
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>PEÃO</p>
+                    <input 
+                      name={`j${num}Peao`} 
+                      type="number" 
+                      step="0.25" 
+                      value={notas[pKey] !== undefined ? notas[pKey] : ''}
+                      onFocus={() => focusedField.current = pKey}
+                      onBlur={() => focusedField.current = null}
+                      onChange={e => setNotas({...notas, [pKey]: parseFloat(e.target.value) || 0})}
+                      readOnly={!canEdit} 
+                      style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0 0 5px 0', fontSize: '0.6rem', color: '#555', textAlign: 'center', fontWeight: 'bold' }}>TOURO</p>
+                    <input 
+                      name={`j${num}Animal`} 
+                      type="number" 
+                      step="0.25" 
+                      value={notas[aKey] !== undefined ? notas[aKey] : ''}
+                      onFocus={() => focusedField.current = aKey}
+                      onBlur={() => focusedField.current = null}
+                      onChange={e => setNotas({...notas, [aKey]: parseFloat(e.target.value) || 0})}
+                      readOnly={!canEdit} 
+                      style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: '900', background: '#000 !important' }} 
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
