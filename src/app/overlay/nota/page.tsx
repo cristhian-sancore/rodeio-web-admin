@@ -263,9 +263,9 @@ export default function OverlayNotaPage() {
         }
 
         .mode-ID .nota-container {
-          position: absolute; bottom: 80px; left: 80px;
+          position: absolute; bottom: 80px; left: 60px; right: 60px;
           display: flex; align-items: stretch; filter: drop-shadow(0 20px 60px rgba(0,0,0,0.8));
-          width: max-content; 
+          width: fit-content; max-width: calc(100vw - 120px);
           opacity: 1; transition: opacity 0.5s ease;
           zoom: var(--font-scale);
         }
@@ -274,14 +274,14 @@ export default function OverlayNotaPage() {
         .mode-ID .info-card {
           background: var(--bg-overlay);
           opacity: var(--opacity);
-          border-left: 18px solid var(--accent); padding: 40px 70px;
-          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 600px;
+          border-left: 14px solid var(--accent); padding: 30px 40px;
+          clip-path: polygon(0 0, 100% 0, 96% 100%, 0% 100%); width: fit-content; min-width: 420px;
           border-radius: var(--radius) 0 0 var(--radius);
-          max-width: 1100px; display: flex; align-items: center; justify-content: center;
-          z-index: 10; gap: 40px;
+          max-width: 800px; display: flex; align-items: center; justify-content: center;
+          z-index: 10; gap: 30px; flex-shrink: 1;
         }
         .mode-ID .competidor-name { 
-          color: #fff; font-size: 3.8rem; font-weight: 950; text-transform: uppercase; 
+          color: #fff; font-size: 3rem; font-weight: 950; text-transform: uppercase; 
           margin: 0; transform-origin: left center; line-height: 0.9;
           display: block; overflow: hidden;
           word-break: break-word;
@@ -289,29 +289,30 @@ export default function OverlayNotaPage() {
         .mode-ID .animal-name { color: var(--accent); font-size: 1.5rem; font-weight: 800; text-transform: uppercase; }
         
         .mode-ID .judges-section {
-          background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -40px;
-          padding: 15px 30px 15px 60px; display: flex; gap: 20px;
-          clip-path: polygon(40px 0, 100% 0, calc(100% - 30px) 100%, 0% 100%);
+          background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); margin-left: -30px;
+          padding: 12px 20px 12px 45px; display: flex; gap: 15px;
+          clip-path: polygon(30px 0, 100% 0, calc(100% - 20px) 100%, 0% 100%);
           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+          flex-shrink: 0;
         }
         .mode-ID .judges-section.pending { transform: translateX(-150%); opacity: 0; }
 
-        .mode-ID .judge-box { border-left: 4px solid var(--accent); padding-left: 15px; min-width: 160px; display: flex; flex-direction: column; }
-        .mode-ID .judge-title { font-size: 1.1rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 5px; display: block; opacity: 0.8; }
-        .mode-ID .judge-score-label { font-size: 0.9rem; color: var(--accent); font-weight: 900; margin-right: 3px; }
-        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 3rem; line-height: 1; }
-        .mode-ID .subtotal { font-size: 4rem; color: #fff; font-weight: 950; margin-top: 10px; border-top: 4px solid rgba(212, 175, 55, 0.3); padding-top: 10px; line-height: 1; text-align: center; }
+        .mode-ID .judge-box { border-left: 3px solid var(--accent); padding-left: 12px; min-width: 130px; display: flex; flex-direction: column; }
+        .mode-ID .judge-title { font-size: 0.9rem; color: var(--accent); font-weight: 950; text-transform: uppercase; margin-bottom: 4px; display: block; opacity: 0.8; }
+        .mode-ID .judge-score-label { font-size: 0.8rem; color: var(--accent); font-weight: 900; margin-right: 2px; }
+        .mode-ID .judge-score-value { color: #fff; font-weight: 950; font-size: 2.2rem; line-height: 1; }
+        .mode-ID .subtotal { font-size: 3rem; color: #fff; font-weight: 950; margin-top: 8px; border-top: 3px solid rgba(212, 175, 55, 0.3); padding-top: 8px; line-height: 1; text-align: center; }
         
         .mode-ID .final-score-card {
-          min-width: 200px; background: var(--accent-gradient);
+          min-width: 180px; background: var(--accent-gradient);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          padding: 15px 30px 15px 50px; clip-path: polygon(40px 0, 100% 0, 100% 100%, 0% 100%);
-          margin-left: -40px;
+          padding: 12px 25px 12px 40px; clip-path: polygon(30px 0, 100% 0, 100% 100%, 0% 100%);
+          margin-left: -30px; flex-shrink: 0;
           border-radius: 0 var(--radius) var(--radius) 0;
           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, opacity 0.4s ease 0.1s;
         }
         .mode-ID .final-score-card.pending { transform: translateX(-200%); opacity: 0; }
-        .mode-ID .total-value { font-size: 7rem; font-weight: 950; color: #000; letter-spacing: -3px; line-height: 1; }
+        .mode-ID .total-value { font-size: 5.5rem; font-weight: 950; color: #000; letter-spacing: -2px; line-height: 1; }
         
         .mode-ID .header-badges { position: absolute; top: -45px; left: 0; display: flex; gap: 10px; }
         .mode-ID .badge { 
