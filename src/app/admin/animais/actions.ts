@@ -95,10 +95,22 @@ export async function deleteAnimal(arg: FormData | number) {
 export async function importAnimais(data: any[]) {
   const session = await getServerSession(authOptions);
   
+  function getVal(row: any, keys: string[], defaultValue = '') {
+    if (!row) return defaultValue;
+    const rowKeys = Object.keys(row);
+    for (const k of keys) {
+      const match = rowKeys.find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+      if (match && row[match] !== undefined && row[match] !== null && String(row[match]).trim() !== '') {
+        return String(row[match]).trim();
+      }
+    }
+    return defaultValue;
+  }
+
   const toCreate = data.map(row => ({
-    nome: String(row.Nome || row.nome || '').trim(),
-    companhia: String(row.Companhia || row.companhia || '').trim(),
-    tipo: String(row.Tipo || row.tipo || 'Touro').trim(),
+    nome: getVal(row, ['nome', 'animal', 'touro', 'cavalo', 'cutiano']),
+    companhia: getVal(row, ['companhia', 'cia', 'tropeiro', 'proprietário', 'dono']),
+    tipo: getVal(row, ['tipo', 'modalidade', 'categoria'], 'Touro'),
   })).filter(a => a.nome.length > 2);
 
   if (toCreate.length === 0) return { error: 'Nenhum dado válido encontrado na planilha.' };

@@ -96,11 +96,23 @@ export async function deleteCompetidor(arg: FormData | number) {
 export async function importCompetidores(data: any[]) {
   const session = await getServerSession(authOptions);
   
+  function getVal(row: any, keys: string[]) {
+    if (!row) return '';
+    const rowKeys = Object.keys(row);
+    for (const k of keys) {
+      const match = rowKeys.find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+      if (match && row[match] !== undefined && row[match] !== null) {
+        return String(row[match]).trim();
+      }
+    }
+    return '';
+  }
+
   // Limpar e validar dados
   const toCreate = data.map(row => ({
-    nome: String(row.Nome || row.nome || '').trim(),
-    cidade: String(row.Cidade || row.cidade || '').trim(),
-    uf: String(row.UF || row.uf || '').trim().toUpperCase().substring(0, 2),
+    nome: getVal(row, ['nome', 'competidor', 'peão', 'atleta', 'rider']),
+    cidade: getVal(row, ['cidade', 'municipio', 'município', 'city']),
+    uf: getVal(row, ['uf', 'estado', 'state']).toUpperCase().substring(0, 2),
   })).filter(c => c.nome.length > 2);
 
   if (toCreate.length === 0) return { error: 'Nenhum dado válido encontrado na planilha.' };
