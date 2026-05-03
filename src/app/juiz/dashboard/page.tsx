@@ -154,8 +154,7 @@ export default function JuizDashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           {data && (
             <div style={styles.headerRight}>
-              <span style={styles.juizBadge}>JUIZ {data.juizNumero}</span>
-              <span style={styles.juizName}>{data.juizNome}</span>
+              <span style={styles.juizBadge}>{data.juizNome}</span>
             </div>
           )}
           <button 
@@ -355,6 +354,11 @@ export default function JuizDashboardPage() {
           -webkit-appearance: none;
           margin: 0;
         }
+        input[type=number]:focus {
+          border-color: #fff !important;
+          box-shadow: 0 0 30px rgba(212, 175, 55, 0.4) !important;
+          background: #050505 !important;
+        }
         input[type=number] { -moz-appearance: textfield; }
         * { box-sizing: border-box; }
       `}</style>
@@ -497,11 +501,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   competidorName: {
     color: '#fff',
-    fontSize: 'clamp(1.5rem, 5vw, 2.8rem)',
-    fontWeight: '900',
-    letterSpacing: '1px',
+    fontSize: 'clamp(1rem, 3.5vw, 1.8rem)',
+    fontWeight: '800',
+    letterSpacing: '0.5px',
     lineHeight: 1.1,
-    marginBottom: 'clamp(0.5rem, 1.5vw, 0.75rem)',
+    marginBottom: '0.5rem',
     textTransform: 'uppercase' as const,
   },
   animalRow: {
@@ -516,8 +520,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   animalName: {
     color: 'var(--primary)',
-    fontSize: 'clamp(1.1rem, 3.5vw, 1.8rem)',
-    fontWeight: '700',
+    fontSize: 'clamp(0.9rem, 3vw, 1.3rem)',
+    fontWeight: '600',
   },
   companhia: {
     color: '#777',
@@ -564,16 +568,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   notaInput: {
     width: '100%',
-    padding: 'clamp(0.75rem, 3vw, 1.5rem)',
-    fontSize: 'clamp(2rem, 8vw, 4rem)',
-    fontWeight: '900',
+    padding: 'clamp(1rem, 4vw, 2rem)',
+    fontSize: 'clamp(2.5rem, 10vw, 5rem)',
+    fontWeight: '950',
     textAlign: 'center' as const,
-    background: '#111',
-    border: '3px solid #333',
+    background: '#000',
+    border: '3px solid #d4af37',
     borderRadius: 'clamp(12px, 3vw, 20px)',
     color: '#fff',
     outline: 'none',
-    caretColor: 'var(--primary)',
+    boxShadow: '0 0 15px rgba(212, 175, 55, 0.1)',
+    transition: 'all 0.2s ease',
   },
   notaRange: {
     color: '#555',
