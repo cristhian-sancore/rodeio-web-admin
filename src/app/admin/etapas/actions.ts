@@ -299,10 +299,26 @@ export async function updateMontariaNota(formData: FormData) {
   let j4P = isJ4 ? parseFloat(formData.get('j4Peao') as string || '0') : m.j4Peao;
   let j4A = isJ4 ? parseFloat(formData.get('j4Animal') as string || '0') : m.j4Animal;
 
+  // No modo de 1 juiz, o frontend divide a nota total por igual. Se houve queda, a nota inteira deve ir pro animal!
+  if (numJuizes === 1 && (tempo < 8 || desclassificado)) {
+     j1A = j1A + j1P;
+     j1P = 0;
+  }
+
   let notaPeao = j1P + j2P + j3P + j4P;
   let notaAnimal = j1A + j2A + j3A + j4A;
 
-  if (desclassificado || (tempo > 0 && tempo < 8)) notaPeao = 0;
+  if (notaPeao > 0 && tempo === 0 && !desclassificado) {
+     throw new Error("⚠️ O peão recebeu nota, mas o cronômetro está zerado! Preencha o tempo (Ex: 8.00).");
+  }
+
+  if (desclassificado || tempo < 8) {
+     notaPeao = 0;
+     if (numJuizes > 1) {
+        // Se for mais de 1 juiz, zera as variáveis de banco também
+        j1P = 0; j2P = 0; j3P = 0; j4P = 0;
+     }
+  }
   
   let notaTotal = notaPeao + notaAnimal;
   
