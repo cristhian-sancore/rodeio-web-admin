@@ -89,6 +89,16 @@ export default function ScoringForm({
   };
 
   useEffect(() => {
+    setNotas({
+      j1p: montaria.j1Peao || 0, j1a: montaria.j1Animal || 0,
+      j2p: montaria.j2Peao || 0, j2a: montaria.j2Animal || 0,
+      j3p: montaria.j3Peao || 0, j3a: montaria.j3Animal || 0,
+      j4p: montaria.j4Peao || 0, j4a: montaria.j4Animal || 0,
+    });
+    setTempo(montaria.tempo || 0);
+    setDesclassificado(montaria.desclassificado || false);
+    setMotivo(montaria.motivo || '');
+    
     fetchStatus();
     intervalRef.current = setInterval(fetchStatus, 3000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
