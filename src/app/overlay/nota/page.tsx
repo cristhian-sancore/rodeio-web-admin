@@ -107,7 +107,7 @@ export default function OverlayNotaPage() {
            ltHideTimeoutRef.current = null;
        }
     }
-  }, [data?.mode, d?.id]);
+  }, [data?.mode, d?.id, d?.total]);
 
   useEffect(() => {
     document.documentElement.style.background = 'transparent';
