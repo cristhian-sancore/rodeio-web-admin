@@ -1,1 +1,0 @@
-{"AttachStdout":true,"AttachStderr":true,"Cmd":["psql","-h","localhost","-U","rodeio_admin","-d","rodeio_db","-c","ALTER TABLE \"Configuracao\" ADD COLUMN IF NOT EXISTS \"exibirCronometroNoOverlay\" BOOLEAN DEFAULT true;"]}
