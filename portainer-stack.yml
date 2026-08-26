@@ -30,7 +30,6 @@ services:
     depends_on:
       - db
     volumes:
-      - prisma_data:/app/prisma
       - uploads_data:/app/public/uploads
     restart: always
     networks:
@@ -38,7 +37,6 @@ services:
 
 volumes:
   db_data:
-  prisma_data:
   uploads_data:
 
 networks:

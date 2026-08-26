@@ -16,7 +16,7 @@ services:
       - rede
 
   app:
-    image: ghcr.io/cristhian221016/rodeio-pro:latest
+    image: ghcr.io/cristhian-sancore/rodeio-pro:latest
     ports:
       - "3000:3000"
     environment:
